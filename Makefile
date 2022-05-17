@@ -1,6 +1,10 @@
 ROOT_DIR:=.
 include ./config.mk
 
+# TESTER PORTMAP
+tester-portmap:
+	make -C submodules/TESTER/ tester-portmap
+
 #
 # BUILD EMBEDDED SOFTWARE
 #
@@ -45,6 +49,9 @@ sim-clean: fw-clean
 sim-test:
 	make -C $(SIM_DIR) test
 
+tester-sim-run:
+	make -C submodules/TESTER sim-run
+
 #
 # BUILD, LOAD AND RUN ON FPGA BOARD
 #
@@ -61,6 +68,12 @@ fpga-clean: fw-clean
 
 fpga-test:
 	make -C $(BOARD_DIR) test
+
+tester-fpga-build:
+	make -C submodules/TESTER fpga-build
+
+tester-fpga-run:
+	make -C submodules/TESTER fpga-run
 
 #
 # SYNTHESIZE AND SIMULATE ASIC
@@ -97,6 +110,7 @@ doc-test:
 #
 
 clean: pc-emul-clean sim-clean fpga-clean doc-clean python-cache-clean
+	make -C submodules/TESTER clean
 
 #
 # TEST ALL PLATFORMS
@@ -157,7 +171,9 @@ debug:
 .PHONY: fw-build fw-clean \
 	pc-emul-build pc-emul-run pc-emul-clean pc-emul-test \
 	sim-build sim-run sim-clean sim-test \
+	tester-sim-run \
 	fpga-build fpga-run fpga-clean fpga-test \
+	tester-fpga-build tester-fpga-run \
 	asic-synth asic-sim-post-synth asic-test \
 	doc-build doc-clean doc-test \
 	clean \
@@ -167,4 +183,5 @@ debug:
 	test-asic test-asic-clean \
 	test-doc test-doc-clean \
 	test test-clean \
+	tester-portmap \
 	debug

@@ -37,7 +37,7 @@ INIT_MEM ?=1
 #list with corename of peripherals to be attached to peripheral bus.
 #to include multiple instances, write the corename of the peripheral multiple times.
 #(Example: 'PERIPHERALS ?=UART UART' will create 2 UART instances)
-PERIPHERALS ?=UART
+PERIPHERALS ?=UART REGFILEIF
 
 #RISC-V HARD MULTIPLIER AND DIVIDER INSTRUCTIONS
 USE_MUL_DIV ?=1
@@ -96,6 +96,8 @@ UART_DIR=$(ROOT_DIR)/submodules/UART
 LIB_DIR=$(ROOT_DIR)/submodules/LIB
 MEM_DIR=$(ROOT_DIR)/submodules/MEM
 AXI_DIR=$(ROOT_DIR)/submodules/AXI
+
+REGFILEIF_DIR=$(ROOT_DIR)/submodules/REGFILEIF
 
 #sw paths
 SW_DIR:=$(ROOT_DIR)/software
