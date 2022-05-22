@@ -158,6 +158,8 @@ FREQ ?=100000000
 
 SHELL = /bin/bash
 
+TOP_MODULE=iob_system_top
+
 #RULES
 gen-clean:
 	@rm -f *# *~

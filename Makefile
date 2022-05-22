@@ -3,7 +3,7 @@ include ./config.mk
 
 # TESTER PORTMAP
 tester-portmap:
-	make -C submodules/TESTER/ tester-portmap
+	make -C submodules/TESTER/ portmap
 
 #
 # BUILD EMBEDDED SOFTWARE
