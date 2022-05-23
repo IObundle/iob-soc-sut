@@ -16,6 +16,7 @@ IOBNATIVEBRIDGEIF_DIR=$($(UUT_NAME)_DIR)/submodules/IOBNATIVEBRIDGEIF
 REMOTE_UUT_DIR ?=sandbox/iob-soc-sut
 
 #Extra tester dependencies
+BUILD_DEPS+=$($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
 SIM_DEPS+=
 FPGA_DEPS+=
 CLEAN_DEPS+=clean-top-module
@@ -27,11 +28,12 @@ else
 # MAKEFILE TARGETS: PLACE BELOW EXTRA TARGETS USED BY TESTER
 #
 
-create-top-module:
+$($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v:
 	make -C $($(UUT_NAME)_DIR)/hardware/src -f ../hardware.mk system.v ROOT_DIR=../..
 	mv $($(UUT_NAME)_DIR)/hardware/src/system.v $($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
 
 clean-top-module:
 	rm -f $($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
 
+.PHONY: clean-top-module
 endif
