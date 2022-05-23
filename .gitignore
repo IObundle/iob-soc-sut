@@ -1,5 +1,5 @@
 #TOP
-test_report.log
+#nothing to ignore
 
 #SOFTWARE
 software/periphs.h
@@ -27,12 +27,15 @@ hardware/testbench/system_tb.v
 
 #simulation
 hardware/simulation/*/*
+!hardware/simulation/verilog_tb
+!hardware/simulation/simulation.mk
 !hardware/simulation/*/Makefile
-!hardware/simulation/*/test.expected
-!hardware/simulation/xcelium/run_xmsim.sh
+!hardware/simulation/*/*.expected
+!hardware/simulation/*/*.sh
 
 #fpga
 hardware/fpga/*/*/*
+!hardware/fpga/fpga.mk
 !hardware/fpga/*/*/Makefile
 !hardware/fpga/*/*/*.tcl
 !hardware/fpga/*/*/*.expected
@@ -41,10 +44,20 @@ hardware/fpga/*/*/*
 !hardware/fpga/vivado/*/*.xdc
 !hardware/fpga/quartus/*/*.sdc
 
+#asic
+hardware/asic/*/*
+!hardware/asic/asic.mk
+!hardware/asic/*/Makefile
+!hardware/asic/*/*.tcl
+!hardware/asic/*/*.sh
+!hardware/asic/*/verilog
+!hardware/asic/*/synscript.tcl
+!hardware/asic/*/powscript.tcl
+!hardware/asic/skywater/openram_config.py
+
 #DOCUMENT
 document/*/*
 !document/*/Makefile
 !document/*/*.expected
 !document/*/*.pdf
 !document/presentation/presentation.tex
-

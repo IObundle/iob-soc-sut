@@ -1,11 +1,13 @@
 `timescale 1 ns / 1 ps
 `include "system.vh"
-`include "interconnect.vh"
+`include "iob_intercon.vh"
   
 module int_mem
   #(
     parameter ADDR_W=32,
-    parameter DATA_W=32
+    parameter DATA_W=32,
+    parameter HEXFILE = "firmware",
+    parameter BOOT_HEXFILE = "boot"
     )
    (
     input                clk,
@@ -42,7 +44,7 @@ module int_mem
    //
    // SPLIT DATA BUS BETWEEN SRAM AND BOOT CONTROLLER
    //
-   split 
+   iob_split 
      #(
        .N_SLAVES(2),
        .P_SLAVES(`B_BIT)
@@ -69,7 +71,9 @@ module int_mem
    wire [`REQ_W-1:0]     ram_w_req;
    wire [`RESP_W-1:0]    ram_w_resp;
 
-   boot_ctr boot_ctr0 
+   boot_ctr 
+        #(.HEXFILE({BOOT_HEXFILE,".hex"}))
+	boot_ctr0 
        (
         .clk(clk),
         .rst(rst),
@@ -128,7 +132,8 @@ module int_mem
    wire [`REQ_W-1:0]     ram_i_req;
    wire [`RESP_W-1:0]    ram_i_resp;
    
-   merge #(
+   iob_merge 
+     #(
            .N_MASTERS(2)
            )
    ibus_merge
@@ -150,7 +155,7 @@ module int_mem
    //
    sram
 `ifdef SRAM_INIT
-        #(.FILE("firmware"))
+        #(.HEXFILE(HEXFILE))
 `endif
    int_sram 
      (
