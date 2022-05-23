@@ -28,7 +28,7 @@ else
 #
 
 create-top-module:
-	(cd $($(UUT_NAME)_DIR)/hardware/src; make -C .. -f hardware.mk system.v ROOT_DIR=..)
+	make -C $($(UUT_NAME)_DIR)/hardware/src -f ../hardware.mk system.v ROOT_DIR=../..
 	mv $($(UUT_NAME)_DIR)/hardware/src/system.v $($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
 
 clean-top-module:
