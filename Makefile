@@ -49,6 +49,9 @@ sim-clean: fw-clean
 sim-test:
 	make -C $(SIM_DIR) test
 
+tester-sim-build:
+	make -C submodules/TESTER sim-build
+
 tester-sim-run:
 	make -C submodules/TESTER sim-run
 
@@ -171,7 +174,7 @@ debug:
 .PHONY: fw-build fw-clean \
 	pc-emul-build pc-emul-run pc-emul-clean pc-emul-test \
 	sim-build sim-run sim-clean sim-test \
-	tester-sim-run \
+	tester-sim-build tester-sim-run \
 	fpga-build fpga-run fpga-clean fpga-test \
 	tester-fpga-build tester-fpga-run \
 	asic-synth asic-sim-post-synth asic-test \

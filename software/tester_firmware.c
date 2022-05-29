@@ -4,7 +4,7 @@
 #include "stdlib.h"
 #include <stdio.h>
 #include "system.h"
-#include "tester_periphs.h"
+#include "periphs.h"
 #include "iob-uart.h"
 #include "printf.h"
 #include "iob_nativebridgeif_swreg.h"
