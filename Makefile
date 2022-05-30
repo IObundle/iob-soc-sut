@@ -20,8 +20,8 @@ fw-clean:
 #
 
 pc-emul-build:
-	make fw-build BAUD=5000000
-	make -C $(PC_DIR) build
+	make fw-build
+	make -C $(PC_DIR)
 
 pc-emul-run: pc-emul-build
 	make -C $(PC_DIR) run
@@ -37,7 +37,7 @@ pc-emul-test: pc-emul-clean
 #
 
 sim-build:
-	make fw-build BAUD=5000000
+	make fw-build
 	make -C $(SIM_DIR) build
 
 sim-run: sim-build
@@ -60,7 +60,7 @@ tester-sim-run:
 #
 
 fpga-build:
-	make fw-build
+	make fw-build BAUD=115200
 	make -C $(BOARD_DIR) build
 
 fpga-run: fpga-build
@@ -83,11 +83,11 @@ tester-fpga-run:
 #
 
 asic-synth:
-	make fw-build
+	make fw-build BAUD=115200
 	make -C $(ASIC_DIR) synth
 
 asic-sim-post-synth:
-	make -C $(ASIC_DIR) all TEST_LOG="$(TEST_LOG)"
+	make -C $(ASIC_DIR) all TEST_LOG="$(TEST_LOG)" BAUD=115200
 
 asic-clean:
 	make -C $(ASIC_DIR) clean-all
