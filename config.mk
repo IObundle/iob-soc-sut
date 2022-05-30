@@ -6,6 +6,8 @@
 
 IOBSOC_NAME:=IOBSOC
 
+TOP_MODULE:=system
+
 #
 # PRIMARY PARAMETERS: CAN BE CHANGED BY USERS OR OVERRIDEN BY ENV VARS
 #
@@ -155,8 +157,6 @@ BAUD ?=5000000 #simulation default
 FREQ ?=100000000
 
 SHELL = /bin/bash
-
-TOP_MODULE=iob_system_top
 
 #RULES
 gen-clean:

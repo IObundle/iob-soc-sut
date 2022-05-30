@@ -48,7 +48,7 @@ REMOTE_UUT_DIR ?=sandbox/iob-soc-sut
 
 #Extra tester target dependencies
 #Run before building system
-BUILD_DEPS+=$($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
+BUILD_DEPS+=$($(UUT_NAME)_DIR)/hardware/src/system.v
 #Run before building system for simulation
 SIM_DEPS+=
 #Run before building system for fpga
@@ -63,12 +63,11 @@ else
 # MAKEFILE TARGETS: PLACE BELOW EXTRA TARGETS USED BY TESTER
 #
 
-$($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v:
+$($(UUT_NAME)_DIR)/hardware/src/system.v:
 	make -C $($(UUT_NAME)_DIR)/hardware/src -f ../hardware.mk system.v ROOT_DIR=../..
-	mv $($(UUT_NAME)_DIR)/hardware/src/system.v $($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
 
 clean-top-module:
-	rm -f $($(UUT_NAME)_DIR)/hardware/src/iob_system_top.v
+	rm -f $($(UUT_NAME)_DIR)/hardware/src/system.v
 
 .PHONY: clean-top-module
 endif

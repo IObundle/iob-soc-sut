@@ -11,56 +11,56 @@ module system
    //do not remove line below
    //PIO
 
-
-`ifdef USE_DDR //AXI MASTER INTERFACE
-
-   //address write
-   output [0:0]             m_axi_awid, 
-   output [`DDR_ADDR_W-1:0] m_axi_awaddr,
-   output [7:0]             m_axi_awlen,
-   output [2:0]             m_axi_awsize,
-   output [1:0]             m_axi_awburst,
-   output [0:0]             m_axi_awlock,
-   output [3:0]             m_axi_awcache,
-   output [2:0]             m_axi_awprot,
-   output [3:0]             m_axi_awqos,
-   output                   m_axi_awvalid,
-   input                    m_axi_awready,
-
-   //write
-   output [`DATA_W-1:0]     m_axi_wdata,
-   output [`DATA_W/8-1:0]   m_axi_wstrb,
-   output                   m_axi_wlast,
-   output                   m_axi_wvalid, 
-   input                    m_axi_wready,
-
-   //write response
-   input [0:0]              m_axi_bid,
-   input [1:0]              m_axi_bresp,
-   input                    m_axi_bvalid,
-   output                   m_axi_bready,
-  
-   //address read
-   output [0:0]             m_axi_arid,
-   output [`DDR_ADDR_W-1:0] m_axi_araddr, 
-   output [7:0]             m_axi_arlen,
-   output [2:0]             m_axi_arsize,
-   output [1:0]             m_axi_arburst,
-   output [0:0]             m_axi_arlock,
-   output [3:0]             m_axi_arcache,
-   output [2:0]             m_axi_arprot,
-   output [3:0]             m_axi_arqos,
-   output                   m_axi_arvalid, 
-   input                    m_axi_arready,
-
-   //read
-   input [0:0]              m_axi_rid,
-   input [`DATA_W-1:0]      m_axi_rdata,
-   input [1:0]              m_axi_rresp,
-   input                    m_axi_rlast, 
-   input                    m_axi_rvalid, 
-   output                   m_axi_rready,
-`endif //  `ifdef USE_DDR
+// ######## Temporary fix for usage without DDR ########
+//`ifdef USE_DDR //AXI MASTER INTERFACE
+//
+//   //address write
+//   output [0:0]             m_axi_awid, 
+//   output [`DDR_ADDR_W-1:0] m_axi_awaddr,
+//   output [7:0]             m_axi_awlen,
+//   output [2:0]             m_axi_awsize,
+//   output [1:0]             m_axi_awburst,
+//   output [0:0]             m_axi_awlock,
+//   output [3:0]             m_axi_awcache,
+//   output [2:0]             m_axi_awprot,
+//   output [3:0]             m_axi_awqos,
+//   output                   m_axi_awvalid,
+//   input                    m_axi_awready,
+//
+//   //write
+//   output [`DATA_W-1:0]     m_axi_wdata,
+//   output [`DATA_W/8-1:0]   m_axi_wstrb,
+//   output                   m_axi_wlast,
+//   output                   m_axi_wvalid, 
+//   input                    m_axi_wready,
+//
+//   //write response
+//   input [0:0]              m_axi_bid,
+//   input [1:0]              m_axi_bresp,
+//   input                    m_axi_bvalid,
+//   output                   m_axi_bready,
+//  
+//   //address read
+//   output [0:0]             m_axi_arid,
+//   output [`DDR_ADDR_W-1:0] m_axi_araddr, 
+//   output [7:0]             m_axi_arlen,
+//   output [2:0]             m_axi_arsize,
+//   output [1:0]             m_axi_arburst,
+//   output [0:0]             m_axi_arlock,
+//   output [3:0]             m_axi_arcache,
+//   output [2:0]             m_axi_arprot,
+//   output [3:0]             m_axi_arqos,
+//   output                   m_axi_arvalid, 
+//   input                    m_axi_arready,
+//
+//   //read
+//   input [0:0]              m_axi_rid,
+//   input [`DATA_W-1:0]      m_axi_rdata,
+//   input [1:0]              m_axi_rresp,
+//   input                    m_axi_rlast, 
+//   input                    m_axi_rvalid, 
+//   output                   m_axi_rready,
+//`endif //  `ifdef USE_DDR
    input                    clk,
    input                    reset,
    output                   trap
