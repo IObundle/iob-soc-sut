@@ -22,7 +22,7 @@ module iob_nativebridgeif
     `IOB_INPUT(ready_ext,  1),
 
 
-`include "gen_if.vh"
+`include "iob_gen_if.vh"
     );
 
     // Connect interfaces
