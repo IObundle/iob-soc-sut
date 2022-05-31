@@ -63,11 +63,17 @@ else
 # MAKEFILE TARGETS: PLACE BELOW EXTRA TARGETS USED BY TESTER
 #
 
+#Target to build UUT topsystem
 $($(UUT_NAME)_DIR)/hardware/src/system.v:
 	make -C $($(UUT_NAME)_DIR)/hardware/src -f ../hardware.mk system.v ROOT_DIR=../..
 
 clean-top-module:
 	rm -f $($(UUT_NAME)_DIR)/hardware/src/system.v
+
+#Target to build UUT bootloader and firmware
+$($(UUT_NAME)_DIR)/software/firmware/boot.hex $($(UUT_NAME)_DIR)/software/firmware/firmware.hex:
+	make -C $($(UUT_NAME)_DIR)/software/firmware build-all
+	make -C $($(UUT_NAME)_DIR)/software/firmware -f ../../hardware/hardware.mk boot.hex firmware.hex ROOT_DIR=../..
 
 .PHONY: clean-top-module
 endif
