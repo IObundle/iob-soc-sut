@@ -35,7 +35,7 @@ SIMULATOR:=icarus
 #BOARD
 #default board running locally or remotely
 #check the respective Makefile in TESTER/hardware/fpga/$(BOARD) for specific settings
-BOARD:=CYCLONEV-GT-DK
+#BOARD:=CYCLONEV-GT-DK
 
 # Tester peripherals to add (besides the default ones in IOb-SoC-Tester)
 PERIPHERALS+=UART IOBNATIVEBRIDGEIF
