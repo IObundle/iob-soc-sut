@@ -20,8 +20,8 @@ fw-clean:
 #
 
 pc-emul-build:
-	make fw-build BAUD=5000000
-	make -C $(PC_DIR) build
+	make fw-build
+	make -C $(PC_DIR)
 
 pc-emul-run: pc-emul-build
 	make -C $(PC_DIR) run
@@ -37,7 +37,7 @@ pc-emul-test: pc-emul-clean
 #
 
 sim-build:
-	make fw-build BAUD=5000000
+	make fw-build
 	make -C $(SIM_DIR) build
 
 sim-run: sim-build
@@ -49,6 +49,9 @@ sim-clean: fw-clean
 sim-test:
 	make -C $(SIM_DIR) test
 
+tester-sim-build:
+	make -C submodules/TESTER sim-build
+
 tester-sim-run:
 	make -C submodules/TESTER sim-run
 
@@ -57,7 +60,7 @@ tester-sim-run:
 #
 
 fpga-build:
-	make fw-build
+	make fw-build BAUD=115200
 	make -C $(BOARD_DIR) build
 
 fpga-run: fpga-build
@@ -74,23 +77,6 @@ tester-fpga-build:
 
 tester-fpga-run:
 	make -C submodules/TESTER fpga-run
-
-#
-# SYNTHESIZE AND SIMULATE ASIC
-#
-
-asic-synth:
-	make fw-build
-	make -C $(ASIC_DIR) synth
-
-asic-sim-post-synth:
-	make -C $(ASIC_DIR) all TEST_LOG="$(TEST_LOG)"
-
-asic-clean:
-	make -C $(ASIC_DIR) clean-all
-
-asic-test:
-	make -C $(ASIC_DIR) test
 
 #
 # COMPILE DOCUMENTS
@@ -136,14 +122,6 @@ test-fpga-clean:
 	make fpga-clean BOARD=CYCLONEV-GT-DK
 	make fpga-clean BOARD=AES-KU040-DB-G
 
-test-asic:
-	make asic-test ASIC_NODE=umc130
-	make asic-test ASIC_NODE=skywater
-
-test-asic-clean:
-	make asic-clean ASIC_NODE=umc130
-	make asic-clean ASIC_NODE=skywater
-
 test-doc:
 	make fpga-clean BOARD=CYCLONEV-GT-DK
 	make fpga-clean BOARD=AES-KU040-DB-G
@@ -171,16 +149,14 @@ debug:
 .PHONY: fw-build fw-clean \
 	pc-emul-build pc-emul-run pc-emul-clean pc-emul-test \
 	sim-build sim-run sim-clean sim-test \
-	tester-sim-run \
+	tester-sim-build tester-sim-run \
 	fpga-build fpga-run fpga-clean fpga-test \
 	tester-fpga-build tester-fpga-run \
-	asic-synth asic-sim-post-synth asic-test \
 	doc-build doc-clean doc-test \
 	clean \
 	test-pc-emul test-pc-emul-clean \
 	test-sim test-sim-clean \
 	test-fpga test-fpga-clean \
-	test-asic test-asic-clean \
 	test-doc test-doc-clean \
 	test test-clean \
 	tester-portmap \
