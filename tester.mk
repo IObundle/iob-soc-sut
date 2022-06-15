@@ -46,11 +46,16 @@ IOBNATIVEBRIDGEIF_DIR=$($(UUT_NAME)_DIR)/submodules/IOBNATIVEBRIDGEIF
 #Root directory on remote machines
 REMOTE_UUT_DIR ?=sandbox/iob-soc-sut
 
+#Set FPGA BAUD if we are not running simulation
+ifeq ($(ISSIMULATION),)
+BAUD=115200
+endif
+
 #Extra tester target dependencies
 #Run before building system
 BUILD_DEPS+=$($(UUT_NAME)_DIR)/hardware/src/system.v
 #Run before building system for simulation
-SIM_DEPS+=
+SIM_DEPS+=set-simulation-variable
 #Run before building system for fpga
 FPGA_DEPS+=
 #Run when cleaning tester
@@ -72,8 +77,12 @@ clean-top-module:
 
 #Target to build UUT bootloader and firmware
 $($(UUT_NAME)_DIR)/software/firmware/boot.hex $($(UUT_NAME)_DIR)/software/firmware/firmware.hex:
-	make -C $($(UUT_NAME)_DIR)/software/firmware build-all
+	make -C $($(UUT_NAME)_DIR)/software/firmware build-all BAUD=$(BAUD)
 	make -C $($(UUT_NAME)_DIR)/software/firmware -f ../../hardware/hardware.mk boot.hex firmware.hex ROOT_DIR=../..
 
-.PHONY: clean-top-module
+#Set ISSIMULATION variable
+set-simulation-variable:
+	$(eval export ISSIMULATION=1)
+
+.PHONY: clean-top-module set-simulation-variable
 endif
