@@ -46,6 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -61,6 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -76,6 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -91,6 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -106,6 +110,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
