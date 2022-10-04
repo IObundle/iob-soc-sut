@@ -21,27 +21,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  pc-emul:
-    runs-on: self-hosted
-    timeout-minutes: 30
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-pc-emul
-        run: make test-pc-emul
+#  pc-emul:
+#    runs-on: self-hosted
+#    timeout-minutes: 30
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+#          submodules: 'recursive'
+#      - name: test-clean
+#        run: make test-clean
+#      - name: test-pc-emul
+#        run: make test-pc-emul
 
   verilator:
     runs-on: self-hosted
     timeout-minutes: 30
     # run even if previous job failed
-    if: ${{ !cancelled() }}
+    # if: ${{ !cancelled() }}
     # run after indicated job
-    needs: aes-ku040
+    # needs: pc-emul
 
     steps:
       - uses: actions/checkout@v3
@@ -73,7 +73,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 60
     if: ${{ !cancelled() }}
-    needs: pc-emul
+    needs: icarus
 
     steps:
       - uses: actions/checkout@v3
@@ -101,18 +101,18 @@ jobs:
       - name: test-aes-ku040
         run: make fpga-test BOARD=AES-KU040-DB-G
 
-  doc:
-    runs-on: self-hosted
-    timeout-minutes: 60
-    if: ${{ !cancelled() }}
-    needs: aes-ku040
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-doc
-        run: make test-doc
+#  doc:
+#    runs-on: self-hosted
+#    timeout-minutes: 60
+#    if: ${{ !cancelled() }}
+#    needs: [ cyclonev, aes-ku040 ]
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+#          submodules: 'recursive'
+#      - name: test-clean
+#        run: make test-clean
+#      - name: test-doc
+#        run: make test-doc
