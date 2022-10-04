@@ -56,7 +56,7 @@ jobs:
   icarus:
     runs-on: self-hosted
     timeout-minutes: 90
-    if: ${{ !cancelled() }}
+    #if: ${{ !cancelled() }}
     needs: verilator
 
     steps:
@@ -72,7 +72,7 @@ jobs:
   cyclonev:
     runs-on: self-hosted
     timeout-minutes: 60
-    if: ${{ !cancelled() }}
+    #if: ${{ !cancelled() }}
     needs: icarus
 
     steps:
@@ -88,7 +88,7 @@ jobs:
   aes-ku040:
     runs-on: self-hosted
     timeout-minutes: 90
-    if: ${{ !cancelled() }}
+    #if: ${{ !cancelled() }}
     needs: cyclonev
 
     steps:
