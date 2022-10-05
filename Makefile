@@ -55,6 +55,8 @@ tester-sim-build:
 tester-sim-run:
 	make -C submodules/TESTER sim-run
 
+tester-sim-test:
+	make -C submodules/TESTER check-sim
 #
 # BUILD, LOAD AND RUN ON FPGA BOARD
 #
@@ -77,6 +79,9 @@ tester-fpga-build:
 
 tester-fpga-run:
 	make -C submodules/TESTER fpga-run
+
+tester-fpga-test:
+	make -C submodules/TESTER check-fpga
 
 #
 # COMPILE DOCUMENTS
@@ -149,9 +154,9 @@ debug:
 .PHONY: fw-build fw-clean \
 	pc-emul-build pc-emul-run pc-emul-clean pc-emul-test \
 	sim-build sim-run sim-clean sim-test \
-	tester-sim-build tester-sim-run \
+	tester-sim-build tester-sim-run tester-sim-test \
 	fpga-build fpga-run fpga-clean fpga-test \
-	tester-fpga-build tester-fpga-run \
+	tester-fpga-build tester-fpga-run tester-fpga-test \
 	doc-build doc-clean doc-test \
 	clean \
 	test-pc-emul test-pc-emul-clean \

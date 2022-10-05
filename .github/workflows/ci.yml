@@ -28,7 +28,6 @@ jobs:
 #    steps:
 #      - uses: actions/checkout@v3
 #        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
 #          submodules: 'recursive'
 #      - name: test-clean
 #        run: make test-clean
@@ -38,7 +37,7 @@ jobs:
   verilator:
     runs-on: self-hosted
     timeout-minutes: 30
-    # run even if previous job failed
+    # always run, except when previous job was cancelled
     # if: ${{ !cancelled() }}
     # run after indicated job
     # needs: pc-emul
@@ -46,7 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -56,13 +54,13 @@ jobs:
   icarus:
     runs-on: self-hosted
     timeout-minutes: 90
+    # always run, except when previous job was cancelled
     #if: ${{ !cancelled() }}
     needs: verilator
 
     steps:
       - uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -72,13 +70,13 @@ jobs:
   cyclonev:
     runs-on: self-hosted
     timeout-minutes: 60
+    # always run, except when previous job was cancelled
     #if: ${{ !cancelled() }}
     needs: icarus
 
     steps:
       - uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
@@ -88,29 +86,73 @@ jobs:
   aes-ku040:
     runs-on: self-hosted
     timeout-minutes: 90
+    # always run, except when previous job was cancelled
     #if: ${{ !cancelled() }}
     needs: cyclonev
 
     steps:
       - uses: actions/checkout@v3
         with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: test-clean
         run: make test-clean
       - name: test-aes-ku040
         run: make fpga-test BOARD=AES-KU040-DB-G
 
+  tester-verilator:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    # always run, except when previous job was cancelled
+    # if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: verilator
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: tester-verilator
+        run: make tester-sim-test SIMULATOR=verilator
+
+# Tester is not yet compatible with DDR in cyclonev
+#  tester-cyclonev:
+#    runs-on: self-hosted
+#    timeout-minutes: 60
+#    # always run, except when previous job was cancelled
+#    #if: ${{ !cancelled() }}
+#    needs: cyclonev
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: 'recursive'
+#      - name: tester-cyclonev
+#        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
+
+  tester-aes-ku040:
+    runs-on: self-hosted
+    timeout-minutes: 90
+    # always run, except when previous job was cancelled
+    #if: ${{ !cancelled() }}
+    needs: aes-ku040
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: tester-aes-ku040
+        run: make tester-fpga-test BOARD=AES-KU040-DB-G
+
 #  doc:
 #    runs-on: self-hosted
 #    timeout-minutes: 60
+    # always run, except when previous job was cancelled
 #    if: ${{ !cancelled() }}
 #    needs: [ cyclonev, aes-ku040 ]
 #
 #    steps:
 #      - uses: actions/checkout@v3
 #        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
 #          submodules: 'recursive'
 #      - name: test-clean
 #        run: make test-clean

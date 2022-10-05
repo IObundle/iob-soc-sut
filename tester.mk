@@ -59,7 +59,7 @@ SIM_DEPS+=set-simulation-variable
 #Run before building system for fpga
 FPGA_DEPS+=
 #Run when cleaning tester
-CLEAN_DEPS+=clean-top-module
+CLEAN_DEPS+=clean-top-module clean-sut-fw
 #Run after finishing fpga run (useful to copy files from remote machines at the end of a run sequence)
 FPGA_POST_RUN_DEPS+=
 
@@ -80,9 +80,30 @@ $($(UUT_NAME)_DIR)/software/firmware/boot.hex $($(UUT_NAME)_DIR)/software/firmwa
 	make -C $($(UUT_NAME)_DIR)/software/firmware build-all BAUD=$(BAUD)
 	make -C $($(UUT_NAME)_DIR)/software/firmware -f ../../hardware/hardware.mk boot.hex firmware.hex ROOT_DIR=../..
 
+clean-sut-fw:
+	make -C $($(UUT_NAME)_DIR) fw-clean
+
 #Set ISSIMULATION variable
 set-simulation-variable:
 	$(eval export ISSIMULATION=1)
 
-.PHONY: clean-top-module set-simulation-variable
+#Test targets
+check-sim:
+	rm -f $(SIM_DIR)/test.log
+	make clean sim-build sim-run INIT_MEM=1 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	#make clean sim-build sim-run INIT_MEM=0 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	make clean sim-build sim-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	make clean sim-build sim-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
+	#make clean sim-build sim-run INIT_MEM=0 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
+	diff $(SIM_DIR)/test.log $($(UUT_NAME)_DIR)/tester/test-sim.expected
+
+check-fpga:
+	rm -f $(BOARD_DIR)/test.log
+	make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	#make clean fpga-build fpga-run INIT_MEM=0 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	#make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
+	diff $(BOARD_DIR)/test.log $($(UUT_NAME)_DIR)/tester/test-fpga.expected
+
+.PHONY: clean-top-module clean-sut-fw set-simulation-variable check-sim check-fpga
 endif

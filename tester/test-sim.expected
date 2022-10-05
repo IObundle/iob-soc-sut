@@ -3,11 +3,16 @@
 |                   IOb-Console                 |
 +-----------------------------------------------+
 
-  BaudRate = 115200
-  StopBits = 1
-  Parity   = None
-
 IOb-Console: connecting...
+
+IOb-Bootloader: connected!
+IOb-Bootloader: Restart CPU to run user program...
+
+
+Hello from tester!
+
+
+#### Messages received from SUT: ####
 
 IOb-Bootloader: connected!
 IOb-Bootloader: Restart CPU to run user program...
@@ -18,32 +23,33 @@ Hello world!
 
 
 This message was sent from SUT!
+
+#### End of messages received from SUT ####
+
+REGFILEIF contents read by the Tester:
+128 
+1024 
+
 IOb-Console: exiting...
 
 +-----------------------------------------------+
 |                   IOb-Console                 |
 +-----------------------------------------------+
 
-  BaudRate = 115200
-  StopBits = 1
-  Parity   = None
-
 IOb-Console: connecting...
 
 IOb-Bootloader: connected!
-IOb-UART: requesting to receive file
-IOb-Console: got file send request
-IOb-Console: file name b'firmware.bin' 
-IOb-Console: file of size 19176 bytes
-IOb-Console: file sent
-IOb-UART: file received
-IOb-Bootloader: Loading firmware...
-IOb-UART: requesting to send file
-IOb-Console: got file receive request
-IOb-Console: file name b's_fw.bin' 
-IOb-Console : file size: 19176 bytes
-IOb-Console: file received
-IOb-UART: file sent
+IOb-Bootloader: DDR in use
+IOb-Bootloader: Restart CPU to run user program...
+
+
+Hello from tester!
+
+
+#### Messages received from SUT: ####
+
+IOb-Bootloader: connected!
+IOb-Bootloader: DDR in use
 IOb-Bootloader: Restart CPU to run user program...
 
 
@@ -52,34 +58,38 @@ Hello world!
 
 
 This message was sent from SUT!
+
+#### End of messages received from SUT ####
+
+REGFILEIF contents read by the Tester:
+128 
+1024 
+
+String read by Tester from DDR:
+This message was written to DDR by the SUT
+
 IOb-Console: exiting...
 
 +-----------------------------------------------+
 |                   IOb-Console                 |
 +-----------------------------------------------+
-
-  BaudRate = 115200
-  StopBits = 1
-  Parity   = None
 
 IOb-Console: connecting...
 
 IOb-Bootloader: connected!
 IOb-Bootloader: DDR in use
 IOb-Bootloader: program to run from DDR
-IOb-UART: requesting to receive file
-IOb-Console: got file send request
-IOb-Console: file name b'firmware.bin' 
-IOb-Console: file of size 19472 bytes
-IOb-Console: file sent
-IOb-UART: file received
-IOb-Bootloader: Loading firmware...
-IOb-UART: requesting to send file
-IOb-Console: got file receive request
-IOb-Console: file name b's_fw.bin' 
-IOb-Console : file size: 19472 bytes
-IOb-Console: file received
-IOb-UART: file sent
+IOb-Bootloader: Restart CPU to run user program...
+
+
+Hello from tester!
+
+
+#### Messages received from SUT: ####
+
+IOb-Bootloader: connected!
+IOb-Bootloader: DDR in use
+IOb-Bootloader: program to run from DDR
 IOb-Bootloader: Restart CPU to run user program...
 
 
@@ -88,4 +98,14 @@ Hello world!
 
 
 This message was sent from SUT!
+
+#### End of messages received from SUT ####
+
+REGFILEIF contents read by the Tester:
+128 
+1024 
+
+String read by Tester directly from SUT's memory:
+This message is stored in SUT's memory
+
 IOb-Console: exiting...
