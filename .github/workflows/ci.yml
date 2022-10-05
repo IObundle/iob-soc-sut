@@ -115,6 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: tester-verilator
         run: make tester-sim-test SIMULATOR=verilator
@@ -130,6 +131,7 @@ jobs:
 #    steps:
 #      - uses: actions/checkout@v3
 #        with:
+#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
 #          submodules: 'recursive'
 #      - name: tester-cyclonev
 #        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
@@ -144,6 +146,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: tester-aes-ku040
         run: make tester-fpga-test BOARD=AES-KU040-DB-G
