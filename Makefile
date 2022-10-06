@@ -1,3 +1,5 @@
+export SHELL = /bin/bash
+
 ROOT_DIR:=.
 include ./config.mk
 
@@ -15,30 +17,36 @@ fw-build:
 fw-clean:
 	make -C $(FIRM_DIR) clean-all
 
+fw-debug:
+	make -C $(FIRM_DIR) debug
+
 #
 # EMULATE ON PC
 #
 
+#default baud and system clock frequency
+SIM_BAUD ?= 2500000
+SIM_FREQ ?=50000000
 pc-emul-build:
-	make fw-build
-	make -C $(PC_DIR)
+	make fw-build BAUD=$(SIM_BAUD) FREQ=$(SIM_FREQ)
+	make -C $(PC_DIR) BAUD=$(SIM_BAUD) FREQ=$(SIM_FREQ)
 
 pc-emul-run: pc-emul-build
-	make -C $(PC_DIR) run
+	make -C $(PC_DIR) run BAUD=$(SIM_BAUD) FREQ=$(SIM_FREQ)
 
 pc-emul-clean: fw-clean
 	make -C $(PC_DIR) clean
 
 pc-emul-test: pc-emul-clean
-	make -C $(PC_DIR) test
+	make -C $(PC_DIR) test BAUD=$(SIM_BAUD) FREQ=$(SIM_FREQ)
 
 #
 # SIMULATE RTL
 #
 
 sim-build:
-	make fw-build
-	make -C $(SIM_DIR) build
+	make fw-build BAUD=$(SIM_BAUD) FREQ=$(SIM_FREQ)
+	make -C $(SIM_DIR) build BAUD=$(SIM_BAUD) FREQ=$(SIM_FREQ)
 
 sim-run: sim-build
 	make -C $(SIM_DIR) run
@@ -48,6 +56,9 @@ sim-clean: fw-clean
 
 sim-test:
 	make -C $(SIM_DIR) test
+
+sim-debug:
+	make -C $(SIM_DIR) debug
 
 tester-sim-build:
 	make -C submodules/TESTER sim-build
@@ -61,15 +72,30 @@ tester-sim-test:
 # BUILD, LOAD AND RUN ON FPGA BOARD
 #
 
+#default baud and system clock freq for boards
+BOARD_BAUD ?= 115200
+#default board frequency
+ifeq ($(BOARD), CYCLONEV-GT-DK)
+BOARD_FREQ ?=50000000
+else
+BOARD_FREQ ?=100000000
+endif
+
 fpga-build:
-	make fw-build BAUD=115200
-	make -C $(BOARD_DIR) build
+	make fw-build BAUD=$(BOARD_BAUD) FREQ=$(BOARD_FREQ)
+	make -C $(BOARD_DIR) build BAUD=$(BOARD_BAUD) FREQ=$(BOARD_FREQ) SHELL=$(SHELL)
 
 fpga-run: fpga-build
 	make -C $(BOARD_DIR) run TEST_LOG="$(TEST_LOG)"
 
 fpga-clean: fw-clean
 	make -C $(BOARD_DIR) clean
+
+fpga-veryclean:
+	make -C $(BOARD_DIR) veryclean
+
+fpga-debug:
+	make -C $(BOARD_DIR) debug
 
 fpga-test:
 	make -C $(BOARD_DIR) test
@@ -151,11 +177,11 @@ debug:
 	@echo $(CACHE_DIR)
 
 
-.PHONY: fw-build fw-clean \
+.PHONY: fw-build fw-clean fw-debug\
 	pc-emul-build pc-emul-run pc-emul-clean pc-emul-test \
-	sim-build sim-run sim-clean sim-test \
+	sim-build sim-run sim-clean sim-test sim-debug \
 	tester-sim-build tester-sim-run tester-sim-test \
-	fpga-build fpga-run fpga-clean fpga-test \
+	fpga-build fpga-run fpga-clean fpga-test fpga-debug \
 	tester-fpga-build tester-fpga-run tester-fpga-test \
 	doc-build doc-clean doc-test \
 	clean \

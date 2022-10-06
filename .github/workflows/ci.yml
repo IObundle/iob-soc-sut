@@ -21,19 +21,19 @@ on:
   workflow_dispatch:
 
 jobs:
-#  pc-emul:
-#    runs-on: self-hosted
-#    timeout-minutes: 30
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      - name: test-clean
-#        run: make test-clean
-#      - name: test-pc-emul
-#        run: make test-pc-emul
+  pc-emul:
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: test-clean
+        run: make test-clean
+      - name: test-pc-emul
+        run: make test-pc-emul
 
   verilator:
     runs-on: self-hosted
@@ -41,7 +41,7 @@ jobs:
     # always run, except when previous job was cancelled
     # if: ${{ !cancelled() }}
     # run after indicated job
-    # needs: pc-emul
+    needs: pc-emul
 
     steps:
       - uses: actions/checkout@v3
@@ -109,7 +109,6 @@ jobs:
     timeout-minutes: 30
     # always run, except when previous job was cancelled
     # if: ${{ !cancelled() }}
-    # run after indicated job
     needs: verilator
 
     steps:
@@ -120,21 +119,20 @@ jobs:
       - name: tester-verilator
         run: make tester-sim-test SIMULATOR=verilator
 
-# Tester is not yet compatible with DDR in cyclonev
-#  tester-cyclonev:
-#    runs-on: self-hosted
-#    timeout-minutes: 60
-#    # always run, except when previous job was cancelled
-#    #if: ${{ !cancelled() }}
-#    needs: cyclonev
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      - name: tester-cyclonev
-#        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
+  tester-cyclonev:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    # always run, except when previous job was cancelled
+    #if: ${{ !cancelled() }}
+    needs: cyclonev
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: tester-cyclonev
+        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
 
   tester-aes-ku040:
     runs-on: self-hosted
