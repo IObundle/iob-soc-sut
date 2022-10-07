@@ -39,7 +39,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 30
     # always run, except when previous job was cancelled
-    # if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     # run after indicated job
     needs: pc-emul
 
@@ -57,7 +57,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: verilator
 
     steps:
@@ -74,7 +74,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 60
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: icarus
 
     steps:
@@ -91,8 +91,8 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
-    needs: cyclonev
+    if: ${{ !cancelled() }}
+    needs: icarus
 
     steps:
       - uses: actions/checkout@v3
@@ -108,7 +108,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 30
     # always run, except when previous job was cancelled
-    # if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: verilator
 
     steps:
@@ -123,7 +123,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 60
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: cyclonev
 
     steps:
@@ -138,7 +138,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: aes-ku040
 
     steps:

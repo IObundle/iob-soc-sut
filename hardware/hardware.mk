@@ -21,11 +21,11 @@ include $(MEM_DIR)/hardware/ram/iob_ram_dp_be/hardware.mk
 include $(PICORV32_DIR)/hardware/hardware.mk
 
 #CACHE
-USE_DDR_TMP=$(USE_DDR)
+USE_DDR_TMP:=$(USE_DDR)
 #Override USE_DDR temporarily to generate m_axi_portmap.vh as it is used in top system.
-USE_DDR:=1
+override USE_DDR:=1
 include $(CACHE_DIR)/hardware/hardware.mk
-USE_DDR=$(USE_DDR_TMP)
+override USE_DDR:=$(USE_DDR_TMP)
 undefine USE_DDR_TMP
 
 #UART
