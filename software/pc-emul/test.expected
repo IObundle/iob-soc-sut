@@ -11,6 +11,5 @@ IOb-Console: connecting...
 Hello world!
 
 
-Value of Pi = 3.141500
-
+This message was sent from SUT!
 IOb-Console: exiting...

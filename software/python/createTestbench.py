@@ -11,27 +11,30 @@ def create_system_testbench(directories_str, peripherals_str):
     # Get peripherals, directories and signals
     instances_amount, _ = get_peripherals(peripherals_str)
     submodule_directories = get_submodule_directories(directories_str)
-    peripheral_signals = get_peripherals_signals(instances_amount, submodule_directories)
 
     # Read template file
     template_file = open(root_dir+"/hardware/simulation/verilog_tb/system_core_tb.v", "r")
     template_contents = template_file.readlines() 
     template_file.close()
 
-    # Insert header files
     for corename in instances_amount:
-        path = root_dir+"/"+submodule_directories[corename]+"/hardware/include"
-        start_index = find_idx(template_contents, "PHEADER")
-        for file in os.listdir(path):
-            if file.endswith(".vh") and not any(x in file for x in ["pio","inst","swreg"]):
-                template_contents.insert(start_index, '`include "{}"\n'.format(path+"/"+file))
-            if file.endswith("swreg.vh"):
-                template_contents.insert(start_index, '`include "{}"\n'.format(file.replace("swreg","swreg_def")))
+        top_module_name = get_top_module(root_dir+"/"+submodule_directories[corename]+"/config.mk");
 
-    # Write system.v
-    systemv_file = open("system_tb.v", "w")
-    systemv_file.writelines(template_contents)
-    systemv_file.close()
+        # Insert header files
+        path = root_dir+"/"+submodule_directories[corename]+"/hardware/include"
+        if os.path.isdir(path):
+            start_index = find_idx(template_contents, "PHEADER")
+            for file in os.listdir(path):
+                if file.endswith(".vh") and not any(x in file for x in ["pio","inst","swreg"]):
+                    template_contents.insert(start_index, '`include "{}"\n'.format(path+"/"+file))
+        # Add topmodule_swreg_def.vh if mkregs.conf exists
+        if os.path.isfile(root_dir+"/"+submodule_directories[corename]+"/mkregs.conf"):
+            template_contents.insert(start_index, '`include "{}"\n'.format(top_module_name+"_swreg_def.vh"))
+
+    # Write system_tb.v
+    systemtb_file = open("system_tb.v", "w")
+    systemtb_file.writelines(template_contents)
+    systemtb_file.close()
 
 
 if __name__ == "__main__":

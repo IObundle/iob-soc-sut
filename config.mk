@@ -39,7 +39,7 @@ INIT_MEM ?=1
 #list with corename of peripherals to be attached to peripheral bus.
 #to include multiple instances, write the corename of the peripheral multiple times.
 #to pass verilog parameters to each instance, type the parameters inside parenthesis.
-#Example: 'PERIPHERALS ?=UART(1,\"textparam\") UART() UART' will create 3 UART instances, 
+#Example: 'PERIPHERALS ?=UART[1,\"textparam\"] UART UART' will create 3 UART instances, 
 #         the first one will be instantiated with verilog parameters 1 and "textparam", 
 #         the second and third will use default parameters.
 PERIPHERALS ?=UART REGFILEIF
@@ -102,21 +102,25 @@ SW_DIR:=$(ROOT_DIR)/software
 PC_DIR:=$(SW_DIR)/pc-emul
 FIRM_DIR:=$(SW_DIR)/firmware
 BOOT_DIR:=$(SW_DIR)/bootloader
-CONSOLE_DIR:=$(SW_DIR)/console
+
+#scripts paths
+PYTHON_DIR=$(LIB_DIR)/software/python
 
 #hw paths
 HW_DIR=$(ROOT_DIR)/hardware
 SIM_DIR=$(HW_DIR)/simulation/$(SIMULATOR)
-BOARD_DIR ?=$(shell find hardware -name $(BOARD))
+BOARD_DIR ?=$(shell find $(ROOT_DIR)/hardware -name $(BOARD))
 
 #doc paths
 DOC_DIR=$(ROOT_DIR)/document/$(DOC)
 
 #macro to return all defined directories separated by newline
-GET_DIRS= $(eval ROOT_DIR_TMP=.)\
+GET_DIRS= $(eval ROOT_DIR_TMP:=$(ROOT_DIR))\
+          $(eval override ROOT_DIR=.)\
           $(foreach V,$(sort $(.VARIABLES)),\
-          $(if $(filter %_DIR, $V),\
-          $(eval TMP_VAR:=$(subst ROOT_DIR,ROOT_DIR_TMP,$(value $V)))$V=$(TMP_VAR);))
+          $(if $(filter $(addsuffix _DIR, $(shell $(SW_DIR)/python/submodule_utils.py remove_duplicates_and_params "$(PERIPHERALS)")), $(filter %_DIR, $V)),\
+          $V=$($V);))\
+          $(eval override ROOT_DIR:=$(ROOT_DIR_TMP))
 
 #define macros
 DEFINE+=$(defmacro)DATA_W=$(DATA_W)
@@ -130,13 +134,8 @@ DEFINE+=$(defmacro)N_SLAVES_W=$(shell $(SW_DIR)/python/submodule_utils.py get_n_
 
 #address selection bits
 E:=31 #extra memory bit
-ifeq ($(USE_DDR),1)
 P:=30 #periphs
 B:=29 #boot controller
-else
-P:=31
-B:=30
-endif
 
 DEFINE+=$(defmacro)E=$E
 DEFINE+=$(defmacro)P=$P
@@ -147,14 +146,16 @@ DEFINE+=$(defmacro)B=$B
 #the ID is used as an instance name index in the hardware and as a base address in the software
 DEFINE+=$(shell $(SW_DIR)/python/submodule_utils.py get_defines "$(PERIPHERALS)" "$(defmacro)")
 
-#default baud and system clock freq
-BAUD ?=5000000 #simulation default
-FREQ ?=100000000
-
-SHELL = /bin/bash
-
 #RULES
+
+#kill "console", the background running program seriving simulators,
+#emulators and boards
+CNSL_PID:=ps aux | grep $(USER) | grep console | grep python3 | grep -v grep
+kill-cnsl:
+	@if [ "`$(CNSL_PID)`" ]; then \
+	kill -9 $$($(CNSL_PID) | awk '{print $$2}'); fi
+
 gen-clean:
 	@rm -f *# *~
 
-.PHONY: gen-clean
+.PHONY: gen-clean kill-cnsl

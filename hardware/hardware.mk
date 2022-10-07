@@ -1,6 +1,3 @@
-#default baud rate for hardware
-BAUD ?=115200
-
 include $(ROOT_DIR)/config.mk
 
 #add itself to MODULES list
@@ -13,6 +10,8 @@ HW_MODULES+=$(IOBSOC_NAME)
 #include LIB modules
 include $(LIB_DIR)/hardware/iob_merge/hardware.mk
 include $(LIB_DIR)/hardware/iob_split/hardware.mk
+include $(LIB_DIR)/hardware/iob_pulse_gen/hardware.mk
+include $(LIB_DIR)/hardware/iob_edge_detect/hardware.mk
 
 #include MEM modules
 include $(MEM_DIR)/hardware/rom/iob_rom_sp/hardware.mk
@@ -22,7 +21,12 @@ include $(MEM_DIR)/hardware/ram/iob_ram_dp_be/hardware.mk
 include $(PICORV32_DIR)/hardware/hardware.mk
 
 #CACHE
+USE_DDR_TMP:=$(USE_DDR)
+#Override USE_DDR temporarily to generate m_axi_portmap.vh as it is used in top system.
+override USE_DDR:=1
 include $(CACHE_DIR)/hardware/hardware.mk
+override USE_DDR:=$(USE_DDR_TMP)
+undefine USE_DDR_TMP
 
 #UART
 include $(UART_DIR)/hardware/hardware.mk
@@ -35,6 +39,7 @@ INC_DIR:=$(HW_DIR)/include
 SRC_DIR:=$(HW_DIR)/src
 
 #DEFINES
+DEFINE+=$(defmacro)DDR_DATA_W=$(DDR_DATA_W)
 DEFINE+=$(defmacro)DDR_ADDR_W=$(DDR_ADDR_W)
 
 #INCLUDES
@@ -42,6 +47,11 @@ INCLUDE+=$(incdir). $(incdir)$(INC_DIR) $(incdir)$(LIB_DIR)/hardware/include
 
 #HEADERS
 VHDR+=$(INC_DIR)/system.vh $(LIB_DIR)/hardware/include/iob_intercon.vh
+
+#axi wires to connect cache to external memory in system top
+VHDR+=m_axi_wire.vh
+m_axi_wire.vh:
+	$(LIB_DIR)/software/python/axi_gen.py axi_wire 'm_' 'm_' 'm_'
 
 #SOURCES
 
@@ -61,8 +71,6 @@ system.v: $(SRC_DIR)/system_core.v
 	$(SW_DIR)/python/createSystem.py $(ROOT_DIR) "$(GET_DIRS)" "$(PERIPHERALS)"
 
 # make and copy memory init files
-PYTHON_DIR=$(MEM_DIR)/software/python
-
 boot.hex: $(BOOT_DIR)/boot.bin
 	$(PYTHON_DIR)/makehex.py $< $(BOOTROM_ADDR_W) > $@
 

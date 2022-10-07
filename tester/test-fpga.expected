@@ -48,7 +48,6 @@ IOb-Console: connecting...
 
 IOb-Bootloader: connected!
 IOb-Bootloader: DDR in use
-IOb-Bootloader: program to run from DDR
 IOb-Bootloader: Restart CPU to run user program...
 
 
@@ -59,7 +58,6 @@ Hello from tester!
 
 IOb-Bootloader: connected!
 IOb-Bootloader: DDR in use
-IOb-Bootloader: program to run from DDR
 IOb-Bootloader: Restart CPU to run user program...
 
 
@@ -75,7 +73,7 @@ REGFILEIF contents read by the Tester:
 128 
 1024 
 
-String read by Tester directly from SUT's memory:
-This message is stored in SUT's memory
+String read by Tester from DDR:
+This message was written to DDR by the SUT
 
 IOb-Console: exiting...

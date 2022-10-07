@@ -21,27 +21,27 @@ on:
   workflow_dispatch:
 
 jobs:
-#  pc-emul:
-#    runs-on: self-hosted
-#    timeout-minutes: 30
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      - name: test-clean
-#        run: make test-clean
-#      - name: test-pc-emul
-#        run: make test-pc-emul
+  pc-emul:
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: test-clean
+        run: make test-clean
+      - name: test-pc-emul
+        run: make test-pc-emul
 
   verilator:
     runs-on: self-hosted
     timeout-minutes: 30
     # always run, except when previous job was cancelled
-    # if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     # run after indicated job
-    # needs: pc-emul
+    needs: pc-emul
 
     steps:
       - uses: actions/checkout@v3
@@ -57,7 +57,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: verilator
 
     steps:
@@ -74,7 +74,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 60
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: icarus
 
     steps:
@@ -91,8 +91,8 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
-    needs: cyclonev
+    if: ${{ !cancelled() }}
+    needs: icarus
 
     steps:
       - uses: actions/checkout@v3
@@ -108,42 +108,43 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 30
     # always run, except when previous job was cancelled
-    # if: ${{ !cancelled() }}
-    # run after indicated job
+    if: ${{ !cancelled() }}
     needs: verilator
 
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: tester-verilator
         run: make tester-sim-test SIMULATOR=verilator
 
-# Tester is not yet compatible with DDR in cyclonev
-#  tester-cyclonev:
-#    runs-on: self-hosted
-#    timeout-minutes: 60
-#    # always run, except when previous job was cancelled
-#    #if: ${{ !cancelled() }}
-#    needs: cyclonev
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          submodules: 'recursive'
-#      - name: tester-cyclonev
-#        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
+  tester-cyclonev:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    needs: cyclonev
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: tester-cyclonev
+        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
 
   tester-aes-ku040:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
-    #if: ${{ !cancelled() }}
+    if: ${{ !cancelled() }}
     needs: aes-ku040
 
     steps:
       - uses: actions/checkout@v3
         with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: tester-aes-ku040
         run: make tester-fpga-test BOARD=AES-KU040-DB-G

@@ -37,6 +37,9 @@ SIMULATOR:=icarus
 #check the respective Makefile in TESTER/hardware/fpga/$(BOARD) for specific settings
 #BOARD:=CYCLONEV-GT-DK
 
+#Add Unit Under Test to Tester peripherals list
+#this works even if UUT is not a "peripheral"
+PERIPHERALS+=$(UUT_NAME)[\`ADDR_W,\`DATA_W,AXI_ID_W]
 # Tester peripherals to add (besides the default ones in IOb-SoC-Tester)
 PERIPHERALS+=UART IOBNATIVEBRIDGEIF
 
@@ -101,8 +104,8 @@ check-fpga:
 	rm -f $(BOARD_DIR)/test.log
 	make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
 	#make clean fpga-build fpga-run INIT_MEM=0 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
-	#make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
-	make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
+	make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
+	#make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
 	diff $(BOARD_DIR)/test.log $($(UUT_NAME)_DIR)/tester/test-fpga.expected
 
 .PHONY: clean-top-module clean-sut-fw set-simulation-variable check-sim check-fpga
