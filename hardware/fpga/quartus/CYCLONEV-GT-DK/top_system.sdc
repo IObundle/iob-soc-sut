@@ -2,6 +2,9 @@ create_clock -period 20.00 [get_ports {clk}]
 #create_clock -period 20.00 [get_ports {clk50}]
 #create_clock -period 10.00 [get_ports {clk100}]
 
+# Ethernet RX_CLK is 25MHz for 100Mbps operation
+create_clock -period 40 [get_ports {ENET_RX_CLK}]
+
 derive_pll_clocks
 
 derive_clock_uncertainty

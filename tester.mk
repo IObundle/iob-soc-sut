@@ -42,16 +42,42 @@ SIMULATOR:=icarus
 PERIPHERALS+=$(UUT_NAME)[\`ADDR_W,\`DATA_W,AXI_ID_W]
 # Tester peripherals to add (besides the default ones in IOb-SoC-Tester)
 PERIPHERALS+=UART IOBNATIVEBRIDGEIF
+# Instance 0 of ETHERNET has default MAC address. Instance 1 has the same MAC address as the console (this way, the UUT always connects to the console's MAC address).
+PERIPHERALS+=ETHERNET
+PERIPHERALS+=ETHERNET[32,\`iob_eth_swreg_ADDR_W,48'h$(RMAC_ADDR)]
 
 # Submodule paths for Tester peripherals (listed above)
 IOBNATIVEBRIDGEIF_DIR=$($(UUT_NAME)_DIR)/submodules/IOBNATIVEBRIDGEIF
+ETHERNET_DIR=$($(UUT_NAME)_DIR)/submodules/ETHERNET
 
 #Root directory on remote machines
 REMOTE_UUT_DIR ?=sandbox/iob-soc-sut
 
-#Set FPGA BAUD if we are not running simulation
-ifeq ($(ISSIMULATION),)
-BAUD=115200
+#Set SIM macro for firmware.
+#Can be used for UART to transfer files from/to console, as these transfers are not compatible with ETHERNET during simulation.
+ifneq ($(ISSIMULATION),)
+DEFINE+=$(defmacro)SIM=1
+endif
+
+#Mac address of pc interface connected to ethernet peripheral
+ifeq ($(BOARD),AES-KU040-DB-G) # Arroz eth if mac
+RMAC_ADDR:=4437e6a6893b
+else # Pudim eth if mac
+RMAC_ADDR:=309c231e624a
+endif
+#Auto-set ethernet interface name based on MAC address
+ETH_IF:=$(shell ip -br link | sed 's/://g' | grep $(RMAC_ADDR) | cut -d " " -f1)
+
+#Configure Tester to use ethernet
+USE_ETHERNET:=1
+DEFINE+=$(defmacro)USE_ETHERNET=1
+
+# Override Tester top system to include ethernet clock generation
+SIMULATION_TOP_SYSTEM=$($(UUT_NAME)_DIR)/tester_top_system/SIMULATION_top_system.v
+ifeq ($(BOARD),AES-KU040-DB-G)
+BOARD_TOP_SYSTEM=$($(UUT_NAME)_DIR)/tester_top_system/KU040_top_system.v
+else
+BOARD_TOP_SYSTEM=$($(UUT_NAME)_DIR)/tester_top_system/CYCLONEV_top_system.v
 endif
 
 #Extra tester target dependencies
@@ -98,7 +124,7 @@ check-sim:
 	make clean sim-build sim-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
 	make clean sim-build sim-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
 	#make clean sim-build sim-run INIT_MEM=0 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
-	diff $(SIM_DIR)/test.log $($(UUT_NAME)_DIR)/tester/test-sim.expected
+	diff $(SIM_DIR)/test.log $($(UUT_NAME)_DIR)/tester_expected/test-sim.expected
 
 check-fpga:
 	rm -f $(BOARD_DIR)/test.log
@@ -106,7 +132,7 @@ check-fpga:
 	#make clean fpga-build fpga-run INIT_MEM=0 USE_DDR=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
 	make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
 	#make clean fpga-build fpga-run INIT_MEM=1 USE_DDR=1 RUN_EXTMEM=1 TEST_LOG=">> test.log"
-	diff $(BOARD_DIR)/test.log $($(UUT_NAME)_DIR)/tester/test-fpga.expected
+	diff $(BOARD_DIR)/test.log $($(UUT_NAME)_DIR)/tester_expected/test-fpga.expected
 
 .PHONY: clean-top-module clean-sut-fw set-simulation-variable check-sim check-fpga
 endif

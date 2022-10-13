@@ -35,6 +35,12 @@ BOOTROM_ADDR_W:=12
 #PRE-INIT MEMORY WITH PROGRAM AND DATA
 INIT_MEM ?=1
 
+#Mac address of pc interface connected to ethernet peripheral
+ifeq ($(BOARD),AES-KU040-DB-G) # Arroz eth if mac
+RMAC_ADDR:=4437e6a6893b
+else # Pudim eth if mac
+RMAC_ADDR:=309c231e624a
+endif
 #PERIPHERAL LIST
 #list with corename of peripherals to be attached to peripheral bus.
 #to include multiple instances, write the corename of the peripheral multiple times.
@@ -42,7 +48,7 @@ INIT_MEM ?=1
 #Example: 'PERIPHERALS ?=UART[1,\"textparam\"] UART UART' will create 3 UART instances, 
 #         the first one will be instantiated with verilog parameters 1 and "textparam", 
 #         the second and third will use default parameters.
-PERIPHERALS ?=UART REGFILEIF
+PERIPHERALS ?=UART REGFILEIF ETHERNET
 
 #RISC-V HARD MULTIPLIER AND DIVIDER INSTRUCTIONS
 USE_MUL_DIV ?=1
@@ -96,6 +102,7 @@ MEM_DIR=$(ROOT_DIR)/submodules/MEM
 AXI_DIR=$(ROOT_DIR)/submodules/AXI
 
 REGFILEIF_DIR=$(ROOT_DIR)/submodules/REGFILEIF
+ETHERNET_DIR=$(ROOT_DIR)/submodules/ETHERNET
 
 #sw paths
 SW_DIR:=$(ROOT_DIR)/software

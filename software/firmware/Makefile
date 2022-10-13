@@ -19,6 +19,9 @@ include $(UART_DIR)/software/embedded/embedded.mk
 #regfileif
 include $(REGFILEIF_DIR)/software/embedded/embedded.mk
 
+#ethernet
+include $(ETHERNET_DIR)/software/embedded/embedded.mk
+
 #HEADERS
 HDR+=periphs.h
 

@@ -18,6 +18,9 @@ include $(UART_DIR)/software/pc-emul/pc-emul.mk
 #regfileif
 include $(REGFILEIF_DIR)/software/pc-emul/pc-emul.mk
 
+#ethernet
+include $(ETHERNET_DIR)/software/pc-emul/pc-emul.mk
+
 #HEADERS
 HDR+=periphs.h
 
