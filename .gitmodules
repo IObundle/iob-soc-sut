@@ -22,3 +22,6 @@
 [submodule "submodules/TESTER"]
 	path = submodules/TESTER
 	url = git@github.com:IObundle/iob-soc-tester.git
+[submodule "submodules/ETHERNET"]
+	path = submodules/ETHERNET
+	url = git@github.com:IObundle/iob-eth.git

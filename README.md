@@ -9,12 +9,14 @@ This system runs on bare metal and has UART and IOb-native interfaces.
 
 This system's build and run steps are similar to the ones used in [IOb-SoC](https://github.com/IObundle/iob-soc).
 
-The SUT's main configuration, stored in `config.mk`, sets the UART and REGFILEIF peripherals. In total, the SUT has one UART and one IOb-native (provided by the REGFILEIF peripheral) interface.
+The SUT's main configuration, stored in `config.mk`, sets the UART, REGFILEIF and ETHERNET peripherals. In total, the SUT has one UART, one ETHERNET, and one IOb-native (provided by the REGFILEIF peripheral) interface.
 
 The SUT's firmware, stored in `software/firmware/firmware.c` has three modes of operation:
 - Without DDR memory (USE\_DDR=0, RUN\_EXTMEM=0)
 - With DDR and running from internal memory (USE\_DDR=1, RUN\_EXTMEM=0)
 - Running from DDR memory (USE\_DDR=1, RUN\_EXTMEM=1)
+
+This firmware currently does not use the ethernet interface.
 
 When running without DDR, the SUT only prints a few `Hello Word!` messages via UART and inserts values into the registers of its IOb-native interface.
 
@@ -58,17 +60,21 @@ make fpga-run [BOARD=<board directory name>] [<control parameters>]
 
 ## Build and run the Tester (along with SUT)
 
-The Tester's main configuration, stored in `tester.mk`, adds the IOBNATIVEBRIDGEIF and another UART instance to the default Tester peripherals. In total, the Tester has two UART interfaces, one IOb-native (provided by IOBNATIVEBRIDGEIF).
+The Tester's main configuration, stored in `tester.mk`, adds the IOBNATIVEBRIDGEIF, two ETHERNET, and another UART instance to the default Tester peripherals. In total, the Tester has two UART interfaces, two ETHERNET, and one IOb-native (provided by IOBNATIVEBRIDGEIF).
 
 The SUT and Tester's peripheral IO connections, stored in `peripheral_portmap.conf`, have the following configuration:
 - Instance 0 of Tester's UART is connected to the PC's console.
 - Instance 1 of Tester's UART is connected to the SUT's UART. 
 - Tester's IOBNATIVEBRIDGEIF is connected to SUT's REGFILEIF. These are the IOb-native interfaces of both systems.
+- Instance 0 of Tester's ETHERNET is connected to the PC's console. Currently this interface is not used.
+- Instance 1 of Tester's ETHERNET is connected to the SUT's ETHERNET. Currently these interfaces are not used.
 
 The Tester's firmware, stored in `software/tester_firmware.c`, also has three modes of operation:
 - Without DDR memory (USE\_DDR=0, RUN\_EXTMEM=0)
 - With DDR and running from internal memory (USE\_DDR=1, RUN\_EXTMEM=0)
 - Running from DDR memory (USE\_DDR=1, RUN\_EXTMEM=1)
+
+This firmware currently does not use the ethernet interfaces.
 
 When running without DDR, the Tester only relays messages printed from the SUT to the console and reads values from the IOb-native interface connected to the SUT.
 

@@ -34,6 +34,9 @@ include $(UART_DIR)/hardware/hardware.mk
 #REGFILEIF
 include $(REGFILEIF_DIR)/hardware/hardware.mk
 
+#ETHERNET
+include $(ETHERNET_DIR)/hardware/hardware.mk
+
 #HARDWARE PATHS
 INC_DIR:=$(HW_DIR)/include
 SRC_DIR:=$(HW_DIR)/src
