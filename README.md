@@ -13,6 +13,7 @@ Before building the system, install the following tools:
 - RISC-V GNU Compiler Toolchain (Instructions at the end of this README)
 - Python3
 - Python3-Parse
+
 Optional tools, depending on desired run strategy:
 - Icarus Verilog
 - Verilator
