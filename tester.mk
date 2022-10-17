@@ -30,7 +30,7 @@ INIT_MEM:=1
 #SIMULATION
 #default simulator running locally or remotely
 #check the respective Makefile in TESTER/hardware/simulation/$(SIMULATOR) for specific settings
-SIMULATOR:=icarus
+SIMULATOR:=verilator
 
 #BOARD
 #default board running locally or remotely
