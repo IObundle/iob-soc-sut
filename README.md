@@ -5,6 +5,20 @@ This repository is a System Under Test (SUT) example, demonstrating the Tester's
 
 This system runs on bare metal and has UART and IOb-native interfaces.
 
+## Dependencies
+
+Before building the system, install the following tools:
+- GNU Bash
+- GNU Make
+- RISC-V GNU Compiler Toolchain (Instructions at the end of this README)
+- Python3
+- Python3-Parse
+Optional tools, depending on desired run strategy:
+- Icarus Verilog
+- Verilator
+- Vivado
+- Quartus
+
 ## Build and run the SUT
 
 This system's build and run steps are similar to the ones used in [IOb-SoC](https://github.com/IObundle/iob-soc).
@@ -117,3 +131,41 @@ The following command will clean the selected simulation, board, document, and T
 ```
 make clean
 ```
+
+## Instructions for Installing the RISC-V GNU Compiler Toolchain
+
+### Get sources and checkout the supported stable version
+
+```
+git clone https://github.com/riscv/riscv-gnu-toolchain
+git checkout 2022.06.10
+```
+
+### Prerequisites
+
+For the Ubuntu OS and its variants:
+
+```
+sudo apt install autoconf automake autotools-dev curl python3 python2 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
+```
+
+For CentOS and its variants:
+```
+sudo yum install autoconf automake python3 python2 libmpc-devel mpfr-devel gmp-devel gawk  bison flex texinfo patchutils gcc gcc-c++ zlib-devel expat-devel
+```
+
+### Installation
+
+```
+cd riscv-gnu-toolchain
+./configure --prefix=/path/to/riscv --enable-multilib
+sudo make -j$(nproc)
+```
+
+This will take a while. After it is done, type:
+```
+export PATH=$PATH:/path/to/riscv/bin
+```
+
+The above command should be added to your `~/.bashrc` file, so that
+you do not have to type it on every session.
