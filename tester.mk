@@ -1,7 +1,7 @@
 # Tester configuration file
 # Use this file to set/override tester parameters and makefile targets
 #
-ifeq ($(INCLUDING_PATHS),)
+ifneq ($(INCLUDING_VARS),)
 # MAKEFILE VARIABLES: PLACE BELOW VARIABLES USED BY TESTER
 #
 
