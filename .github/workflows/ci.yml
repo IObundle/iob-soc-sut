@@ -13,7 +13,9 @@ concurrency:
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - build-lib
   # Don't forget to require approval for all outside collaborators
   pull_request:
     branches: '*'
@@ -23,17 +25,19 @@ on:
 jobs:
   pc-emul:
     runs-on: self-hosted
-    timeout-minutes: 30
+    timeout-minutes: 5
 
     steps:
       - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-pc-emul
-        run: make test-pc-emul
+      - name: clean
+        run: make clean
+      - name: setup
+        run: make setup
+      - name: pc-emul test
+        run: make -C ../iob_soc_sut* pc-emul-test
 
   verilator:
     runs-on: self-hosted
@@ -41,127 +45,76 @@ jobs:
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
-    needs: pc-emul
-
+  
     steps:
       - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-verilator
-        run: make sim-test SIMULATOR=verilator
-
+      - name: clean
+        run: make clean
+      - name: setup
+        run: make setup
+      - name: verilator test
+        run: nix-shell -p verilator --run 'make -C ../iob_soc_sut* sim-test SIMULATOR=verilator'
+  
   icarus:
     runs-on: self-hosted
     timeout-minutes: 90
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
-    needs: verilator
-
+  
     steps:
       - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-icarus
-        run: make sim-test SIMULATOR=icarus
-
-  cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 60
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    needs: icarus
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-cyclonev
-        run: make fpga-test BOARD=CYCLONEV-GT-DK
-
-  aes-ku040:
-    runs-on: self-hosted
-    timeout-minutes: 90
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    needs: icarus
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: test-clean
-        run: make test-clean
-      - name: test-aes-ku040
-        run: make fpga-test BOARD=AES-KU040-DB-G
-
-  tester-verilator:
-    runs-on: self-hosted
-    timeout-minutes: 30
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    needs: verilator
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: tester-verilator
-        run: make tester-sim-test SIMULATOR=verilator
-
-  tester-cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 60
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    needs: cyclonev
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: tester-cyclonev
-        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
-
-  tester-aes-ku040:
-    runs-on: self-hosted
-    timeout-minutes: 90
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    needs: aes-ku040
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: tester-aes-ku040
-        run: make tester-fpga-test BOARD=AES-KU040-DB-G
-
-#  doc:
-#    runs-on: self-hosted
-#    timeout-minutes: 60
-    # always run, except when previous job was cancelled
-#    if: ${{ !cancelled() }}
-#    needs: [ cyclonev, aes-ku040 ]
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      - name: test-clean
-#        run: make test-clean
-#      - name: test-doc
-#        run: make test-doc
+      - name: clean
+        run: make clean
+      - name: setup
+        run: make setup
+      - name: icarus test
+        run: make -C ../iob_soc_sut* sim-test SIMULATOR=icarus
+  
+  # cyclonev:
+  #   runs-on: self-hosted
+  #   timeout-minutes: 60
+  #   if: ${{ !cancelled() }}
+  #
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: 'recursive'
+  #     - name: test-clean
+  #       run: make test-clean
+  #     - name: test-cyclonev
+  #       run: make fpga-test BOARD=CYCLONEV-GT-DK
+  #
+  # aes-ku040:
+  #   runs-on: self-hosted
+  #   timeout-minutes: 90
+  #   if: ${{ !cancelled() }}
+  #
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: 'recursive'
+  #     - name: test-clean
+  #       run: make test-clean
+  #     - name: test-aes-ku040
+  #       run: make fpga-test BOARD=AES-KU040-DB-G
+  #
+  # doc:
+  #   runs-on: self-hosted
+  #   timeout-minutes: 60
+  #   if: ${{ !cancelled() }}
+  #   needs: [ cyclonev, aes-ku040 ]
+  #
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: 'recursive'
+  #     - name: test-clean
+  #       run: make test-clean
+  #     - name: test-doc
+  #       run: make test-doc
