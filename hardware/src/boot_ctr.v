@@ -1,14 +1,14 @@
 `timescale 1 ns / 1 ps
-`include "iob_soc.vh"
+`include "iob_soc_sut.vh"
 `include "iob_lib.vh"
 
 module boot_ctr
   #(
     parameter HEXFILE = "boot.hex",
-    parameter DATA_W = `IOB_SOC_DATA_W,
-    parameter ADDR_W = `IOB_SOC_ADDR_W,
-    parameter BOOTROM_ADDR_W = `IOB_SOC_BOOTROM_ADDR_W,
-    parameter SRAM_ADDR_W = `IOB_SOC_SRAM_ADDR_W
+    parameter DATA_W = `IOB_SOC_SUT_DATA_W,
+    parameter ADDR_W = `IOB_SOC_SUT_ADDR_W,
+    parameter BOOTROM_ADDR_W = `IOB_SOC_SUT_BOOTROM_ADDR_W,
+    parameter SRAM_ADDR_W = `IOB_SOC_SUT_SRAM_ADDR_W
  )
   (
    input  en_i,

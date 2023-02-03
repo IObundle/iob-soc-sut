@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "system.h"
-#include "periphs.h"
-#include "iob_soc_conf.h"
+#include "iob_soc_sut_periphs.h"
+#include "iob_soc_sut_conf.h"
 #include "iob-uart.h"
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
@@ -18,15 +18,15 @@ int main()
   uart_puts("This message was sent from SUT!\n");
 
   //Write data to the registers of REGFILEIF to be read by the Tester.
-  IOB_REGFILEIF_INVERTED_SET_REG3_INVERTED(128);
-  IOB_REGFILEIF_INVERTED_SET_REG4_INVERTED(1024);
+  IOB_REGFILEIF_INVERTED_SET_REG3(128);
+  IOB_REGFILEIF_INVERTED_SET_REG4(1024);
 
 #ifdef USE_DDR
 #ifdef RUN_EXTMEM
   char sutMemoryMessage[]="This message is stored in SUT's memory\n";
   
   //Give address of stored message to Tester using regfileif register 4
-  IOB_REGFILEIF_INVERTED_SET_REG5_INVERTED((int)sutMemoryMessage);
+  IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
 #else
   char ddrMemoryMessage[]="This message was written to DDR by the SUT\n", *strPtr;
   int i;

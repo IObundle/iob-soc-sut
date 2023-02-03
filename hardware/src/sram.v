@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
 
-`include "iob_soc.vh"
+`include "iob_soc_sut.vh"
 
 module sram #(
-              parameter DATA_W=`IOB_SOC_DATA_W,
-              parameter SRAM_ADDR_W = `IOB_SOC_SRAM_ADDR_W,
+              parameter DATA_W=`IOB_SOC_SUT_DATA_W,
+              parameter SRAM_ADDR_W = `IOB_SOC_SUT_SRAM_ADDR_W,
               parameter HEXFILE = "none"
 	      )
    (

@@ -1,23 +1,21 @@
 `timescale 1 ns / 1 ps
-`include "iob_soc.vh"
+`include "iob_soc_sut.vh"
 `include "iob_lib.vh"
 
 //do not remove line below
 //PHEADER
 
-module system
+module iob_soc_sut
   #(
 `include "iob_soc_sut_params.vh"
     )
   (
 `include "iob_soc_sut_io.vh"
    );
-   
-	// Assign general io signals to local wires
-   wire clk_i = general_clk_i;
-   wire arst_i = general_rst_i;
-	wire trap_o;
-   assign general_trap_o = trap_o;
+
+	localparam E_BIT = `IOB_SOC_SUT_E;
+	localparam P_BIT = `IOB_SOC_SUT_P;
+	localparam B_BIT = `IOB_SOC_SUT_B;
 
    //
    // SYSTEM RESET

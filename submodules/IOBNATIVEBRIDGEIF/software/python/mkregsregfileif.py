@@ -1,1 +1,0 @@
-../../../REGFILEIF/software/python/mkregsregfileif.py

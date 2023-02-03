@@ -1,5 +1,5 @@
 #include "system.h"
-#include "iob_soc_conf.h"
+#include "iob_soc_sut_conf.h"
 #include "iob-uart.h"
 
 #ifdef RUN_EXTMEM
@@ -42,7 +42,7 @@ int main() {
 
   //receive firmware from host 
   int file_size = 0;
-  char r_fw[] = "iob_soc_firmware.bin";
+  char r_fw[] = "iob_soc_sut_firmware.bin";
   if (uart_getc() == FRX) {//file receive: load firmware
     file_size = uart_recvfile(r_fw, prog_start_addr);
     uart_puts (PROGNAME);

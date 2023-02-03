@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "iob_soc.vh"
+`include "iob_soc_sut.vh"
 
 module iob_soc_sut_fpga_wrapper
   (

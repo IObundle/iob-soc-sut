@@ -16,4 +16,4 @@ test1:
 
 CLEAN_LIST+=clean1
 clean1:
-	@rm -rf iob_soc_conf.h
+	@rm -rf iob_soc_sut_conf.h
