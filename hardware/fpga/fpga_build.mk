@@ -1,14 +1,14 @@
+HEX+=iob_soc_sut_boot.hex iob_soc_sut_firmware.hex
+include ../../software/sw_build.mk
+
+# Set USE_EXTMEM if IOB_SOC_SUT_RUN_EXTMEM is present in the *confs.vh file
+USE_EXTMEM:=$(call GET_CONF_PARAM,IOB_SOC_SUT_RUN_EXTMEM)
+
+IS_FPGA=1
+
 TEST_LIST+=test1
 test1:
-	make -C $(ROOT_DIR) fpga-clean BOARD=$(BOARD)
-	make -C $(ROOT_DIR) fpga-run INIT_MEM=1 RUN_EXTMEM=0 TEST_LOG=">> test.log"
-
-TEST_LIST+=test1
-test2:
-	make -C $(ROOT_DIR) fpga-clean BOARD=$(BOARD)
-	make -C $(ROOT_DIR) fpga-run INIT_MEM=0 RUN_EXTMEM=0 TEST_LOG=">> test.log"
-
-TEST_LIST+=test1
-test3:
-	make -C $(ROOT_DIR) fpga-clean BOARD=$(BOARD)
-	make -C $(ROOT_DIR) fpga-run INIT_MEM=0 RUN_EXTMEM=1 TEST_LOG=">> test.log"
+	make -C ../../ fw-clean BOARD=$(BOARD)
+	make -C ../../ fpga-clean BOARD=$(BOARD)
+	make run BOARD=$(BOARD)
+	diff run.log $(FPGA_TOOL)/$(BOARD)/test.expected

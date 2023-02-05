@@ -1,0 +1,18 @@
+
++-----------------------------------------------+
+|                   IOb-Console                 |
++-----------------------------------------------+
+
+IOb-Console: connecting...
+
+IOb-Bootloader: connected!
+IOb-Bootloader: DDR in use and program runs from DDR
+IOb-Bootloader: Restart CPU to run user program...
+
+
+
+Hello world!
+
+
+This message was sent from SUT!
+IOb-Console: exiting...

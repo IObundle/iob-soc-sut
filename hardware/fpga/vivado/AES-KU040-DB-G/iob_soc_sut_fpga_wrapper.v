@@ -13,7 +13,7 @@ module iob_soc_sut_fpga_wrapper
    output        uart_txd,
    input         uart_rxd,
 
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
    output        c0_ddr4_act_n,
    output [16:0] c0_ddr4_adr,
    output [1:0]  c0_ddr4_ba,
@@ -89,26 +89,26 @@ module iob_soc_sut_fpga_wrapper
    wire          clk;
    wire 	 rst;
    
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
    //axi wires between system backend and axi bridge
- `include "iob_soc_sut_axi_m_wire.vh"
+ `include "iob_axi_wire.vh"
 `endif
 
    //
    // SYSTEM
    //
 
-   system
+   iob_soc_sut
      #(
        .AXI_ID_W(AXI_ID_W),
        .AXI_LEN_W(AXI_LEN_W),
        .AXI_ADDR_W(AXI_ADDR_W),
        .AXI_DATA_W(AXI_DATA_W)
        )
-   system 
+   iob_soc_sut 
      (
       .clk_i (clk),
-      .rst_i (rst),
+      .arst_i (rst),
       .trap_o (trap),
 
         //
@@ -129,9 +129,9 @@ module iob_soc_sut_fpga_wrapper
         .ETHERNET0_TX_CLK(ETH_CLK),
         .ETHERNET0_TX_DATA(TX_DATA),
         .ETHERNET0_TX_EN(ENET_TX_EN),
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
       //axi system backend interface
- `include "iob_soc_sut_axi_m_portmap.vh"	
+      `include "iob_axi_m_portmap.vh"	
 `endif
 
       //UART
@@ -146,10 +146,10 @@ module iob_soc_sut_fpga_wrapper
    // DDR4 CONTROLLER
    //
                  
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
 
    //axi wires between ddr4 contrl and axi interconnect
- `include "ddr4_axi_wire.vh"
+   `include "ddr4_axi_wire.vh"
 
    //DDR4 controller axi side clocks and resets
    wire          c0_ddr4_ui_clk;//controller output clock 200MHz
@@ -179,47 +179,47 @@ module iob_soc_sut_fpga_wrapper
       .S00_AXI_ACLK         (clk), //from ddr4 controller PLL to be used by system
       
       //Write address
-      .S00_AXI_AWID         (axi_awid_o  [0]),
-      .S00_AXI_AWADDR       (axi_awaddr_o   ),
-      .S00_AXI_AWLEN        (axi_awlen_o    ),
-      .S00_AXI_AWSIZE       (axi_awsize_o   ),
-      .S00_AXI_AWBURST      (axi_awburst_o  ),
-      .S00_AXI_AWLOCK       (axi_awlock_o[0]),
-      .S00_AXI_AWCACHE      (axi_awcache_o  ),
-      .S00_AXI_AWPROT       (axi_awprot_o   ),
-      .S00_AXI_AWQOS        (axi_awqos_o    ),
-      .S00_AXI_AWVALID      (axi_awvalid_o  ),
-      .S00_AXI_AWREADY      (axi_awready_i  ),
+      .S00_AXI_AWID         (axi_awid  [0]),
+      .S00_AXI_AWADDR       (axi_awaddr   ),
+      .S00_AXI_AWLEN        (axi_awlen    ),
+      .S00_AXI_AWSIZE       (axi_awsize   ),
+      .S00_AXI_AWBURST      (axi_awburst  ),
+      .S00_AXI_AWLOCK       (axi_awlock[0]),
+      .S00_AXI_AWCACHE      (axi_awcache  ),
+      .S00_AXI_AWPROT       (axi_awprot   ),
+      .S00_AXI_AWQOS        (axi_awqos    ),
+      .S00_AXI_AWVALID      (axi_awvalid  ),
+      .S00_AXI_AWREADY      (axi_awready  ),
       //Write data
-      .S00_AXI_WDATA        (axi_wdata_o    ),
-      .S00_AXI_WSTRB        (axi_wstrb_o    ),
-      .S00_AXI_WLAST        (axi_wlast_o    ),
-      .S00_AXI_WVALID       (axi_wvalid_o   ),
-      .S00_AXI_WREADY       (axi_wready_i   ),
+      .S00_AXI_WDATA        (axi_wdata    ),
+      .S00_AXI_WSTRB        (axi_wstrb    ),
+      .S00_AXI_WLAST        (axi_wlast    ),
+      .S00_AXI_WVALID       (axi_wvalid   ),
+      .S00_AXI_WREADY       (axi_wready   ),
       //Write response
-      .S00_AXI_BID          (axi_bid_i   [0]),
-      .S00_AXI_BRESP        (axi_bresp_i    ),
-      .S00_AXI_BVALID       (axi_bvalid_i   ),
-      .S00_AXI_BREADY       (axi_bready_o   ),
+      .S00_AXI_BID          (axi_bid   [0]),
+      .S00_AXI_BRESP        (axi_bresp    ),
+      .S00_AXI_BVALID       (axi_bvalid   ),
+      .S00_AXI_BREADY       (axi_bready   ),
       //Read address
-      .S00_AXI_ARID         (axi_arid_o  [0]),
-      .S00_AXI_ARADDR       (axi_araddr_o   ),
-      .S00_AXI_ARLEN        (axi_arlen_o    ),
-      .S00_AXI_ARSIZE       (axi_arsize_o   ),
-      .S00_AXI_ARBURST      (axi_arburst_o  ),
-      .S00_AXI_ARLOCK       (axi_arlock_o[0]),
-      .S00_AXI_ARCACHE      (axi_arcache_o  ),
-      .S00_AXI_ARPROT       (axi_arprot_o   ),
-      .S00_AXI_ARQOS        (axi_arqos_o    ),
-      .S00_AXI_ARVALID      (axi_arvalid_o  ),
-      .S00_AXI_ARREADY      (axi_arready_i  ),
+      .S00_AXI_ARID         (axi_arid  [0]),
+      .S00_AXI_ARADDR       (axi_araddr   ),
+      .S00_AXI_ARLEN        (axi_arlen    ),
+      .S00_AXI_ARSIZE       (axi_arsize   ),
+      .S00_AXI_ARBURST      (axi_arburst  ),
+      .S00_AXI_ARLOCK       (axi_arlock[0]),
+      .S00_AXI_ARCACHE      (axi_arcache  ),
+      .S00_AXI_ARPROT       (axi_arprot   ),
+      .S00_AXI_ARQOS        (axi_arqos    ),
+      .S00_AXI_ARVALID      (axi_arvalid  ),
+      .S00_AXI_ARREADY      (axi_arready  ),
       //Read data
-      .S00_AXI_RID          (axi_rid_i   [0]),
-      .S00_AXI_RDATA        (axi_rdata_i    ),
-      .S00_AXI_RRESP        (axi_rresp_i    ),
-      .S00_AXI_RLAST        (axi_rlast_i    ),
-      .S00_AXI_RVALID       (axi_rvalid_i   ),
-      .S00_AXI_RREADY       (axi_rready_o   ),
+      .S00_AXI_RID          (axi_rid   [0]),
+      .S00_AXI_RDATA        (axi_rdata    ),
+      .S00_AXI_RRESP        (axi_rresp    ),
+      .S00_AXI_RLAST        (axi_rlast    ),
+      .S00_AXI_RVALID       (axi_rvalid   ),
+      .S00_AXI_RREADY       (axi_rready   ),
 
 
       //
@@ -361,33 +361,38 @@ module iob_soc_sut_fpga_wrapper
 
 
 `else
-   //if DDR not used use PLL to generate system clock
-   clock_wizard 
-     #(
-       .OUTPUT_PER(10),
-       .INPUT_PER(4)
-       )
-   clk_250_to_100_MHz
-     (
-      .clk_in1_p(c0_sys_clk_clk_p),
-      .clk_in1_n(c0_sys_clk_clk_n),
-      .clk_out1(clk)
-      );
+    //if DDR not used use PLL to generate system clock
+    clock_wizard #(
+        .OUTPUT_PER(10),
+        .INPUT_PER(4)
+        )
+    clk_250_to_100_MHz (
+        .clk_in1_p(c0_sys_clk_clk_p),
+        .clk_in1_n(c0_sys_clk_clk_n),
+        .clk_out1(clk)
+        );
 
-   //create reset pulse as reset is never activated manually
-   //also, during bitstream loading, the reset pin is not pulled high
-   iob_pulse_gen
-     #(
-       .START(5),
-       .DURATION(10)
-       ) 
-   reset_pulse
-     (
-      .clk(clk),
-      .rst(reset),
-      .restart(1'b0),
-      .pulse_out(rst)
-      );
+    wire start;
+    iob_reset_sync start_sync (
+        .clk_i(clk),
+        .arst_i(reset),
+        .cke_i(1'b1),
+        .rst_o(start)
+        );
+
+    //create reset pulse as reset is never activated manually
+    //also, during bitstream loading, the reset pin is not pulled high
+    iob_pulse_gen #(
+        .START(5),
+        .DURATION(10)
+        ) 
+    reset_pulse (
+        .clk_i(clk),
+        .arst_i(reset),
+        .cke_i(1'b1),
+        .start_i(start),
+        .pulse_o(rst)
+        );
 `endif
 
 endmodule

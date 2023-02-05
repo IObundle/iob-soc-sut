@@ -11,7 +11,7 @@ module iob_soc_sut_fpga_wrapper
    output        uart_txd,
    input         uart_rxd,
 
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
    output [13:0] ddr3b_a, //SSTL15  //Address
    output [2:0]  ddr3b_ba, //SSTL15  //Bank Address
    output        ddr3b_rasn, //SSTL15  //Row Address Strobe
@@ -91,25 +91,23 @@ module iob_soc_sut_fpga_wrapper
                                          .dataout ( ENET_GTX_CLK )
                                          );
 
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
    //axi wires between system backend and axi bridge
- `include "iob_soc_sut_axi_m_wire.vh"
+ `include "iob_axi_wire.vh"
 `endif
 
    //
    // SYSTEM
    //
-   system
-     #(
+   iob_soc_sut #(
        .AXI_ID_W(AXI_ID_W),
        .AXI_LEN_W(AXI_LEN_W),
        .AXI_ADDR_W(AXI_ADDR_W),
        .AXI_DATA_W(AXI_DATA_W)
        )
-   system 
-     (
+   iob_soc_sut (
       .clk_i (clk),
-      .rst_i (rst),
+      .arst_i (rst),
       .trap_o (trap),
 
       //ETHERNET
@@ -125,8 +123,8 @@ module iob_soc_sut_fpga_wrapper
       .ETHERNET0_TX_DATA(TX_DATA),
       .ETHERNET0_TX_EN(ENET_TX_EN),
 
-`ifdef RUN_EXTMEM
-      `include "iob_soc_sut_axi_m_portmap.vh"	
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
+      `include "iob_axi_m_portmap.vh"	
 `endif
 
       //UART
@@ -137,7 +135,7 @@ module iob_soc_sut_fpga_wrapper
       );
 
    
-`ifdef RUN_EXTMEM
+`ifdef IOB_SOC_SUT_RUN_EXTMEM
    //user reset
    wire          locked;
    wire          init_done;
@@ -146,7 +144,7 @@ module iob_soc_sut_fpga_wrapper
    wire          rst_int = ~resetn | ~locked | ~init_done;
 //   wire          rst_int = ~resetn | ~locked;
    
-   iob_reset_sync rst_sync (clk, rst_int, rst);
+   iob_reset_sync rst_sync (clk, rst_int, 1'b1, rst);
 
    alt_ddr3 ddr3_ctrl 
      (
@@ -222,8 +220,8 @@ module iob_soc_sut_fpga_wrapper
       .mem_if_ddr3_emif_0_status_local_cal_fail ()
       );
 
-`else
-   iob_reset_sync rst_sync (clk, (~resetn), rst);   
+`else 
+   iob_reset_sync rst_sync (clk, (~resetn), 1'b1, rst);   
 `endif
 
 

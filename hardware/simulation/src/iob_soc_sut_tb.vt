@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 `include "iob_soc_sut_conf.vh"
-`include "iob_soc_sut.vh"
+`include "iob_uart_conf.vh"
 `include "iob_uart_swreg_def.vh"
 
 
@@ -114,7 +114,7 @@ module iob_soc_sut_tb;
     end
   end
 
-iob_soc_sut_top system_top
+iob_soc_sut_top iob_soc_sut_top
   (
    .clk_i (clk),
    .rst_i (reset),

@@ -1,4 +1,4 @@
-#include "system.h"
+#include "iob_soc_sut_system.h"
 #include "iob_soc_sut_conf.h"
 
 .section .init

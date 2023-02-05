@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "system.h"
+#include "iob_soc_sut_system.h"
 #include "iob_soc_sut_periphs.h"
 #include "iob_soc_sut_conf.h"
 #include "iob-uart.h"
