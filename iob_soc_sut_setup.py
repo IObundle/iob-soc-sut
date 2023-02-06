@@ -62,9 +62,13 @@ tester_options = {
 
     'confs':
     [
+        # Override default values of Tester params
         #{'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
         #{'name':'SRAM_ADDR_W',   'type':'P', 'val':'16', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
-    ]
+    ],
+
+    #FIXME: uut_name is currently only used by the Tester to know the prefix of DDR_* sut macros
+    'uut_name':name
 }
 
 # ############### End of Tester configuration ###################
@@ -173,7 +177,7 @@ def custom_setup():
         if arg.startswith("RUN_EXTMEM="):
             if arg[-1:]!="0": update_define(confs, "RUN_EXTMEM",True)
             else: update_define(confs, "RUN_EXTMEM",False)
-        if arg.startswith("tester="):
+        if arg.startswith("TESTER="):
             if arg[-1:]!="0": setup_with_tester=True
             else: setup_with_tester=False
 
