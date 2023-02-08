@@ -68,7 +68,8 @@ tester_options = {
     ],
 
     #FIXME: uut_name is currently only used by the Tester to know the prefix of DDR_* sut macros
-    'uut_name':name
+    'uut_name':name,
+    'sut_fw_name':name+'_firmware'
 }
 
 # ############### End of Tester configuration ###################
@@ -161,7 +162,7 @@ ios = \
         {'name':"arst_i", 'type':"I", 'n_bits':'1', 'descr':"System reset, synchronous and active high"},
         {'name':"trap_o", 'type':"O", 'n_bits':'1', 'descr':"CPU trap signal"}
     ]},
-    {'name': 'axi_m_port', 'descr':'General interface signals', 'ports': [], 'if_defined':'IOB_SOC_SUT_RUN_EXTMEM'},
+    {'name': 'axi_m_port', 'descr':'General interface signals', 'ports': [], 'if_defined':'RUN_EXTMEM'},
 ]
 
 def custom_setup():

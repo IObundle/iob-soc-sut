@@ -6,6 +6,12 @@ sim-test:
 	make clean && make setup SETUP_ARGS="INIT_MEM=1 RUN_EXTMEM=1" && make -C ../iob_soc_sut_V*/ sim-test
 	make clean && make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=1" && make -C ../iob_soc_sut_V*/ sim-test
 
+tester-sim-test:
+	make clean && make setup SETUP_ARGS="INIT_MEM=1 RUN_EXTMEM=0 TESTER=1" && make -C ../iob_soc_sut_V*/ sim-run | tee /dev/tty | grep "Verification successful!" > /dev/null
+	#make clean && make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=0 TESTER=1" && make -C ../iob_soc_sut_V*/ sim-run | tee /dev/tty | grep "Verification successful!" > /dev/null
+	make clean && make setup SETUP_ARGS="INIT_MEM=1 RUN_EXTMEM=1 TESTER=1" && make -C ../iob_soc_sut_V*/ sim-run | tee /dev/tty | grep "Verification successful!" > /dev/null
+	#make clean && make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=1 TESTER=1" && make -C ../iob_soc_sut_V*/ sim-run | tee /dev/tty | grep "Verification successful!" > /dev/null
+
 fpga-test:
 	make clean && make setup SETUP_ARGS="INIT_MEM=1 RUN_EXTMEM=0" && make -C ../iob_soc_sut_V*/ fpga-test
 	make clean && make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=0" && make -C ../iob_soc_sut_V*/ fpga-test
