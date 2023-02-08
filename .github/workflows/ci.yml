@@ -120,6 +120,22 @@ jobs:
       #  run: make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=1"
       #- name: icarus test
       #  run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus
+
+  tester-verilator:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ verilator ]
+  
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: Tester verilator
+        run: nix-shell -p verilator --run 'make tester-sim-test SIMULATOR=verilator'
   
   cyclonev:
     runs-on: self-hosted
@@ -159,6 +175,22 @@ jobs:
         run: make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=1"
       - name: cyclonev test
         run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
+
+  tester-cyclonev:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ cyclonev ]
+  
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: Tester CYCLONEV
+        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
   
   aes-ku040:
     runs-on: self-hosted
@@ -198,6 +230,22 @@ jobs:
         run: make setup SETUP_ARGS="INIT_MEM=0 RUN_EXTMEM=1"
       - name: ku040 test
         run: make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G
+
+  tester-aes-ku040:
+    runs-on: self-hosted
+    timeout-minutes: 90
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ aes-ku040 ]
+  
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: Tester KU040
+        run: make tester-fpga-test BOARD=AES-KU040-DB-G
   
   doc:
     runs-on: self-hosted
