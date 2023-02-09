@@ -67,8 +67,6 @@ tester_options = {
         #{'name':'SRAM_ADDR_W',   'type':'P', 'val':'16', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
     ],
 
-    #FIXME: uut_name is currently only used by the Tester to know the prefix of DDR_* sut macros
-    'uut_name':name,
     'sut_fw_name':name+'_firmware'
 }
 
