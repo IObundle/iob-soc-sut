@@ -48,7 +48,7 @@ make pc-emul [<control parameters>]
 
 `<control parameters>` are system configuration parameters passed in the
 command line, overriding those in the `config.mk` file. Example control
-parameters are `USE_DDR=1 RUN_EXTMEM=0`.
+parameters are `USE_DDR=1 USE_EXTMEM=0`.
 
 ### Simulate the SUT
 
@@ -108,7 +108,7 @@ make tester-sim-run [SIMULATOR=<simulator directory name>] [<control parameters>
 
 `<control parameters>` are system configuration parameters passed in the
 command line, overriding those in the `config.mk` file. Example control
-parameters are `USE_DDR=1 RUN_EXTMEM=0`.
+parameters are `USE_DDR=1 USE_EXTMEM=0`.
 
 `<simulator directory name>` is the name of the simulator's run directory.
 

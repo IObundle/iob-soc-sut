@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "build_configuration.h"
 #include "iob_soc_sut_system.h"
 #include "iob_soc_sut_periphs.h"
 #include "iob_soc_sut_conf.h"
@@ -21,7 +22,7 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG3(128);
   IOB_REGFILEIF_INVERTED_SET_REG4(1024);
 
-#ifdef RUN_EXTMEM
+#ifdef USE_EXTMEM
   char sutMemoryMessage[]="This message is stored in SUT's memory\n";
   
   //Give address of stored message to Tester using regfileif register 4

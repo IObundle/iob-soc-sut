@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
-`include "iob_soc_sut.vh"
+`include "iob_soc_sut_conf.vh"
+`include "build_configuration.vh"
 
 module iob_soc_sut_fpga_wrapper
   (
@@ -13,7 +14,7 @@ module iob_soc_sut_fpga_wrapper
    output        uart_txd,
    input         uart_rxd,
 
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
    output        c0_ddr4_act_n,
    output [16:0] c0_ddr4_adr,
    output [1:0]  c0_ddr4_ba,
@@ -51,8 +52,8 @@ module iob_soc_sut_fpga_wrapper
 
    localparam AXI_ID_W  = 4;
    localparam AXI_LEN_W = 8;
-   localparam AXI_ADDR_W=`IOB_SOC_SUT_DDR_ADDR_W;
-   localparam AXI_DATA_W=`IOB_SOC_SUT_DDR_DATA_W;
+   localparam AXI_ADDR_W=`DDR_ADDR_W;
+   localparam AXI_DATA_W=`DDR_DATA_W;
 
     // 
     // 2. Logic to contatenate data pins and ethernet clock
@@ -89,7 +90,7 @@ module iob_soc_sut_fpga_wrapper
    wire          clk;
    wire 	 rst;
    
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
    //axi wires between system backend and axi bridge
  `include "iob_axi_wire.vh"
 `endif
@@ -129,7 +130,7 @@ module iob_soc_sut_fpga_wrapper
         .ETHERNET0_TX_CLK(ETH_CLK),
         .ETHERNET0_TX_DATA(TX_DATA),
         .ETHERNET0_TX_EN(ENET_TX_EN),
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
       //axi system backend interface
       `include "iob_axi_m_portmap.vh"	
 `endif
@@ -146,7 +147,7 @@ module iob_soc_sut_fpga_wrapper
    // DDR4 CONTROLLER
    //
                  
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
 
    //axi wires between ddr4 contrl and axi interconnect
    `include "ddr4_axi_wire.vh"

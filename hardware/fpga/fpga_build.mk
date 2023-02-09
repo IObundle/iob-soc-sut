@@ -1,10 +1,10 @@
 HEX+=iob_soc_sut_boot.hex iob_soc_sut_firmware.hex
 include ../../software/sw_build.mk
 
-# Set USE_EXTMEM if IOB_SOC_SUT_RUN_EXTMEM is present in the *confs.vh file
-USE_EXTMEM:=$(call GET_CONF_PARAM,IOB_SOC_SUT_RUN_EXTMEM)
-
 IS_FPGA=1
+
+
+QUARTUS_SEED=10
 
 TEST_LIST+=test1
 test1:
