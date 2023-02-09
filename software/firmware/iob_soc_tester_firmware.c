@@ -3,6 +3,7 @@
  *********************************************************/
 #include "stdlib.h"
 #include <stdio.h>
+#include "build_configuration.h"
 #include "iob_soc_tester_system.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -69,7 +70,7 @@ int main()
 	printf("%d \n", IOB_REGFILEIF_GET_REG3());
 	printf("%d \n", IOB_REGFILEIF_GET_REG4());
 
-#ifdef RUN_EXTMEM
+#ifdef USE_EXTMEM
 	//Get address of first char in string stored in SUT's memory with first bit inverted
 	sutStr=(char*)(IOB_REGFILEIF_GET_REG5() ^ (0b1 << (DCACHE_ADDR_W-1))); //Note, DCACHE_ADDR_W may not be the same as DDR_ADDR_W when running in fpga
 
