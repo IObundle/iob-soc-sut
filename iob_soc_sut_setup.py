@@ -130,20 +130,20 @@ blocks = \
 
 confs = \
 [
-    # SoC macros
-    {'name':'INIT_MEM',      'type':'M', 'val':'1', 'min':'0', 'max':'1', 'descr':"Enable memory initialization"},
-    {'name':'USE_EXTMEM',    'type':'M', 'val':'NA', 'min':'0', 'max':'1', 'descr':"Run firmware from external memory"},
+    # macros
     {'name':'USE_MUL_DIV',   'type':'M', 'val':'1', 'min':'0', 'max':'1', 'descr':"Enable MUL and DIV CPU instructions"},
     {'name':'USE_COMPRESSED','type':'M', 'val':'1', 'min':'0', 'max':'1', 'descr':"Use compressed CPU instructions"},
     {'name':'E',             'type':'M', 'val':'31', 'min':'1', 'max':'32', 'descr':"Address selection bit for external memory"},
     {'name':'P',             'type':'M', 'val':'30', 'min':'1', 'max':'32', 'descr':"Address selection bit for peripherals"},
     {'name':'B',             'type':'M', 'val':'29', 'min':'1', 'max':'32', 'descr':"Address selection bit for boot ROM"},
 
-    # SoC parameters
-    {'name':'ADDR_W',        'type':'P', 'val':'32', 'min':'1', 'max':'32', 'descr':"Address bus width"},
-    {'name':'DATA_W',        'type':'P', 'val':'32', 'min':'1', 'max':'32', 'descr':"Data bus width"},
+    # parameters
     {'name':'BOOTROM_ADDR_W','type':'P', 'val':'12', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
     {'name':'SRAM_ADDR_W',   'type':'P', 'val':'15', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
+
+    #mandatory parameters (do not change them!)
+    {'name':'ADDR_W',        'type':'P', 'val':'32', 'min':'1', 'max':'32', 'descr':"Address bus width"},
+    {'name':'DATA_W',        'type':'P', 'val':'32', 'min':'1', 'max':'32', 'descr':"Data bus width"},
     {'name':'DCACHE_ADDR_W', 'type':'P', 'val':'24', 'min':'1', 'max':'32', 'descr':"DCACHE address width"},
     {'name':'AXI_ID_W',      'type':'P', 'val':'0', 'min':'1', 'max':'32', 'descr':"AXI ID bus width"},
     {'name':'AXI_ADDR_W',    'type':'P', 'val':'`IOB_SOC_SUT_DCACHE_ADDR_W', 'min':'1', 'max':'32', 'descr':"AXI address bus width"},
@@ -166,25 +166,22 @@ ios = \
 def custom_setup():
     global setup_with_tester
     # Add the following arguments:
-    # "INIT_MEM=x":   allows choosing if should setup with init_mem or not
-    # "USE_EXTMEM=x": allows choosing if should setup with run_extmem or not
-    # "TESTER=x": allows choosing if should setup with tester or not
+    # "INIT_MEM": if should setup with init_mem or not
+    # "USE_EXTMEM": if should setup with extmem or not
+    # "TESTER": if should setup with tester or not
     for arg in sys.argv[1:]:
-        if arg.startswith("INIT_MEM="):
-            if arg[-1:]!="0": update_define(confs, "INIT_MEM",True)
-            else: update_define(confs, "INIT_MEM",False)
-        if arg.startswith("USE_EXTMEM="):
-            if arg[-1:]!="1": update_define(confs, "USE_EXTMEM",False)
-            else: update_define(confs, "USE_EXTMEM",True)
-        if arg.startswith("TESTER="):
-            if arg[-1:]!="0": setup_with_tester=True
-            else: setup_with_tester=False
+        if arg == "INIT_MEM":
+            update_define(confs, "INIT_MEM",True)
+        if arg == "USE_EXTMEM":
+            update_define(confs, "USE_EXTMEM",True)
+        if arg == "TESTER":
+            setup_with_tester=True
 
     # Add Tester as a hardware module
     if setup_with_tester: tester.add_tester_modules(sys.modules[__name__],tester_options)
     
     for conf in confs:
-        if (conf['name'] == 'USE_EXTMEM') and (conf['val'] == '1'):
+        if (conf['name'] == 'USE_EXTMEM') and conf['val']:
             submodules['hw_setup']['headers'].append([ 'ddr4_', 'axi_wire', 'ddr4_', 'ddr4_' ])
 
 
