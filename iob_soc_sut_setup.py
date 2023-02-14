@@ -13,16 +13,14 @@ setup_dir=os.path.dirname(__file__)
 build_dir=f"../{name}_{version}"
 
 # ################## Tester configuration #######################
-# Bool to select if should setup this core with the Tester by default
-# This value can be overridden by the setup call like, for example: `make setup SETUP_ARGS="tester=1"`
-setup_with_tester=False
-
 tester_options = {
+    #NOTE: Ethernet peripheral is disabled for the time being as it has not yet been updated for compatibility with the python-setup branch.
     'extra_peripherals': 
     [
         #{'name':'UART0', 'type':'UART', 'descr':'Default UART interface', 'params':{}}, # It is possible to override default tester peripherals with new parameters
         {'name':'UART1', 'type':'UART', 'descr':'UART interface for communication with SUT', 'params':{}},
-        ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with SUT', 'params':{}},
+        ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the console', 'params':{}},
+        ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the SUT', 'params':{}},
         {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{}},
         {'name':'IOBNATIVEBRIDGEIF0', 'type':'IOBNATIVEBRIDGEIF', 'descr':'IOb native interface for communication with SUT. Essentially a REGFILEIF without any registers.', 'params':{}},
     ],
@@ -47,7 +45,8 @@ tester_options = {
         ({'corename':'SUT0', 'if_name':'UART0', 'port':'cts', 'bits':[]},                    {'corename':'UART1', 'if_name':'rs232', 'port':'rts', 'bits':[]}), 
         ({'corename':'SUT0', 'if_name':'UART0', 'port':'rts', 'bits':[]},                    {'corename':'UART1', 'if_name':'rs232', 'port':'cts', 'bits':[]}), 
         # SUT ETHERNET0
-        ####({'corename':'SUT0', 'if_name':'ETHERNET0_ethernet', 'port':'', 'bits':[]},             {'corename':'ETHERNET0', 'if_name':'ethernet', 'port':'', 'bits':[]}), #Map ETHERNET0 of SUT to ETHERNET0 of Tester
+        ####({'corename':'SUT0', 'if_name':'ETHERNET0_ethernet', 'port':'', 'bits':[]},         {'corename':'', 'if_name':'', 'port':'', 'bits':[]}), #Map ETHERNET0 of Tester to external interface
+        ####({'corename':'SUT0', 'if_name':'ETHERNET1_ethernet', 'port':'', 'bits':[]},         {'corename':'ETHERNET0', 'if_name':'ethernet', 'port':'', 'bits':[]}), #Map ETHERNET0 of SUT to ETHERNET0 of Tester
         # SUT REGFILEIF0
         #({'corename':'SUT0', 'if_name':'REGFILEIF0_external_iob_s_port', 'port':'', 'bits':[]}, {'corename':'IOBNATIVEBRIDGEIF0', 'if_name':'external_iob_s_port', 'port':'', 'bits':[]}), #Map REGFILEIF of SUT to IOBNATIVEBRIDGEIF of Tester
         # Python scripts do not yet support 'REGFILEIF0_external_iob_s_port'. Need to connect each signal independently
@@ -162,7 +161,9 @@ ios = \
 ]
 
 def custom_setup():
-    global setup_with_tester
+    # By default, don't setup with tester
+    setup_with_tester = False
+
     # Add the following arguments:
     # "INIT_MEM": if should setup with init_mem or not
     # "USE_EXTMEM": if should setup with extmem or not

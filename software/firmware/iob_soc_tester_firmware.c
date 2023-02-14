@@ -72,7 +72,7 @@ int main()
 
 #ifdef USE_EXTMEM
 	//Get address of first char in string stored in SUT's memory with first bit inverted
-	sutStr=(char*)(IOB_REGFILEIF_GET_REG5() ^ (0b1 << (DCACHE_ADDR_W-1))); //Note, DCACHE_ADDR_W may not be the same as DDR_ADDR_W when running in fpga
+	sutStr=(char*)(IOB_REGFILEIF_GET_REG5() ^ (0b1 << (MEM_ADDR_W-1))); //Note, MEM_ADDR_W may not be the same as DDR_ADDR_W when running in fpga
 
 	//Print the string by accessing that address
 	uart_puts("\nString read by Tester directly from SUT's memory:\n");

@@ -121,6 +121,22 @@ jobs:
       #- name: icarus test
       #  run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus
 
+  tester-icarus:
+    runs-on: self-hosted
+    timeout-minutes: 30
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ icarus ]
+  
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: Tester Icarus
+        run: make tester-sim-test SIMULATOR=icarus
+
   tester-verilator:
     runs-on: self-hosted
     timeout-minutes: 30
