@@ -74,23 +74,24 @@ module iob_soc_sut_fpga_wrapper
     assign {ENET_TX_D3, ENET_TX_D2, ENET_TX_D1, ENET_TX_D0} = TX_DATA;
     assign RX_DATA = {ENET_RX_D3, ENET_RX_D2, ENET_RX_D1, ENET_RX_D0};
 
-    //eth clock
-   clk_buf_altclkctrl_0 txclk_buf (
-	              .inclk  (ENET_RX_CLK),
-	              .outclk (ETH_CLK)
-	              );
-   
-
-    assign eth_locked = 1'b1; 
-
-
-   ddio_out_clkbuf ddio_out_clkbuf_inst (
-                                         .aclr ( ~ENET_RESETN ),
-                                         .datain_h ( 1'b0 ),
-                                         .datain_l ( 1'b1 ),
-                                         .outclock ( ETH_CLK ),
-                                         .dataout ( ENET_GTX_CLK )
-                                         );
+//        //  TEMPORARILY DISABLE ETHERNET as it is not yet compatible with python-setup
+//    //eth clock
+//   clk_buf_altclkctrl_0 txclk_buf (
+//	              .inclk  (ENET_RX_CLK),
+//	              .outclk (ETH_CLK)
+//	              );
+//   
+//
+//    assign eth_locked = 1'b1; 
+//
+//
+//   ddio_out_clkbuf ddio_out_clkbuf_inst (
+//                                         .aclr ( ~ENET_RESETN ),
+//                                         .datain_h ( 1'b0 ),
+//                                         .datain_l ( 1'b1 ),
+//                                         .outclock ( ETH_CLK ),
+//                                         .dataout ( ENET_GTX_CLK )
+//                                         );
 
 `ifdef IOB_SOC_SUT_USE_EXTMEM
    //axi wires between system backend and axi bridge
@@ -111,19 +112,20 @@ module iob_soc_sut_fpga_wrapper
       .arst_i (rst),
       .trap_o (trap),
 
-      //ETHERNET
-      //PHY
-      .ETHERNET0_ETH_PHY_RESETN(ENET_RESETN),
-      //PLL
-      .ETHERNET0_PLL_LOCKED(eth_locked),
-      //MII
-      .ETHERNET0_RX_CLK(ETH_CLK),
-      .ETHERNET0_RX_DATA(RX_DATA),
-      .ETHERNET0_RX_DV(ENET_RX_DV),
-      .ETHERNET0_TX_CLK(ETH_CLK),
-      .ETHERNET0_TX_DATA(TX_DATA),
-      .ETHERNET0_TX_EN(ENET_TX_EN),
-
+//        //  TEMPORARILY DISABLE ETHERNET as it is not yet compatible with python-setup
+//      //ETHERNET
+//      //PHY
+//      .ETHERNET0_ETH_PHY_RESETN(ENET_RESETN),
+//      //PLL
+//      .ETHERNET0_PLL_LOCKED(eth_locked),
+//      //MII
+//      .ETHERNET0_RX_CLK(ETH_CLK),
+//      .ETHERNET0_RX_DATA(RX_DATA),
+//      .ETHERNET0_RX_DV(ENET_RX_DV),
+//      .ETHERNET0_TX_CLK(ETH_CLK),
+//      .ETHERNET0_TX_DATA(TX_DATA),
+//      .ETHERNET0_TX_EN(ENET_TX_EN),
+//
 `ifdef IOB_SOC_SUT_USE_EXTMEM
       `include "iob_axi_m_portmap.vh"	
 `endif

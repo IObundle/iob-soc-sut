@@ -112,24 +112,25 @@ module iob_soc_sut_fpga_wrapper
       .arst_i (rst),
       .trap_o (trap),
 
-        //
-        // 3. System instance ports for ethernet interface
-        //
-
-        //ETHERNET
-        //PHY
-        .ETHERNET0_ETH_PHY_RESETN(ENET_RESETN),
-
-        //PLL
-        .ETHERNET0_PLL_LOCKED(locked),
-
-        //MII
-        .ETHERNET0_RX_CLK(ETH_CLK),
-        .ETHERNET0_RX_DATA(RX_DATA),
-        .ETHERNET0_RX_DV(ENET_RX_DV),
-        .ETHERNET0_TX_CLK(ETH_CLK),
-        .ETHERNET0_TX_DATA(TX_DATA),
-        .ETHERNET0_TX_EN(ENET_TX_EN),
+//        //  TEMPORARILY DISABLE ETHERNET as it is not yet compatible with
+//        python-setup
+//        // 3. System instance ports for ethernet interface
+//        //
+//
+//        //ETHERNET
+//        //PHY
+//        .ETHERNET0_ETH_PHY_RESETN(ENET_RESETN),
+//
+//        //PLL
+//        .ETHERNET0_PLL_LOCKED(locked),
+//
+//        //MII
+//        .ETHERNET0_RX_CLK(ETH_CLK),
+//        .ETHERNET0_RX_DATA(RX_DATA),
+//        .ETHERNET0_RX_DV(ENET_RX_DV),
+//        .ETHERNET0_TX_CLK(ETH_CLK),
+//        .ETHERNET0_TX_DATA(TX_DATA),
+//        .ETHERNET0_TX_EN(ENET_TX_EN),
 `ifdef IOB_SOC_SUT_USE_EXTMEM
       //axi system backend interface
       `include "iob_axi_m_portmap.vh"	
