@@ -142,22 +142,23 @@ It inverts the most significant bit of that pointer to access the SUT's address 
 More details on configuring, building and running the Tester are available in the `README.md` file of the [IOb-SoC-Tester](https://github.com/IObundle/iob-soc-tester) repository.
 
 
-### Simulate the Tester along with the SUT
+### Build and run the Tester along with the SUT
+
+The steps to build and run the Tester along with the SUT, are the same as the ones for the SUT individually.
+You just need to make sure that the system was previously setup with the `TESTER=1` argument in the `make setup TESTER=1` command.
 
 To build and run in simulation, type:
 
 ```Bash
-make -C ../iob_soc_sut_V* tester-sim-run [SIMULATOR=<simulator name>]
+make -C ../iob_soc_sut_V* sim-run [SIMULATOR=<simulator name>]
 ```
 
 `<simulator name>` is the name of the simulator's Makefile segment.
 
-### Build and run the Tester along with the SUT on the FPGA board
-
 To build for FPGA, type:
 
 ```Bash
-make -C ../iob_soc_sut_V* tester-fpga-build [BOARD=<board name>]
+make -C ../iob_soc_sut_V* fpga-build [BOARD=<board name>]
 ```
 
 `<board name>` is the name of the board's run directory.
@@ -165,7 +166,7 @@ make -C ../iob_soc_sut_V* tester-fpga-build [BOARD=<board name>]
 To run in FPGA, type:
 
 ```Bash
-make -C ../iob_soc_sut_V* tester-fpga-run [BOARD=<board name>]
+make -C ../iob_soc_sut_V* fpga-run [BOARD=<board name>]
 ```
 
 ## Cleaning
