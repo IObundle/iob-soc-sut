@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "build_configuration.h"
 #include "iob_soc_sut_system.h"
 #include "iob_soc_sut_periphs.h"
 #include "iob_soc_sut_conf.h"
@@ -21,22 +22,11 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG3(128);
   IOB_REGFILEIF_INVERTED_SET_REG4(1024);
 
-#ifdef USE_DDR
-#ifdef RUN_EXTMEM
+#ifdef USE_EXTMEM
   char sutMemoryMessage[]="This message is stored in SUT's memory\n";
   
   //Give address of stored message to Tester using regfileif register 4
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
-#else
-  char ddrMemoryMessage[]="This message was written to DDR by the SUT\n", *strPtr;
-  int i;
-  //Write string to DDR, starting at address 0, to later be read by tester
-  strPtr=(char*)(0b1 << E); //Address 0 of DDR
-  for(i=0; ddrMemoryMessage[i]!='\0'; i++){
-    strPtr[i]=ddrMemoryMessage[i];
-  }
-  strPtr[i]='\0';
-#endif
 #endif
 
   uart_finish();

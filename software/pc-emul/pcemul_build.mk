@@ -1,11 +1,12 @@
 # Local pc-emul makefile fragment for custom pc emulation targets.
 # This file is included in BUILD_DIR/sw/pc/Makefile.
 
-# Include directory with system.h
+# Include directory with iob_soc_sut_system.h
 INCLUDE+=-I.. -I../psrc -I../src -I../esrc
 
 # SOURCES
 # exclude bootloader sources
+SRC+=../firmware/iob_soc_sut_firmware.c
 SRC+=$(wildcard ../src/*.c)
 SRC:=$(filter-out %boot.c,$(SRC))
 

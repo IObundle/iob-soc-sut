@@ -5,13 +5,13 @@
   
 module int_mem
   #(
-    parameter ADDR_W=`IOB_SOC_SUT_ADDR_W,
-    parameter DATA_W=`IOB_SOC_SUT_DATA_W,
+    parameter ADDR_W = 0,
+    parameter DATA_W = 0,
     parameter HEXFILE = "firmware",
     parameter BOOT_HEXFILE = "boot",
-    parameter SRAM_ADDR_W = `IOB_SOC_SUT_SRAM_ADDR_W,
-    parameter BOOTROM_ADDR_W = `IOB_SOC_SUT_BOOTROM_ADDR_W,
-    parameter B_BIT = `IOB_SOC_SUT_B
+    parameter SRAM_ADDR_W = 0,
+    parameter BOOTROM_ADDR_W = 0,
+    parameter B_BIT = 0
     )
    (
 

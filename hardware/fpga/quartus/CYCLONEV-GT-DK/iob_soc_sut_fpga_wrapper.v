@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
-`include "iob_soc_sut.vh"
+`include "iob_soc_sut_conf.vh"
+`include "build_configuration.vh"
 
 module iob_soc_sut_fpga_wrapper
   (
@@ -11,7 +12,7 @@ module iob_soc_sut_fpga_wrapper
    output        uart_txd,
    input         uart_rxd,
 
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
    output [13:0] ddr3b_a, //SSTL15  //Address
    output [2:0]  ddr3b_ba, //SSTL15  //Bank Address
    output        ddr3b_rasn, //SSTL15  //Row Address Strobe
@@ -48,8 +49,8 @@ module iob_soc_sut_fpga_wrapper
    //axi4 parameters
    localparam AXI_ID_W  = 1;
    localparam AXI_LEN_W = 4;
-   localparam AXI_ADDR_W=`IOB_SOC_SUT_DDR_ADDR_W;
-   localparam AXI_DATA_W=`IOB_SOC_SUT_DDR_DATA_W;
+   localparam AXI_ADDR_W=`DDR_ADDR_W;
+   localparam AXI_DATA_W=`DDR_DATA_W;
    
    //-----------------------------------------------------------------
    // Clocking / Reset
@@ -73,25 +74,26 @@ module iob_soc_sut_fpga_wrapper
     assign {ENET_TX_D3, ENET_TX_D2, ENET_TX_D1, ENET_TX_D0} = TX_DATA;
     assign RX_DATA = {ENET_RX_D3, ENET_RX_D2, ENET_RX_D1, ENET_RX_D0};
 
-    //eth clock
-   clk_buf_altclkctrl_0 txclk_buf (
-	              .inclk  (ENET_RX_CLK),
-	              .outclk (ETH_CLK)
-	              );
-   
+//        //  TEMPORARILY DISABLE ETHERNET as it is not yet compatible with python-setup
+//    //eth clock
+//   clk_buf_altclkctrl_0 txclk_buf (
+//	              .inclk  (ENET_RX_CLK),
+//	              .outclk (ETH_CLK)
+//	              );
+//   
+//
+//    assign eth_locked = 1'b1; 
+//
+//
+//   ddio_out_clkbuf ddio_out_clkbuf_inst (
+//                                         .aclr ( ~ENET_RESETN ),
+//                                         .datain_h ( 1'b0 ),
+//                                         .datain_l ( 1'b1 ),
+//                                         .outclock ( ETH_CLK ),
+//                                         .dataout ( ENET_GTX_CLK )
+//                                         );
 
-    assign eth_locked = 1'b1; 
-
-
-   ddio_out_clkbuf ddio_out_clkbuf_inst (
-                                         .aclr ( ~ENET_RESETN ),
-                                         .datain_h ( 1'b0 ),
-                                         .datain_l ( 1'b1 ),
-                                         .outclock ( ETH_CLK ),
-                                         .dataout ( ENET_GTX_CLK )
-                                         );
-
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
    //axi wires between system backend and axi bridge
  `include "iob_axi_wire.vh"
 `endif
@@ -110,20 +112,21 @@ module iob_soc_sut_fpga_wrapper
       .arst_i (rst),
       .trap_o (trap),
 
-      //ETHERNET
-      //PHY
-      .ETHERNET0_ETH_PHY_RESETN(ENET_RESETN),
-      //PLL
-      .ETHERNET0_PLL_LOCKED(eth_locked),
-      //MII
-      .ETHERNET0_RX_CLK(ETH_CLK),
-      .ETHERNET0_RX_DATA(RX_DATA),
-      .ETHERNET0_RX_DV(ENET_RX_DV),
-      .ETHERNET0_TX_CLK(ETH_CLK),
-      .ETHERNET0_TX_DATA(TX_DATA),
-      .ETHERNET0_TX_EN(ENET_TX_EN),
-
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+//        //  TEMPORARILY DISABLE ETHERNET as it is not yet compatible with python-setup
+//      //ETHERNET
+//      //PHY
+//      .ETHERNET0_ETH_PHY_RESETN(ENET_RESETN),
+//      //PLL
+//      .ETHERNET0_PLL_LOCKED(eth_locked),
+//      //MII
+//      .ETHERNET0_RX_CLK(ETH_CLK),
+//      .ETHERNET0_RX_DATA(RX_DATA),
+//      .ETHERNET0_RX_DV(ENET_RX_DV),
+//      .ETHERNET0_TX_CLK(ETH_CLK),
+//      .ETHERNET0_TX_DATA(TX_DATA),
+//      .ETHERNET0_TX_EN(ENET_TX_EN),
+//
+`ifdef IOB_SOC_SUT_USE_EXTMEM
       `include "iob_axi_m_portmap.vh"	
 `endif
 
@@ -135,7 +138,7 @@ module iob_soc_sut_fpga_wrapper
       );
 
    
-`ifdef IOB_SOC_SUT_RUN_EXTMEM
+`ifdef IOB_SOC_SUT_USE_EXTMEM
    //user reset
    wire          locked;
    wire          init_done;
@@ -168,41 +171,41 @@ module iob_soc_sut_fpga_wrapper
       .memory_mem_dqs_n (ddr3b_dqs_n),
       .memory_mem_odt (ddr3b_odt),
       
-      .axi_bridge_0_s0_awid        (axi_awid_o     ),
-      .axi_bridge_0_s0_awaddr      (axi_awaddr_o   ),
-      .axi_bridge_0_s0_awlen       (axi_awlen_o    ),
-      .axi_bridge_0_s0_awsize      (axi_awsize_o   ),
-      .axi_bridge_0_s0_awburst     (axi_awburst_o  ),
-      .axi_bridge_0_s0_awlock      (axi_awlock_o   ),
-      .axi_bridge_0_s0_awcache     (axi_awcache_o  ),
-      .axi_bridge_0_s0_awprot      (axi_awprot_o   ),
-      .axi_bridge_0_s0_awvalid     (axi_awvalid_o  ),
-      .axi_bridge_0_s0_awready     (axi_awready_i  ),
-      .axi_bridge_0_s0_wdata       (axi_wdata_o    ),
-      .axi_bridge_0_s0_wstrb       (axi_wstrb_o    ),
-      .axi_bridge_0_s0_wlast       (axi_wlast_o    ),
-      .axi_bridge_0_s0_wvalid      (axi_wvalid_o   ),
-      .axi_bridge_0_s0_wready      (axi_wready_i   ),
-      .axi_bridge_0_s0_bid         (axi_bid_i      ),
-      .axi_bridge_0_s0_bresp       (axi_bresp_i    ),
-      .axi_bridge_0_s0_bvalid      (axi_bvalid_i   ),
-      .axi_bridge_0_s0_bready      (axi_bready_o   ),
-      .axi_bridge_0_s0_arid        (axi_arid_o     ),
-      .axi_bridge_0_s0_araddr      (axi_araddr_o   ),
-      .axi_bridge_0_s0_arlen       (axi_arlen_o    ),
-      .axi_bridge_0_s0_arsize      (axi_arsize_o   ),
-      .axi_bridge_0_s0_arburst     (axi_arburst_o  ),
-      .axi_bridge_0_s0_arlock      (axi_arlock_o   ),
-      .axi_bridge_0_s0_arcache     (axi_arcache_o  ),
-      .axi_bridge_0_s0_arprot      (axi_arprot_o   ),
-      .axi_bridge_0_s0_arvalid     (axi_arvalid_o  ),
-      .axi_bridge_0_s0_arready     (axi_arready_i  ),
-      .axi_bridge_0_s0_rid         (axi_rid_i      ),
-      .axi_bridge_0_s0_rdata       (axi_rdata_i    ),
-      .axi_bridge_0_s0_rresp       (axi_rresp_i    ),
-      .axi_bridge_0_s0_rlast       (axi_rlast_i    ),
-      .axi_bridge_0_s0_rvalid      (axi_rvalid_i   ),
-      .axi_bridge_0_s0_rready      (axi_rready_o   ),
+      .axi_bridge_0_s0_awid (axi_awid),
+      .axi_bridge_0_s0_awaddr (axi_awaddr),
+      .axi_bridge_0_s0_awlen (axi_awlen),
+      .axi_bridge_0_s0_awsize (axi_awsize),
+      .axi_bridge_0_s0_awburst (axi_awburst),
+      .axi_bridge_0_s0_awlock (axi_awlock),
+      .axi_bridge_0_s0_awcache (axi_awcache),
+      .axi_bridge_0_s0_awprot (axi_awprot),
+      .axi_bridge_0_s0_awvalid (axi_awvalid),
+      .axi_bridge_0_s0_awready (axi_awready),
+      .axi_bridge_0_s0_wdata (axi_wdata),
+      .axi_bridge_0_s0_wstrb (axi_wstrb),
+      .axi_bridge_0_s0_wlast (axi_wlast),
+      .axi_bridge_0_s0_wvalid (axi_wvalid),
+      .axi_bridge_0_s0_wready (axi_wready),
+      .axi_bridge_0_s0_bid (axi_bid),
+      .axi_bridge_0_s0_bresp (axi_bresp),
+      .axi_bridge_0_s0_bvalid (axi_bvalid),
+      .axi_bridge_0_s0_bready (axi_bready),
+      .axi_bridge_0_s0_arid (axi_arid),
+      .axi_bridge_0_s0_araddr (axi_araddr),
+      .axi_bridge_0_s0_arlen (axi_arlen),
+      .axi_bridge_0_s0_arsize (axi_arsize),
+      .axi_bridge_0_s0_arburst (axi_arburst),
+      .axi_bridge_0_s0_arlock (axi_arlock),
+      .axi_bridge_0_s0_arcache (axi_arcache),
+      .axi_bridge_0_s0_arprot (axi_arprot),
+      .axi_bridge_0_s0_arvalid (axi_arvalid),
+      .axi_bridge_0_s0_arready (axi_arready),
+      .axi_bridge_0_s0_rid (axi_rid),
+      .axi_bridge_0_s0_rdata (axi_rdata),
+      .axi_bridge_0_s0_rresp (axi_rresp),
+      .axi_bridge_0_s0_rlast (axi_rlast),
+      .axi_bridge_0_s0_rvalid (axi_rvalid),
+      .axi_bridge_0_s0_rready (axi_rready),
 
 
       .mem_if_ddr3_emif_0_pll_sharing_pll_mem_clk (),
