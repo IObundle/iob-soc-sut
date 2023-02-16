@@ -63,7 +63,7 @@ build-sut-netlist:
 
 tester-sut-netlist: build-sut-netlist
 	#Build tester without sut sources, but with netlist instead
-	NETLIST_EXTENSION=`ls ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut.* | rev | cut -d. -f1 | rev` &&\
+	NETLIST_EXTENSION=`ls ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut.* | grep -e edif -e qxp | rev | cut -d. -f1 | rev` &&\
 	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
 	rm -fr ../iob_soc_tester_V* && make setup TESTER_ONLY=1 BUILD_DIR="../iob_soc_tester_$$TESTER_VER" &&\
 	cp ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut.* ../iob_soc_tester_$$TESTER_VER/hardware/fpga/ &&\
