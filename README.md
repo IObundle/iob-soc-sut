@@ -1,6 +1,6 @@
 # IOb-SoC-SUT
 
-IOb-SoC-SUT is a generic RISC-V SoC, based on [IOb-SoC](https://github.com/IObundle/iob-soc), used to verify the [IOb-SoC-Tester](https://github.com/IObundle/iob-soc-tester).
+IOb-SoC-SUT is a generic RISC-V SoC, based on [IOb-SoC](https://github.com/IObundle/iob-soc), used to verify the [IOb-SoC-Tester](https://github.com/IObundle/iob-soc-tester) [project](https://nlnet.nl/project/OpenCryptoTester#ack).
 This repository is a System Under Test (SUT) example, demonstrating the Tester's abilities for verification purposes.
 
 This system runs on bare metal and has UART and IOb-native interfaces.
@@ -196,7 +196,7 @@ make build-sut-netlist [BOARD=<board name>]
 The FPGA board will not be used during this stage.
 This variable is used to select which tool and server to use.
 
-This netlist can then be combined with the Tester using the specific configuration for the SUT's netlist located in the `submodules/NETLISTCONF/` directory.
+This netlist can then be combined with the Tester for verification.
 
 To build the SUT's netlist, attach it to the Tester and run it on the FPGA, type:
 
