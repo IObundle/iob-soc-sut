@@ -72,6 +72,7 @@ tester-sut-netlist: build-sut-netlist
 	echo -e "\nIP+=iob_soc_sut.$$NETLIST_EXTENSION" >> ../iob_soc_tester_$$TESTER_VER/hardware/fpga/fpga_build.mk &&\
 	cp software/firmware/iob_soc_tester_firmware.c ../iob_soc_tester_$$TESTER_VER/software/firmware
 	# Copy and modify iob_soc_sut_params.vh (needed for stub) and modify *_stub.v to insert the SUT parameters 
+	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
 	if [ -f ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_stub.v ]; then\
 		cp ../iob_soc_sut_V0.70/hardware/src/iob_soc_sut_params.vh ../iob_soc_tester_$$TESTER_VER/hardware/src/;\
 		sed -i -E 's/=[^,]*(,?)$$/=0\1/g' ../iob_soc_tester_$$TESTER_VER/hardware/src/iob_soc_sut_params.vh;\
