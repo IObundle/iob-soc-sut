@@ -184,6 +184,38 @@ The following command will delete the build directory:
 make clean
 ```
 
+## Setup the SUT as a netlist
+
+The SUT can be individually built as a netlist by running the following Makefile target:
+
+```Bash
+make build-sut-netlist [BOARD=<board name>]
+```
+
+`<board name>` is the name of the board's run directory.
+The FPGA board will not be used during this stage.
+This variable is used to select which tool and server to use.
+
+This netlist can then be combined with the Tester using the specific configuration for the SUT's netlist located in the `submodules/NETLISTCONF/` directory.
+
+To build the SUT's netlist, attach it to the Tester and run it on the FPGA, type:
+
+```Bash
+make tester-sut-netlist [BOARD=<board name>] [<control parameters>]
+```
+
+`<control parameters>` are system configuration parameters passed in the command line, overriding those in the `iob_soc_sut_setup.py` file.
+
+Check the commands run by the `tester-sut-netlist` Makefile target for more details.
+
+This command will generate the `../iob_soc_tester_V*/` build folder.
+To delete it, type:
+
+```Bash
+rm -r ../iob_soc_tester_V*
+```
+
+
 ## Instructions for Installing the RISC-V GNU Compiler Toolchain
 
 ### Get sources and checkout the supported stable version
