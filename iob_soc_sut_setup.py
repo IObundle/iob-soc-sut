@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import os, sys
+sys.path.insert(0, os.path.dirname(__file__)+'/submodules/IOBSOC/scripts')
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
+
 import setup
 from mk_configuration import update_define
 import tester
 from submodule_utils import import_setup
+from iob_soc import setup_iob_soc
 
 name='iob_soc_sut'
 version='V0.70'
@@ -208,7 +211,7 @@ def only_setup_tester():
 def main():
     custom_setup()
     # Setup this system
-    setup.setup(sys.modules[__name__])
+    setup_iob_soc(sys.modules[__name__])
 
 if __name__ == "__main__":
     main()

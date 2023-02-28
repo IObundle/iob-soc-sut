@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "build_configuration.h"
 #include "iob_soc_sut_system.h"
 #include "iob_soc_sut_periphs.h"
 #include "iob_soc_sut_conf.h"
