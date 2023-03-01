@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os, sys
+sys.path.insert(0, os.path.dirname(__file__)+'/submodules/TESTER/scripts')
 sys.path.insert(0, os.path.dirname(__file__)+'/submodules/IOBSOC/scripts')
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 
