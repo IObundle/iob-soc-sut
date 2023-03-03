@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
 import os, sys
-sys.path.insert(0, os.path.dirname(__file__)+'/submodules/TESTER/scripts')
-sys.path.insert(0, os.path.dirname(__file__)+'/submodules/IOBSOC/scripts')
-sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 
+sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 import setup
 from mk_configuration import update_define
-import tester
 from submodule_utils import import_setup
-from iob_soc import setup_iob_soc
+
+sys.path.insert(0, os.path.dirname(__file__)+'/submodules/IOBSOC/scripts')
+import iob_soc
+
+sys.path.insert(0, os.path.dirname(__file__)+'/submodules/TESTER/scripts')
+import tester
 
 name='iob_soc_sut'
 version='V0.70'
 flows='pc-emul emb sim doc fpga'
-setup_dir=os.path.dirname(__file__)
-build_dir=f"../{name}_{version}"
+if setup.is_top_module(sys.modules[__name__]):
+    setup_dir=os.path.dirname(__file__)
+    build_dir=f"../{name}_{version}"
 
 # ######### Register file peripheral configuration ##############
 regfileif_options = {
@@ -177,6 +180,9 @@ ios = \
     {'name': 'axi_m_port', 'descr':'General interface signals', 'ports': [], 'if_defined':'USE_EXTMEM'},
 ]
 
+# Add IOb-SoC modules. These will copy and generate common files from the IOb-SoC repository.
+iob_soc.add_iob_soc_modules(sys.modules[__name__])
+
 def custom_setup():
     # By default, don't setup with tester
     setup_with_tester = False
@@ -212,7 +218,7 @@ def only_setup_tester():
 def main():
     custom_setup()
     # Setup this system
-    setup_iob_soc(sys.modules[__name__])
+    setup.setup(sys.modules[__name__])
 
 if __name__ == "__main__":
     main()
