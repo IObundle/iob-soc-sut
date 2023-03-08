@@ -44,7 +44,7 @@ tester_options = {
         {'name':'UART1', 'type':'UART', 'descr':'UART interface for communication with SUT', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the console', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the SUT', 'params':{}},
-        {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{}},
+        {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{'AXI_ID_W':'AXI_ID_W','AXI_LEN_W':'AXI_LEN_W'}},
         {'name':'IOBNATIVEBRIDGEIF0', 'type':'IOBNATIVEBRIDGEIF', 'descr':'IOb native interface for communication with SUT. Essentially a REGFILEIF without any registers.', 'params':{}},
     ],
 
