@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 
 import os, sys
+
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 import setup
 from mk_configuration import update_define
-import tester
 from submodule_utils import import_setup
+
+sys.path.insert(0, os.path.dirname(__file__)+'/submodules/IOBSOC/scripts')
+import iob_soc
+
+sys.path.insert(0, os.path.dirname(__file__)+'/submodules/TESTER/scripts')
+import tester
 
 name='iob_soc_sut'
 version='V0.70'
 flows='pc-emul emb sim doc fpga'
-setup_dir=os.path.dirname(__file__)
-build_dir=f"../{name}_{version}"
+if setup.is_top_module(sys.modules[__name__]):
+    setup_dir=os.path.dirname(__file__)
+    build_dir=f"../{name}_{version}"
 
 # ######### Register file peripheral configuration ##############
 regfileif_options = {
@@ -37,7 +44,7 @@ tester_options = {
         {'name':'UART1', 'type':'UART', 'descr':'UART interface for communication with SUT', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the console', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the SUT', 'params':{}},
-        {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{}},
+        {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{'AXI_ID_W':'AXI_ID_W','AXI_LEN_W':'AXI_LEN_W'}},
         {'name':'IOBNATIVEBRIDGEIF0', 'type':'IOBNATIVEBRIDGEIF', 'descr':'IOb native interface for communication with SUT. Essentially a REGFILEIF without any registers.', 'params':{}},
     ],
 
@@ -173,6 +180,9 @@ ios = \
     {'name': 'axi_m_port', 'descr':'General interface signals', 'ports': [], 'if_defined':'USE_EXTMEM'},
 ]
 
+# Add IOb-SoC modules. These will copy and generate common files from the IOb-SoC repository.
+iob_soc.add_iob_soc_modules(sys.modules[__name__])
+
 def custom_setup():
     # By default, don't setup with tester
     setup_with_tester = False
@@ -196,7 +206,7 @@ def custom_setup():
     
     for conf in confs:
         if (conf['name'] == 'USE_EXTMEM') and conf['val']:
-            submodules['hw_setup']['headers'].append([ 'ddr4_', 'axi_wire', 'ddr4_', 'ddr4_' ])
+            submodules['hw_setup']['headers'].append({ 'file_prefix':'ddr4_', 'interface':'axi_wire', 'wire_prefix':'ddr4_', 'port_prefix':'ddr4_' })
 
 # Setup the Tester without the SUT sources
 def only_setup_tester():

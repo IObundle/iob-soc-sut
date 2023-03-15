@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
+`include "bsp.vh"
 `include "iob_soc_sut_conf.vh"
-`include "build_configuration.vh"
 
 module iob_soc_sut_fpga_wrapper
   (

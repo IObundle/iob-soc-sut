@@ -3,7 +3,7 @@
  *********************************************************/
 #include "stdlib.h"
 #include <stdio.h>
-#include "build_configuration.h"
+#include "bsp.h"
 #include "iob_soc_tester_system.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"

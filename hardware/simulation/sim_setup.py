@@ -1,5 +1,5 @@
 # This script is called during setup.
-# You can use 'setup_module' to access the contents of the iob_soc_sut_setup.py python module
+# You can use 'setup_module' to access the contents of the iob_soc_setup.py python module
 import os
 import shutil
 
@@ -22,5 +22,5 @@ if macro and macro['val']:
 test_file_name+='.expected'
 
 # Copy correct test.expected file to build dir
-shutil.copyfile(os.path.join(setup_module.setup_dir, "hardware/simulation/src", test_file_name),os.path.join(dirpath,"test.expected"))
+shutil.copyfile(os.path.join(setup_module.setup_dir, "hardware/simulation/src", test_file_name),os.path.join(setup_module.build_dir, "hardware/simulation/test.expected"))
 

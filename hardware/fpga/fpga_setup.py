@@ -1,5 +1,5 @@
 # This script is called during setup.
-# You can use 'setup_module' to access the contents of the iob_soc_sut_setup.py python module
+# You can use 'setup_module' to access the contents of the iob_soc_setup.py python module
 import os
 import shutil
 
