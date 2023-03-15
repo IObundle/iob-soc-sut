@@ -10,8 +10,9 @@ IOb-Bootloader: Restart CPU to run user program...
 
 
 
-Hello world!
+[SUT]: Hello world!
 
 
-This message was sent from SUT!
+[SUT]: This message was sent from SUT!
+[SUT]: Stored values 128 and 1024 in REGFILEIF registers 3 and 4.
 IOb-Console: exiting...

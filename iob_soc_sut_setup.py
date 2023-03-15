@@ -86,7 +86,7 @@ tester_options = {
     [
         # Override default values of Tester params
         #{'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
-        #{'name':'SRAM_ADDR_W',   'type':'P', 'val':'16', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
+        {'name':'SRAM_ADDR_W',   'type':'P', 'val':'17', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
     ],
 
     'sut_fw_name':name+'_firmware',
