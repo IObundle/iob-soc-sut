@@ -58,7 +58,7 @@ tester_options = {
 
     'peripheral_portmap':
     [
-        ({'corename':'UART0', 'if_name':'rs232', 'port':'', 'bits':[]},                         {'corename':'', 'if_name':'', 'port':'', 'bits':[]}), #Map UART0 of Tester to external interface
+        ({'corename':'UART0', 'if_name':'rs232', 'port':'', 'bits':[]},                         {'corename':'self', 'if_name':'UART', 'port':'', 'bits':[]}), #Map UART0 of Tester to external interface
         # ================================================================== SUT IO mappings ==================================================================
         # SUT UART0
         #({'corename':'SUT0', 'if_name':'UART0_rs232', 'port':'', 'bits':[]},                    {'corename':'UART1', 'if_name':'rs232', 'port':'', 'bits':[]}), #Map UART0 of SUT to UART1 of Tester
