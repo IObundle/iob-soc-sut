@@ -140,6 +140,7 @@ jobs:
       # Run only the tests with INIT_MEM=1
       - name: Tester Icarus
         run: make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C ../iob_soc_sut_V*/ sim-run SIMULATOR=icarus | tee /dev/tty | grep "Verification successful!" > /dev/null
+      - name: Tester Icarus Extmem
         run: make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C ../iob_soc_sut_V*/ sim-run SIMULATOR=icarus | tee /dev/tty | grep "Verification successful!" > /dev/null
 
   tester-verilator:
