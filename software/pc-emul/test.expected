@@ -8,8 +8,14 @@ IOb-Console: connecting...
 
 
 
-Hello world!
+[SUT]: Hello world!
 
 
-This message was sent from SUT!
+[SUT]: This message was sent from SUT!
+
+[SUT]: Reading REGFILEIF contents:
+[SUT] Register 1: 1 
+[SUT] Register 2: 1 
+
+[SUT]: Stored values 128 and 2048 in REGFILEIF registers 3 and 4.
 IOb-Console: exiting...
