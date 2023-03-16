@@ -9,7 +9,7 @@ IOb-Bootloader: connected!
 IOb-UART: requesting to receive file
 IOb-Console: got file send request
 IOb-Console: file name b'iob_soc_sut_firmware.bin' 
-IOb-Console: file of size 22292 bytes
+IOb-Console: file of size 22436 bytes
   0 %
  10 %
  20 %
@@ -27,7 +27,7 @@ IOb-Bootloader: Loading firmware...
 IOb-UART: requesting to send file
 IOb-Console: got file receive request
 IOb-Console: file name b's_fw.bin' 
-IOb-Console : file size: 22292 bytes
+IOb-Console : file size: 22436 bytes
   0 %
  10 %
  20 %
@@ -49,5 +49,10 @@ IOb-Bootloader: Restart CPU to run user program...
 
 
 [SUT]: This message was sent from SUT!
-[SUT]: Stored values 128 and 1024 in REGFILEIF registers 3 and 4.
+
+[SUT]: Reading REGFILEIF contents:
+[SUT] Register 1: 0 
+[SUT] Register 2: 0 
+
+[SUT]: Stored values 128 and 2048 in REGFILEIF registers 3 and 4.
 IOb-Console: exiting...

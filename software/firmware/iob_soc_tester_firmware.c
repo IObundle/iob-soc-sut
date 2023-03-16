@@ -27,6 +27,11 @@ int main()
 	IOB_REGFILEIF_INIT_BASEADDR(IOBNATIVEBRIDGEIF0_BASE);
 
 	uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
+	
+	//Write data to the registers of REGFILEIF to be read by the Tester.
+	IOB_REGFILEIF_SET_REG1(64);
+	IOB_REGFILEIF_SET_REG2(1024);
+	uart_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the SUT's REGFILEIF.\n\n");
 
 	uart_puts("[Tester]: Initializing SUT via UART...\n");
 	//Init and switch to uart1 (connected to the SUT)
@@ -145,17 +150,17 @@ int main()
 	uart_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 
 	//Read data from REGFILEIF (was written by the SUT)
-	uart_puts("[Tester]: Reading REGFILEIF contents:\n");
+	uart_puts("[Tester]: Reading SUT's REGFILEIF contents:\n");
 	printf("[Tester] Register 3: %d \n", IOB_REGFILEIF_GET_REG3());
 	printf("[Tester] Register 4: %d \n", IOB_REGFILEIF_GET_REG4());
 
 #ifdef USE_EXTMEM
 	uart_puts("\n[Tester] Using shared external memory. Obtain SUT memory string pointer via REGFILEIF register 5...\n");
+	uart_puts("[Tester]: String pointer is: ");
+	printf("0x%x",IOB_REGFILEIF_GET_REG5());
+	uart_putc('\n');
 	//Get address of first char in string stored in SUT's memory with first bit inverted
 	sutStr=(char*)(IOB_REGFILEIF_GET_REG5() ^ (0b1 << (MEM_ADDR_W-1))); //Note, MEM_ADDR_W may not be the same as DDR_ADDR_W when running in fpga
-	uart_puts("[Tester]: String pointer is: ");
-	printf("0x%x",sutStr);
-	uart_putc('\n');
 
 	//Print the string by accessing that address
 	uart_puts("[Tester]: String read from SUT's memory via shared memory:\n");

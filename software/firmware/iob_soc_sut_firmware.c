@@ -16,12 +16,17 @@ int main()
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
 
   //Write to UART0 connected to the Tester.
-  uart_puts("[SUT]: This message was sent from SUT!\n");
+  uart_puts("[SUT]: This message was sent from SUT!\n\n");
+  
+  //Print contents of REGFILEIF registers 1 and 2
+  uart_puts("[SUT]: Reading REGFILEIF contents:\n");
+  printf("[SUT] Register 1: %d \n", IOB_REGFILEIF_INVERTED_GET_REG1());
+  printf("[SUT] Register 2: %d \n\n", IOB_REGFILEIF_INVERTED_GET_REG2());
 
   //Write data to the registers of REGFILEIF to be read by the Tester.
   IOB_REGFILEIF_INVERTED_SET_REG3(128);
-  IOB_REGFILEIF_INVERTED_SET_REG4(1024);
-  uart_puts("[SUT]: Stored values 128 and 1024 in REGFILEIF registers 3 and 4.\n");
+  IOB_REGFILEIF_INVERTED_SET_REG4(2048);
+  uart_puts("[SUT]: Stored values 128 and 2048 in REGFILEIF registers 3 and 4.\n");
 
 #ifdef USE_EXTMEM
   char sutMemoryMessage[]="This message is stored in SUT's memory\n";

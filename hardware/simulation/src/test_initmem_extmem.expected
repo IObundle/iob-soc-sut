@@ -15,7 +15,12 @@ IOb-Bootloader: Restart CPU to run user program...
 
 
 [SUT]: This message was sent from SUT!
-[SUT]: Stored values 128 and 1024 in REGFILEIF registers 3 and 4.
+
+[SUT]: Reading REGFILEIF contents:
+[SUT] Register 1: 0 
+[SUT] Register 2: 0 
+
+[SUT]: Stored values 128 and 2048 in REGFILEIF registers 3 and 4.
 
 [SUT]: Using external memory. Stored a string in memory at location: 0x7fc8
 [SUT]: Stored string memory location in REGFILEIF register 5.
