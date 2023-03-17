@@ -58,7 +58,7 @@ tester_options = {
 
     'peripheral_portmap':
     [
-        ({'corename':'UART0', 'if_name':'rs232', 'port':'', 'bits':[]},                         {'corename':'', 'if_name':'', 'port':'', 'bits':[]}), #Map UART0 of Tester to external interface
+        ({'corename':'UART0', 'if_name':'rs232', 'port':'', 'bits':[]},                         {'corename':'self', 'if_name':'UART', 'port':'', 'bits':[]}), #Map UART0 of Tester to external interface
         # ================================================================== SUT IO mappings ==================================================================
         # SUT UART0
         #({'corename':'SUT0', 'if_name':'UART0_rs232', 'port':'', 'bits':[]},                    {'corename':'UART1', 'if_name':'rs232', 'port':'', 'bits':[]}), #Map UART0 of SUT to UART1 of Tester
@@ -86,7 +86,7 @@ tester_options = {
     [
         # Override default values of Tester params
         #{'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
-        #{'name':'SRAM_ADDR_W',   'type':'P', 'val':'16', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
+        {'name':'SRAM_ADDR_W',   'type':'P', 'val':'17', 'min':'1', 'max':'32', 'descr':"SRAM address width"},
     ],
 
     'sut_fw_name':name+'_firmware',
