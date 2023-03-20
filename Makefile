@@ -31,6 +31,10 @@ tester-sim-test:
 	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
+tester-sim-test-icarus:
+	make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+
 fpga-test:
 	make clean && make setup && make -C ../iob_soc_sut_V*/ fpga-test
 	make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ fpga-test
@@ -50,15 +54,15 @@ test-all:
 	make clean && make setup && make -C ../iob_soc_sut_V*/ doc-test
 
 .PHONY: sim-test fpga-test test-all
-.PHONY: tester-sim-test tester-fpga-test
+.PHONY: tester-sim-test tester-sim-test-icarus tester-fpga-test
 
 build-sut-netlist:
 	make clean && make setup 
 	# Rename constraint files
-	FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/quartus/CYCLONEV-GT-DK` &&\
-	mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper.sdc $$FPGA_DIR/iob_soc_sut.sdc
-	FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/vivado/AES-KU040-DB-G` &&\
-	mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper.xdc $$FPGA_DIR/iob_soc_sut.xdc
+	#FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/quartus/CYCLONEV-GT-DK` &&\
+	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
+	#FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/vivado/AES-KU040-DB-G` &&\
+	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
 	# Build netlist 
 	make -C ../iob_soc_sut_V*/ fpga-build IS_FPGA=0 NETLIST_NAME="iob_soc_sut"
 

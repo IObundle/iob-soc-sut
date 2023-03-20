@@ -134,14 +134,9 @@ jobs:
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      # Running tests with INIT_MEM=0 is to slow for icarus
-      #- name: Tester Icarus
-      #  run: make tester-sim-test SIMULATOR=icarus
-      # Run only the tests with INIT_MEM=1
+      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
       - name: Tester Icarus
-        run: make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C ../iob_soc_sut_V*/ sim-run SIMULATOR=icarus | tee /dev/tty | grep "Verification successful!" > /dev/null
-      - name: Tester Icarus Extmem
-        run: make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C ../iob_soc_sut_V*/ sim-run SIMULATOR=icarus | tee /dev/tty | grep "Verification successful!" > /dev/null
+        run: make tester-sim-test-icarus
 
   tester-verilator:
     runs-on: self-hosted
