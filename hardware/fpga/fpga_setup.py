@@ -23,17 +23,19 @@ else: contents.insert(1,"USE_EXTMEM:=0\n\n")
 with open(setup_module.build_dir+"/hardware/fpga/fpga_build.mk",'w') as file: file.writelines(contents)
 
 
-board_dirs = ['hardware/fpga/quartus/DE10-LITE/','hardware/fpga/quartus/CYCLONEV-GT-DK','hardware/fpga/vivado/AES-KU040-DB-G','hardware/fpga/vivado/BASYS3']
-# Remove all test*.expected files from boards, copy only the correct one
+board_dirs = [
+        #'hardware/fpga/quartus/DE10-LITE/',
+        'hardware/fpga/quartus/CYCLONEV-GT-DK',
+        'hardware/fpga/vivado/AES-KU040-DB-G',
+        #'hardware/fpga/vivado/BASYS3'
+        ]
+# Remove all test*.expected files from boards except for the correct one
 for board_dir in board_dirs:
-    # Delete all test*.expected files from build_dir
     dirpath=os.path.join(setup_module.build_dir, board_dir)
+    # Move test_file_name to a file named 'test.expected'
+    os.rename(os.path.join(dirpath, test_file_name),os.path.join(dirpath, 'test.expected'))
+    # Delete all test*.expected files from build_dir except 'test.expected'
     for file in os.listdir(dirpath):
-        if file.startswith("test") and file.endswith(".expected"):
+        if file.startswith("test") and file.endswith(".expected") and file != 'test.expected':
             os.remove(os.path.join(dirpath,file))
-
-    # Copy correct test.expected file to build dir
-    src_file = os.path.join(setup_module.setup_dir, board_dir, test_file_name)
-    if os.path.isfile(src_file):
-        shutil.copyfile(src_file,os.path.join(dirpath,"test.expected"))
 
