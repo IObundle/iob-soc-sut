@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys
+import os, sys, shutil
 
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 import setup
@@ -212,6 +212,8 @@ def custom_setup():
 def only_setup_tester():
     tester_module = import_setup(setup_dir+"/submodules/TESTER", module_parameters=tester_options)
     tester_module.main()
+    # Copy document/ directory to build dir (tester does not have one, and it is required by setup.mk)
+    shutil.copytree(setup_dir+"/document", f"../{tester_module.name}_{tester_module.version}"+"/document", dirs_exist_ok=True)
     exit(0)
 
 # Main function to setup this system and its components

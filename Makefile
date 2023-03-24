@@ -64,17 +64,16 @@ build-sut-netlist:
 	#FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/vivado/AES-KU040-DB-G` &&\
 	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
 	# Build netlist 
-	make -C ../iob_soc_sut_V*/ fpga-build IS_FPGA=0 NETLIST_NAME="iob_soc_sut"
+	make -C ../iob_soc_sut_V*/ fpga-build IS_FPGA=0
 
 tester-sut-netlist: build-sut-netlist
 	#Build tester without sut sources, but with netlist instead
-	NETLIST_EXTENSION=`ls ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut.* | grep -e edif -e qxp | rev | cut -d. -f1 | rev` &&\
 	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
 	rm -fr ../iob_soc_tester_V* && make setup TESTER_ONLY=1 BUILD_DIR="../iob_soc_tester_$$TESTER_VER" &&\
-	cp ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut.* ../iob_soc_tester_$$TESTER_VER/hardware/fpga/ &&\
+	cp ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_fpga_wrapper_netlist.v ../iob_soc_tester_$$TESTER_VER/hardware/fpga/iob_soc_sut.v &&\
 	cp ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_firmware.* ../iob_soc_tester_$$TESTER_VER/hardware/fpga/ &&\
 	if [ -f ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_stub.v ]; then cp ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_stub.v ../iob_soc_tester_$$TESTER_VER/hardware/src/; fi &&\
-	echo -e "\nIP+=iob_soc_sut.$$NETLIST_EXTENSION" >> ../iob_soc_tester_$$TESTER_VER/hardware/fpga/fpga_build.mk &&\
+	echo -e "\nIP+=iob_soc_sut.v" >> ../iob_soc_tester_$$TESTER_VER/hardware/fpga/fpga_build.mk &&\
 	cp software/firmware/iob_soc_tester_firmware.c ../iob_soc_tester_$$TESTER_VER/software/firmware
 	# Copy and modify iob_soc_sut_params.vh (needed for stub) and modify *_stub.v to insert the SUT parameters 
 	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
@@ -84,6 +83,7 @@ tester-sut-netlist: build-sut-netlist
 		sed -i 's/_sut(/_sut#(\n`include "iob_soc_sut_params.vh"\n)(/g' ../iob_soc_tester_$$TESTER_VER/hardware/src/iob_soc_sut_stub.v;\
 	fi
 	# Run Tester on fpga
-	make -C ../iob_soc_tester_V*/ fpga-run | tee /dev/tty | grep "Verification successful!" > /dev/null
+	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
+	make -C ../iob_soc_tester_V*/ fpga-run | tee ../iob_soc_tester_$$TESTER_VER/test.log && grep "Verification successful!" ../iob_soc_tester_$$TESTER_VER/test.log > /dev/null
 
 .PHONY: build-sut-netlist test-sut-netlist
