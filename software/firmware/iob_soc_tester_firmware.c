@@ -21,6 +21,9 @@ int main()
 	uint32_t file_size = 0;
 	char c, msgBuffer[5096], *sutStr;
 	int i = 0;
+#ifndef INIT_MEM
+	char sut_firmware[SUT_FIRMWARE_SIZE];
+#endif
 
 	//Init uart0
 	uart_init(UART0_BASE,FREQ/BAUD);   
@@ -52,7 +55,6 @@ int main()
 	uart_puts("[Tester]: SUT memory is not initalized. Waiting for firmware transfer request from SUT...\n");
 	IOB_UART_INIT_BASEADDR(UART1_BASE);
 
-  char *sut_firmware = malloc(SUT_FIRMWARE_SIZE);
   //receive firmware request from SUT 
   //Wait for FRX signal from SUT
   while(uart_getc()!=FRX);
