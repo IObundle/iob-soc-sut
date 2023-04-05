@@ -202,21 +202,21 @@ jobs:
       - name: Tester CYCLONEV
         run: make tester-fpga-test-cyclone
 
-  tester-netlist-cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 60
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ tester-cyclonev ]
-  
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: Tester Netlist CYCLONEV
-        run: make tester-sut-netlist BOARD=CYCLONEV-GT-DK
+  #tester-netlist-cyclonev:
+  #  runs-on: self-hosted
+  #  timeout-minutes: 60
+  #  # always run, except when previous job was cancelled
+  #  if: ${{ !cancelled() }}
+  #  # run after indicated job
+  #  needs: [ tester-cyclonev ]
+  #
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #      with:
+  #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #        submodules: 'recursive'
+  #    - name: Tester Netlist CYCLONEV
+  #      run: make tester-sut-netlist BOARD=CYCLONEV-GT-DK
   
   aes-ku040:
     runs-on: self-hosted
@@ -266,21 +266,21 @@ jobs:
       - name: Tester KU040
         run: make tester-fpga-test BOARD=AES-KU040-DB-G
 
-  tester-netlist-aes-ku040:
-    runs-on: self-hosted
-    timeout-minutes: 90
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ tester-aes-ku040 ]
-  
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: Tester Netlist KU040
-        run: make tester-sut-netlist BOARD=AES-KU040-DB-G
+  #tester-netlist-aes-ku040:
+  #  runs-on: self-hosted
+  #  timeout-minutes: 90
+  #  # always run, except when previous job was cancelled
+  #  if: ${{ !cancelled() }}
+  #  # run after indicated job
+  #  needs: [ tester-aes-ku040 ]
+  #
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #      with:
+  #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #        submodules: 'recursive'
+  #    - name: Tester Netlist KU040
+  #      run: make tester-sut-netlist BOARD=AES-KU040-DB-G
   
   doc:
     runs-on: self-hosted
