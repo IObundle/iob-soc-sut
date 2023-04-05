@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys
+import os, sys, shutil
 
 sys.path.insert(0, os.getcwd()+'/submodules/LIB/scripts')
 import setup
@@ -44,7 +44,7 @@ tester_options = {
         {'name':'UART1', 'type':'UART', 'descr':'UART interface for communication with SUT', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the console', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the SUT', 'params':{}},
-        {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{'AXI_ID_W':'AXI_ID_W','AXI_LEN_W':'AXI_LEN_W'}},
+        {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{'AXI_ID_W':'AXI_ID_W','AXI_LEN_W':'AXI_LEN_W','AXI_ADDR_W':'AXI_ADDR_W'}},
         {'name':'IOBNATIVEBRIDGEIF0', 'type':'IOBNATIVEBRIDGEIF', 'descr':'IOb native interface for communication with SUT. Essentially a REGFILEIF without any registers.', 'params':{}},
     ],
 
@@ -115,12 +115,12 @@ submodules = {
         'modules': [ 'PICORV32', 'CACHE', 'UART', ('REGFILEIF',regfileif_options), 'iob_merge', 'iob_split', 'iob_rom_sp.v', 'iob_ram_dp_be.v', 'iob_ram_dp_be_xil.v', 'iob_pulse_gen.v', 'iob_counter.v', 'iob_ram_2p_asym.v', 'iob_reg.v', 'iob_reg_re.v', 'iob_ram_sp_be.v', 'iob_ram_dp.v', 'iob_reset_sync']
     },
     'sim_setup': {
-        'headers' : [ 'axi_s_portmap' ],
-        'modules': [ 'axi_ram.v', 'iob_tasks.vh' ]
+        'headers' : [ 'axi_s_portmap', 'iob_tasks.vh' ],
+        'modules': [ 'axi_ram.v' ]
     },
     'sw_setup': {
         'headers': [  ],
-        'modules': [ 'CACHE', 'UART', ('REGFILEIF',regfileif_options) ]
+        'modules': [ 'CACHE', 'UART', ('REGFILEIF',regfileif_options), 'iob_str'  ]
     },
 }
 
@@ -212,6 +212,8 @@ def custom_setup():
 def only_setup_tester():
     tester_module = import_setup(setup_dir+"/submodules/TESTER", module_parameters=tester_options)
     tester_module.main()
+    # Copy document/ directory to build dir (tester does not have one, and it is required by setup.mk)
+    shutil.copytree(setup_dir+"/document", f"../{tester_module.name}_{tester_module.version}"+"/document", dirs_exist_ok=True)
     exit(0)
 
 # Main function to setup this system and its components

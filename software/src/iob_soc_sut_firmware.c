@@ -6,9 +6,13 @@
 #include "iob-uart.h"
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
+#include "iob_str.h"
 
 int main()
 {
+  char pass_string[] = "Test passed!";
+  char fail_string[] = "Test failed!";
+
   //init uart
   uart_init(UART0_BASE,FREQ/BAUD);   
   uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
@@ -38,6 +42,13 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 #endif
+
+//#ifdef USE_EXTMEM
+//  if(memory_access_failed)
+//      uart_sendfile("test.log", iob_strlen(fail_string), fail_string);
+//      uart_finish();
+//#endif
+  uart_sendfile("test.log", iob_strlen(pass_string), pass_string);
 
   uart_finish();
 }

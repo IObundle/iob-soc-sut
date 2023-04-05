@@ -18,8 +18,12 @@
 
 int main()
 {
+	uint32_t file_size = 0;
 	char c, msgBuffer[5096], *sutStr;
 	int i = 0;
+#ifndef INIT_MEM
+	char sut_firmware[SUT_FIRMWARE_SIZE];
+#endif
 
 	//Init uart0
 	uart_init(UART0_BASE,FREQ/BAUD);   
@@ -51,7 +55,6 @@ int main()
 	uart_puts("[Tester]: SUT memory is not initalized. Waiting for firmware transfer request from SUT...\n");
 	IOB_UART_INIT_BASEADDR(UART1_BASE);
 
-  char *sut_firmware = malloc(SUT_FIRMWARE_SIZE);
   //receive firmware request from SUT 
   //Wait for FRX signal from SUT
   while(uart_getc()!=FRX);
@@ -66,7 +69,6 @@ int main()
 	uart_puts("[Tester]: Sending transfer request to console...\n");
 
   //Make request to host
-  uint32_t file_size = 0;
   file_size = uart_recvfile(msgBuffer, sut_firmware);
   
 	uart_puts("[Tester]: SUT firmware obtained. Transfering it to SUT via UART...\n");
@@ -125,7 +127,8 @@ int main()
 
 	i=0;
 	//Read and store messages sent from SUT
-	while ((c=uart_getc())!=EOT){
+	//Up until it sends the test.log file
+	while ((c=uart_getc())!=FTX){
 		msgBuffer[i]=c;
 		if(DEBUG){
 			IOB_UART_INIT_BASEADDR(UART0_BASE);
@@ -135,6 +138,18 @@ int main()
 		i++;
 	}
 	msgBuffer[i]=EOT;
+	
+	//Receive filename (test.log)
+	for(i=0;uart_getc()!='\0';i++);
+
+	//receive file size (test.log)
+	file_size = uart_getc();
+	file_size |= ((uint32_t) uart_getc()) << 8;
+	file_size |= ((uint32_t) uart_getc()) << 16;
+	file_size |= ((uint32_t) uart_getc()) << 24;
+
+	//ignore file contents received (test.log)
+	for (i = 0; i < file_size; i++) uart_getc();
 
 	//End UART1 connection with SUT
 	uart_finish();

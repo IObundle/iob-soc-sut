@@ -52,7 +52,7 @@ int main() {
 
    
 #ifndef INIT_MEM
-  for ( i = 0; i < 5000; i++)asm("nop"); //Delay to allow time for tester to print debug messages
+  for ( i = 0; i < 45000; i++)asm("nop"); //Delay to allow time for tester to print debug messages
   //receive firmware from host 
   int file_size = 0;
   char r_fw[] = "iob_soc_sut_firmware.bin";

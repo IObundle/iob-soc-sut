@@ -58,28 +58,28 @@ jobs:
       - name: setup init_mem
         run: make setup
       - name: verilator test
-        run: nix-shell -p verilator --run 'make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator'
+        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
       # No init mem
       - name: clean
         run: make clean
       - name: setup
         run: make setup INIT_MEM=0
       - name: verilator test
-        run: nix-shell -p verilator --run 'make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator'
+        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
       # Init mem and Ext mem
       - name: clean
         run: make clean
       - name: setup init_mem ext_mem
         run: make setup INIT_MEM=1 USE_EXTMEM=1
       - name: verilator test
-        run: nix-shell -p verilator --run 'make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator'
+        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
       # No init mem and Ext mem
       - name: clean
         run: make clean
       - name: setup ext_mem
         run: make setup INIT_MEM=0 USE_EXTMEM=1
       - name: verilator test
-        run: nix-shell -p verilator --run 'make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator'
+        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
   
   icarus:
     runs-on: self-hosted
@@ -134,14 +134,9 @@ jobs:
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      # Running tests with INIT_MEM=0 is to slow for icarus
-      #- name: Tester Icarus
-      #  run: make tester-sim-test SIMULATOR=icarus
-      # Run only the tests with INIT_MEM=1
+      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
       - name: Tester Icarus
-        run: make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C ../iob_soc_sut_V*/ sim-run SIMULATOR=icarus | tee /dev/tty | grep "Verification successful!" > /dev/null
-      - name: Tester Icarus Extmem
-        run: make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C ../iob_soc_sut_V*/ sim-run SIMULATOR=icarus | tee /dev/tty | grep "Verification successful!" > /dev/null
+        run: make tester-sim-test-icarus
 
   tester-verilator:
     runs-on: self-hosted
@@ -157,7 +152,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester verilator
-        run: nix-shell -p verilator --run 'make tester-sim-test SIMULATOR=verilator'
+        run: make tester-sim-test SIMULATOR=verilator
   
   cyclonev:
     runs-on: self-hosted
@@ -205,7 +200,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester CYCLONEV
-        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
+        run: make tester-fpga-test-cyclone
 
   tester-netlist-cyclonev:
     runs-on: self-hosted
