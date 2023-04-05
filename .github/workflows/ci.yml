@@ -200,7 +200,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester CYCLONEV
-        run: make tester-fpga-test BOARD=CYCLONEV-GT-DK
+        run: make tester-fpga-test-cyclone
 
   tester-netlist-cyclonev:
     runs-on: self-hosted

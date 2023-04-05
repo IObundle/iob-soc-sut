@@ -1,4 +1,5 @@
 CORE := iob_soc_sut
+BOARD ?= AES-KU040-DB-G
 include submodules/LIB/setup.mk
 
 INIT_MEM ?= 1
@@ -36,14 +37,20 @@ tester-sim-test-icarus:
 	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
 fpga-test:
-	make clean && make setup && make -C ../iob_soc_sut_V*/ fpga-test
-	make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ fpga-test
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ fpga-test
+	make clean && make setup && make -C ../iob_soc_sut_V*/ fpga-test BOARD=$(BOARD)
+	make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ fpga-test BOARD=$(BOARD)
+	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ fpga-test BOARD=$(BOARD)
 
 tester-fpga-test:
-	make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+
+tester-fpga-test-cyclone:
+	make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	# Disable test for now, as they have timing problems
+	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	#make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
 test-all:
 	make clean && make setup && make -C ../iob_soc_sut_V*/ pc-emul-test
@@ -54,7 +61,7 @@ test-all:
 	make clean && make setup && make -C ../iob_soc_sut_V*/ doc-test
 
 .PHONY: sim-test fpga-test test-all
-.PHONY: tester-sim-test tester-sim-test-icarus tester-fpga-test
+.PHONY: tester-sim-test tester-sim-test-icarus tester-fpga-test tester-fpga-test-cyclone
 
 build-sut-netlist:
 	make clean && make setup 
@@ -64,7 +71,7 @@ build-sut-netlist:
 	#FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/vivado/AES-KU040-DB-G` &&\
 	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
 	# Build netlist 
-	make -C ../iob_soc_sut_V*/ fpga-build IS_FPGA=0
+	make -C ../iob_soc_sut_V*/ fpga-build BOARD=$(BOARD) IS_FPGA=0
 
 tester-sut-netlist: build-sut-netlist
 	#Build tester without sut sources, but with netlist instead
@@ -84,6 +91,6 @@ tester-sut-netlist: build-sut-netlist
 	fi
 	# Run Tester on fpga
 	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
-	make -C ../iob_soc_tester_V*/ fpga-run | tee ../iob_soc_tester_$$TESTER_VER/test.log && grep "Verification successful!" ../iob_soc_tester_$$TESTER_VER/test.log > /dev/null
+	make -C ../iob_soc_tester_V*/ fpga-run BOARD=$(BOARD) | tee ../iob_soc_tester_$$TESTER_VER/test.log && grep "Verification successful!" ../iob_soc_tester_$$TESTER_VER/test.log > /dev/null
 
 .PHONY: build-sut-netlist test-sut-netlist
