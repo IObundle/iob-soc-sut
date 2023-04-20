@@ -46,6 +46,7 @@ tester_options = {
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface for communication with the SUT', 'params':{}},
         {'name':'SUT0', 'type':'SUT', 'descr':'System Under Test (SUT) peripheral', 'params':{'AXI_ID_W':'AXI_ID_W','AXI_LEN_W':'AXI_LEN_W','AXI_ADDR_W':'AXI_ADDR_W'}},
         {'name':'IOBNATIVEBRIDGEIF0', 'type':'IOBNATIVEBRIDGEIF', 'descr':'IOb native interface for communication with SUT. Essentially a REGFILEIF without any registers.', 'params':{}},
+        {'name':'GPIO0', 'type':'GPIO', 'descr':'GPIO interface', 'params':{}},
     ],
 
     'extra_peripherals_dirs':
@@ -54,6 +55,7 @@ tester_options = {
         'ETHERNET':f"{setup_dir}/submodules/ETHERNET",
         'REGFILEIF':f"{setup_dir}/submodules/REGFILEIF",
         'IOBNATIVEBRIDGEIF':f"{setup_dir}/submodules/REGFILEIF/nativebridgeif_wrappper",
+        'GPIO':f"{setup_dir}/submodules/GPIO",
     },
 
     'peripheral_portmap':
@@ -80,6 +82,11 @@ tester_options = {
         ({'corename':'SUT0', 'if_name':'REGFILEIF0', 'port':'external_iob_rvalid_o', 'bits':[]}, {'corename':'IOBNATIVEBRIDGEIF0', 'if_name':'iob_m_port', 'port':'iob_rvalid_i', 'bits':[]}),
         ({'corename':'SUT0', 'if_name':'REGFILEIF0', 'port':'external_iob_rdata_o', 'bits':[]}, {'corename':'IOBNATIVEBRIDGEIF0', 'if_name':'iob_m_port', 'port':'iob_rdata_i', 'bits':[]}),
         ({'corename':'SUT0', 'if_name':'REGFILEIF0', 'port':'external_iob_ready_o', 'bits':[]}, {'corename':'IOBNATIVEBRIDGEIF0', 'if_name':'iob_m_port', 'port':'iob_ready_i', 'bits':[]}),
+        # SUT GPIO0
+        ({'corename':'GPIO0', 'if_name':'gpio', 'port':'input_ports', 'bits':[]}, {'corename':'SUT0', 'if_name':'GPIO0', 'port':'output_ports', 'bits':[]}),
+        ({'corename':'GPIO0', 'if_name':'gpio', 'port':'output_ports', 'bits':[]}, {'corename':'SUT0', 'if_name':'GPIO0', 'port':'input_ports', 'bits':[]}),
+        ({'corename':'GPIO0', 'if_name':'gpio', 'port':'output_enable', 'bits':[]}, {'corename':'self', 'if_name':'GPIO', 'port':'', 'bits':[]}),
+        ({'corename':'SUT0', 'if_name':'GPIO0', 'port':'output_enable', 'bits':[]}, {'corename':'self', 'if_name':'SUT_GPIO', 'port':'', 'bits':[]}),
     ],
 
     'confs':
@@ -112,7 +119,7 @@ tester_options = {
 submodules = {
     'hw_setup': {
         'headers' : [ 'iob_wire', 'axi_wire', 'axi_m_m_portmap', 'axi_m_port', 'axi_m_m_portmap', 'axi_m_portmap' ],
-        'modules': [ 'PICORV32', 'CACHE', 'UART', ('REGFILEIF',regfileif_options), 'iob_merge', 'iob_split', 'iob_rom_sp.v', 'iob_ram_dp_be.v', 'iob_ram_dp_be_xil.v', 'iob_pulse_gen.v', 'iob_counter.v', 'iob_ram_2p_asym.v', 'iob_reg.v', 'iob_reg_re.v', 'iob_ram_sp_be.v', 'iob_ram_dp.v', 'iob_reset_sync']
+        'modules': [ 'PICORV32', 'CACHE', 'UART', ('REGFILEIF',regfileif_options), 'GPIO', 'iob_merge', 'iob_split', 'iob_rom_sp.v', 'iob_ram_dp_be.v', 'iob_ram_dp_be_xil.v', 'iob_pulse_gen.v', 'iob_counter.v', 'iob_ram_2p_asym.v', 'iob_reg.v', 'iob_reg_re.v', 'iob_ram_sp_be.v', 'iob_ram_dp.v', 'iob_reset_sync']
     },
     'sim_setup': {
         'headers' : [ 'axi_s_portmap', 'iob_tasks.vh' ],
@@ -120,7 +127,7 @@ submodules = {
     },
     'sw_setup': {
         'headers': [  ],
-        'modules': [ 'CACHE', 'UART', ('REGFILEIF',regfileif_options), 'iob_str'  ]
+        'modules': [ 'CACHE', 'UART', ('REGFILEIF',regfileif_options), 'GPIO', 'iob_str'  ]
     },
 }
 
@@ -143,6 +150,7 @@ blocks = \
         {'name':'UART0', 'type':'UART', 'descr':'Default UART interface', 'params':{}},
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface', 'params':{}},
         {'name':'REGFILEIF0', 'type':'REGFILEIF', 'descr':'Register file interface', 'params':{}},
+        {'name':'GPIO0', 'type':'GPIO', 'descr':'GPIO interface', 'params':{}},
     ]},
 ]
 
