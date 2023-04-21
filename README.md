@@ -3,7 +3,7 @@
 IOb-SoC-SUT is a generic RISC-V SoC, based on [IOb-SoC](https://github.com/IObundle/iob-soc), used to verify the [IOb-SoC-Tester](https://github.com/IObundle/iob-soc-tester) [project](https://nlnet.nl/project/OpenCryptoTester#ack).
 This repository is a System Under Test (SUT) example, demonstrating the Tester's abilities for verification purposes.
 
-This system runs on bare metal and has UART and IOb-native interfaces.
+This system runs on bare metal and has UART, GPIO, and IOb-native interfaces.
 
 ## Dependencies
 
@@ -37,7 +37,7 @@ available except for Vivado and Quartus.
 This system's setup, build and run steps are similar to the ones used in [IOb-SoC](https://github.com/IObundle/iob-soc).
 Check the `README.md` file of that repository for more details on the process of setup, building and running the system without the Tester.
 
-The SUT's main configuration, stored in `iob_soc_sut_setup.py`, sets the UART, REGFILEIF and ETHERNET peripherals. In total, the SUT has one UART, one ETHERNET, and one IOb-native (provided by the REGFILEIF peripheral) interface.
+The SUT's main configuration, stored in `iob_soc_sut_setup.py`, sets the UART, GPIO, REGFILEIF and ETHERNET peripherals. In total, the SUT has one UART, one GPIO, one ETHERNET, and one IOb-native (provided by the REGFILEIF peripheral) interface.
 
 **NOTE**: For the time being, the ETHERNET peripheral is disabled as it has not yet been updated to be compatible with the new python-setup branch.
 
@@ -68,7 +68,7 @@ The SUT's firmware, stored in `software/firmware/iob_soc_sut_firmware.c` has two
 
 This firmware currently does not use the ethernet interface.
 
-When running without external memory, the SUT only prints a few `Hello Word!` messages via UART and inserts values into the registers of its IOb-native interface.
+When running without external memory, the SUT only prints a few `Hello Word!` messages via UART, reads GPIO inputs and sets its outputs. It also reads and inserts values into the registers of its IOb-native interface.
 
 When running from the external memory, the system does the same as without external memory. It also allocates and stores a string in memory and writes its pointer to a register in the IOb-native interface.
 
@@ -109,8 +109,8 @@ make -C ../iob_soc_sut_V* fpga-run [BOARD=<board directory name>]
 ## Setup the Tester along with the SUT
 
 The Tester's main configuration is stored in the `tester_options` variable of the `iob_soc_sut_setup.py` file.
-It adds the IOBNATIVEBRIDGEIF, two ETHERNET, and another UART instance to the default Tester peripherals.
-In total, the Tester has two UART interfaces, two ETHERNET, and one IOb-native (provided by IOBNATIVEBRIDGEIF).
+It adds the IOBNATIVEBRIDGEIF, two ETHERNET, one GPIO, and another UART instance to the default Tester peripherals.
+In total, the Tester has two UART interfaces, two ETHERNET, one GPIO, and one IOb-native (provided by IOBNATIVEBRIDGEIF).
 
 **NOTE**: As mentioned previously, for the time being, the ETHERNET peripheral is disabled as it has not yet been updated to be compatible with the new python-setup branch.
 
@@ -126,6 +126,7 @@ The SUT and Tester's peripheral IO connections, stored in the `peripheral_portma
 - Tester's IOBNATIVEBRIDGEIF is connected to SUT's REGFILEIF. These are the IOb-native interfaces of both systems.
 - Instance 0 of Tester's ETHERNET is connected to the PC's console. Currently, this interface is not used.
 - Instance 1 of Tester's ETHERNET is connected to the SUT's ETHERNET. Currently, these interfaces are not used.
+- Tester's GPIO is connected to SUT's GPIO.
 
 The Tester's firmware, stored in `software/firmware/iob_soc_tester_firmware.c`, also has two modes of operation:
 - Without external memory (USE\_EXTMEM=0)
