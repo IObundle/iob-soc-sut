@@ -8,6 +8,7 @@
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
 #include "iob-uart.h"
+#include "iob-gpio.h"
 #include "printf.h"
 #include "iob_regfileif_swreg.h"
 
@@ -29,13 +30,19 @@ int main()
 	uart_init(UART0_BASE,FREQ/BAUD);   
 	//Init REGFILEIF of SUT (connected through IOBNATIVEBRIDGEIF)
 	IOB_REGFILEIF_INIT_BASEADDR(IOBNATIVEBRIDGEIF0_BASE);
+	//Init gpio
+	gpio_init(GPIO0_BASE);   
 
 	uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 	
-	//Write data to the registers of REGFILEIF to be read by the Tester.
+	//Write data to the registers of REGFILEIF to be read by the SUT.
 	IOB_REGFILEIF_SET_REG1(64);
 	IOB_REGFILEIF_SET_REG2(1024);
 	uart_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the SUT's REGFILEIF.\n\n");
+	
+	//Write a test pattern to the GPIO outputs to be read by the SUT.
+	gpio_set(0x1234abcd);
+	uart_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 
 	uart_puts("[Tester]: Initializing SUT via UART...\n");
 	//Init and switch to uart1 (connected to the SUT)
@@ -166,8 +173,11 @@ int main()
 
 	//Read data from REGFILEIF (was written by the SUT)
 	uart_puts("[Tester]: Reading SUT's REGFILEIF contents:\n");
-	printf("[Tester] Register 3: %d \n", IOB_REGFILEIF_GET_REG3());
-	printf("[Tester] Register 4: %d \n", IOB_REGFILEIF_GET_REG4());
+	printf("[Tester]: Register 3: %d \n", IOB_REGFILEIF_GET_REG3());
+	printf("[Tester]: Register 4: %d \n", IOB_REGFILEIF_GET_REG4());
+
+	//Read pattern from GPIO inputs (was set by the SUT)
+	printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n",gpio_get());
 
 #ifdef USE_EXTMEM
 	uart_puts("\n[Tester] Using shared external memory. Obtain SUT memory string pointer via REGFILEIF register 5...\n");

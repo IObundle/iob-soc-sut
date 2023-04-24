@@ -22,3 +22,6 @@
 [submodule "submodules/IOBSOC"]
 	path = submodules/IOBSOC
 	url = git@github.com:IObundle/iob-soc.git
+[submodule "submodules/GPIO"]
+	path = submodules/GPIO
+	url = git@github.com:IObundle/iob-gpio.git

@@ -4,6 +4,8 @@
 `include "iob_soc_sut_conf.vh"
 `include "iob_lib.vh"
 
+`include "iob_gpio_swreg_def.vh"
+`include "iob_regfileif_swreg_def.vh"
 `include "iob_uart_swreg_def.vh"
 
 module iob_soc_sut_sim_wrapper (
@@ -25,13 +27,16 @@ module iob_soc_sut_sim_wrapper (
    localparam AXI_ADDR_W=`DDR_ADDR_W;
    localparam AXI_DATA_W=`IOB_SOC_SUT_DATA_W;
  
+   wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_output_enable;
+   wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_output_ports;
+   wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
    wire [1-1:0] REGFILEIF0_external_iob_ready_o;
-   wire [`IOB_SOC_SUT_DATA_W-1:0] REGFILEIF0_external_iob_rdata_o;
+   wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] REGFILEIF0_external_iob_rdata_o;
    wire [1-1:0] REGFILEIF0_external_iob_rvalid_o;
-   wire [(`IOB_SOC_SUT_DATA_W/8)-1:0] REGFILEIF0_external_iob_wstrb_i=1'b0;
-   wire [`IOB_SOC_SUT_DATA_W-1:0] REGFILEIF0_external_iob_wdata_i=1'b0;
-   wire [`IOB_SOC_SUT_ADDR_W-1:0] REGFILEIF0_external_iob_addr_i=1'b0;
-   wire [1-1:0] REGFILEIF0_external_iob_avalid_i=1'b0;
+   wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] REGFILEIF0_external_iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W/8'h0; 
+   wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] REGFILEIF0_external_iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
+   wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] REGFILEIF0_external_iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
+   wire [1-1:0] REGFILEIF0_external_iob_avalid_i = 1'b0;
    wire [1-1:0] UART0_rts;
    wire [1-1:0] UART0_cts;
    wire [1-1:0] UART0_rxd;
@@ -68,6 +73,9 @@ module iob_soc_sut_sim_wrapper (
       .AXI_DATA_W(AXI_DATA_W)
       )
     uut (
+               .GPIO0_output_enable(GPIO0_output_enable),
+               .GPIO0_output_ports(GPIO0_output_ports),
+               .GPIO0_input_ports(GPIO0_input_ports),
                .REGFILEIF0_external_iob_ready_o(REGFILEIF0_external_iob_ready_o),
                .REGFILEIF0_external_iob_rdata_o(REGFILEIF0_external_iob_rdata_o),
                .REGFILEIF0_external_iob_rvalid_o(REGFILEIF0_external_iob_rvalid_o),
