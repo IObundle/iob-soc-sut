@@ -229,6 +229,11 @@ def main():
     custom_setup()
     # Setup this system
     setup.setup(sys.modules[__name__])
+    # Replace default "BOARD ?= CYCLONEV-GT-DK" by "BOARD ?= AES-KU040-DB-G" in Makefile for build_dir
+    with open(os.path.join(build_dir, 'Makefile'), 'r') as f:
+        file_content = f.read()
+    with open(os.path.join(build_dir, 'Makefile'), 'w') as f:
+        f.write(file_content.replace('BOARD ?= CYCLONEV-GT-DK', 'BOARD ?= AES-KU040-DB-G'))
 
 if __name__ == "__main__":
     main()
