@@ -9,7 +9,7 @@
 `include "iob_uart_swreg_def.vh"
 
 module iob_soc_sut_sim_wrapper (
-   output                             trap_o,
+   output [1:0]                       trap_o,
    //tester uart
    input                              uart_avalid,
    input [`IOB_UART_SWREG_ADDR_W-1:0] uart_addr,

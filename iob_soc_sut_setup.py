@@ -78,7 +78,7 @@ regfileif_options = {
 
 # ################## IOb-SoC configuration #######################
 iob_soc_options = {
-    "system_name": name,
+    "name": name,
     "peripherals": [
         # {'name':'UART0', 'type':'UART', 'descr':'Default UART interface', 'params':{}}, # It is possible to override default tester peripherals with new parameters
         ##{'name':'ETHERNET0', 'type':'ETHERNET', 'descr':'Ethernet interface', 'params':{}},
