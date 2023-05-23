@@ -76,7 +76,7 @@ regfileif_options = {
 }
 # ############### End of REGFILEIF configuration ################
 
-# ################## IOb-SoC configuration #######################
+# ################## SUT configuration to generate system via IOb-SoC #######################
 iob_soc_options = {
     "name": name,
     "peripherals": [
@@ -104,7 +104,7 @@ iob_soc_options = {
     },
 }
 
-# ############### End of IOb-SoC configuration ###################
+# ############### End of SUT configuration ###################
 
 submodules = {
     "hw_setup": {

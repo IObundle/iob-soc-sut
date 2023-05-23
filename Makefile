@@ -1,3 +1,17 @@
+TESTER_PATH:=iob_soc_tester
+
+# Change Makefile working directory
+ifeq ($(TESTER),1)
+# TODO: Fix this
+# Set the new correct value of CURDIR (before changing directory)
+CURDIR := $(abspath $(TESTER_PATH))
+# Change the current directory
+$(guile (chdir "$(TESTER_PATH)"))
+# Don't try to recreate Makefile file
+# that is disappeared now from the current directory
+Makefile : ;
+endif
+
 CORE := iob_soc_sut
 BOARD ?= AES-KU040-DB-G
 include submodules/LIB/setup.mk
@@ -10,10 +24,6 @@ endif
 
 ifeq ($(USE_EXTMEM),1)
 SETUP_ARGS += USE_EXTMEM
-endif
-
-ifeq ($(TESTER),1)
-SETUP_ARGS += TESTER
 endif
 
 ifeq ($(TESTER_ONLY),1)
