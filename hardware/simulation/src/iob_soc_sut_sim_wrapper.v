@@ -8,32 +8,39 @@
 `include "iob_regfileif_swreg_def.vh"
 `include "iob_uart_swreg_def.vh"
 
+`ifndef IOB_UART_SWREG_ADDR_W
+`define IOB_UART_SWREG_ADDR_W 16
+`endif
+`ifndef IOB_SOC_SUT_DATA_W
+`define IOB_SOC_SUT_DATA_W 32
+`endif
+
 module iob_soc_sut_sim_wrapper (
-   output [1:0]                       trap_o,
+   output [1:0] trap_o,
    //tester uart
-   input                              uart_avalid,
+   input uart_avalid,
    input [`IOB_UART_SWREG_ADDR_W-1:0] uart_addr,
-   input [`IOB_SOC_SUT_DATA_W-1:0]        uart_wdata,
-   input [3:0]                        uart_wstrb,
-   output [`IOB_SOC_SUT_DATA_W-1:0]       uart_rdata,
-   output                             uart_ready,
-   output                             uart_rvalid,
-   `IOB_INPUT(clk_i,          1), //V2TEX_IO System clock input.
-   `IOB_INPUT(rst_i,         1)  //V2TEX_IO System reset, asynchronous and active high.
-   );
- 
-   localparam AXI_ID_W  = 4;
+   input [`IOB_SOC_SUT_DATA_W-1:0] uart_wdata,
+   input [3:0] uart_wstrb,
+   output [`IOB_SOC_SUT_DATA_W-1:0] uart_rdata,
+   output uart_ready,
+   output uart_rvalid,
+   input [1-1:0] clk_i,  //V2TEX_IO System clock input.
+   input [1-1:0] rst_i  //V2TEX_IO System reset, asynchronous and active high.
+);
+
+   localparam AXI_ID_W = 4;
    localparam AXI_LEN_W = 8;
-   localparam AXI_ADDR_W=`DDR_ADDR_W;
-   localparam AXI_DATA_W=`IOB_SOC_SUT_DATA_W;
- 
+   localparam AXI_ADDR_W = `DDR_ADDR_W;
+   localparam AXI_DATA_W = `IOB_SOC_SUT_DATA_W;
+
    wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_output_enable;
    wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_output_ports;
    wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
    wire [1-1:0] REGFILEIF0_external_iob_ready_o;
    wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] REGFILEIF0_external_iob_rdata_o;
    wire [1-1:0] REGFILEIF0_external_iob_rvalid_o;
-   wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] REGFILEIF0_external_iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W/8'h0; 
+   wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] REGFILEIF0_external_iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W/8'h0;
    wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] REGFILEIF0_external_iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
    wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] REGFILEIF0_external_iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
    wire [1-1:0] REGFILEIF0_external_iob_avalid_i = 1'b0;
@@ -42,7 +49,7 @@ module iob_soc_sut_sim_wrapper (
    wire [1-1:0] UART0_rxd;
    wire [1-1:0] UART0_txd;
 
-   
+
    /////////////////////////////////////////////
    // TEST PROCEDURE
    //
@@ -52,7 +59,7 @@ module iob_soc_sut_sim_wrapper (
       $dumpvars();
 `endif
    end
-   
+
    //
    // INSTANTIATE COMPONENTS
    //
@@ -60,59 +67,57 @@ module iob_soc_sut_sim_wrapper (
    //AXI wires for connecting system to memory
 
 `ifdef IOB_SOC_SUT_USE_EXTMEM
-   `include "iob_axi_wire.vh"
+   `include "iob_axi_wire.vs"
 `endif
 
-    //
-    // UNIT UNDER TEST
-    //
-    iob_soc_sut #(
-      .AXI_ID_W(AXI_ID_W),
-      .AXI_LEN_W(AXI_LEN_W),
+   //
+   // UNIT UNDER TEST
+   //
+   iob_soc_sut #(
+      .AXI_ID_W  (AXI_ID_W),
+      .AXI_LEN_W (AXI_LEN_W),
       .AXI_ADDR_W(AXI_ADDR_W),
       .AXI_DATA_W(AXI_DATA_W)
-      )
-    uut (
-               .GPIO0_output_enable(GPIO0_output_enable),
-               .GPIO0_output_ports(GPIO0_output_ports),
-               .GPIO0_input_ports(GPIO0_input_ports),
-               .REGFILEIF0_external_iob_ready_o(REGFILEIF0_external_iob_ready_o),
-               .REGFILEIF0_external_iob_rdata_o(REGFILEIF0_external_iob_rdata_o),
-               .REGFILEIF0_external_iob_rvalid_o(REGFILEIF0_external_iob_rvalid_o),
-               .REGFILEIF0_external_iob_wstrb_i(REGFILEIF0_external_iob_wstrb_i),
-               .REGFILEIF0_external_iob_wdata_i(REGFILEIF0_external_iob_wdata_i),
-               .REGFILEIF0_external_iob_addr_i(REGFILEIF0_external_iob_addr_i),
-               .REGFILEIF0_external_iob_avalid_i(REGFILEIF0_external_iob_avalid_i),
-               .UART0_rts(UART0_rts),
-               .UART0_cts(UART0_cts),
-               .UART0_rxd(UART0_rxd),
-               .UART0_txd(UART0_txd),
+   ) uut (
+      .GPIO0_output_enable             (GPIO0_output_enable),
+      .GPIO0_output_ports              (GPIO0_output_ports),
+      .GPIO0_input_ports               (GPIO0_input_ports),
+      .REGFILEIF0_external_iob_ready_o (REGFILEIF0_external_iob_ready_o),
+      .REGFILEIF0_external_iob_rdata_o (REGFILEIF0_external_iob_rdata_o),
+      .REGFILEIF0_external_iob_rvalid_o(REGFILEIF0_external_iob_rvalid_o),
+      .REGFILEIF0_external_iob_wstrb_i (REGFILEIF0_external_iob_wstrb_i),
+      .REGFILEIF0_external_iob_wdata_i (REGFILEIF0_external_iob_wdata_i),
+      .REGFILEIF0_external_iob_addr_i  (REGFILEIF0_external_iob_addr_i),
+      .REGFILEIF0_external_iob_avalid_i(REGFILEIF0_external_iob_avalid_i),
+      .UART0_rts                       (UART0_rts),
+      .UART0_cts                       (UART0_cts),
+      .UART0_rxd                       (UART0_rxd),
+      .UART0_txd                       (UART0_txd),
 `ifdef IOB_SOC_SUT_USE_EXTMEM
-      `include "iob_axi_m_portmap.vh"
-`endif               
-      .clk_i (clk_i),
-      .arst_i (rst_i),
-      .trap_o (trap_o)
-      );
+      `include "iob_axi_m_portmap.vs"
+`endif
+      .clk_i                           (clk_i),
+      .arst_i                          (rst_i),
+      .trap_o                          (trap_o)
+   );
 
 
    //instantiate the axi memory
 `ifdef IOB_SOC_SUT_USE_EXTMEM
-    axi_ram #(
-      .FILE("iob_soc_sut_firmware.hex"),
-      .FILE_SIZE(2**(`IOB_SOC_SUT_SRAM_ADDR_W-2)),
-      .ID_WIDTH(AXI_ID_W),
-      .DATA_WIDTH (`IOB_SOC_SUT_DATA_W),
-      .ADDR_WIDTH (`DDR_ADDR_W)
-      )
-    ddr_model_mem (
-      `include "iob_axi_s_portmap.vh"
+   axi_ram #(
+      .FILE      ("iob_soc_sut_firmware.hex"),
+      .FILE_SIZE (2 ** (`IOB_SOC_SUT_SRAM_ADDR_W - 2)),
+      .ID_WIDTH  (AXI_ID_W),
+      .DATA_WIDTH(`IOB_SOC_SUT_DATA_W),
+      .ADDR_WIDTH(`DDR_ADDR_W)
+   ) ddr_model_mem (
+      `include "iob_axi_s_portmap.vs"
       .clk_i(clk_i),
       .rst_i(rst_i)
-      );   
+   );
 `endif
 
-   
+
    //finish simulation on trap
    /* always @(posedge trap) begin
     #10 $display("Found CPU trap condition");
@@ -139,27 +144,26 @@ module iob_soc_sut_sim_wrapper (
     //$finish;
       end
     */
-	//Manually added testbench uart core. RS232 pins attached to the same pins
-	//of the uut UART0 instance to communicate with it
+   //Manually added testbench uart core. RS232 pins attached to the same pins
+   //of the uut UART0 instance to communicate with it
    wire cke_i = 1'b1;
-   iob_uart uart_tb
-     (
-      .clk_i      (clk_i),
-      .cke_i      (cke_i),
-      .arst_i     (rst_i),
-      
-      .iob_avalid_i (uart_avalid),
-      .iob_addr_i   (uart_addr),
-      .iob_wdata_i  (uart_wdata),
-      .iob_wstrb_i  (uart_wstrb),
-      .iob_rdata_o  (uart_rdata),
-      .iob_rvalid_o (uart_rvalid),
-      .iob_ready_o  (uart_ready),
-      
-      .txd        (UART0_rxd),
-      .rxd        (UART0_txd),
-      .rts        (UART0_cts),
-      .cts        (UART0_rts)
-      );
+   iob_uart uart_tb (
+      .clk_i (clk_i),
+      .cke_i (cke_i),
+      .arst_i(rst_i),
+
+      .iob_avalid_i(uart_avalid),
+      .iob_addr_i  (uart_addr),
+      .iob_wdata_i (uart_wdata),
+      .iob_wstrb_i (uart_wstrb),
+      .iob_rdata_o (uart_rdata),
+      .iob_rvalid_o(uart_rvalid),
+      .iob_ready_o (uart_ready),
+
+      .txd(UART0_rxd),
+      .rxd(UART0_txd),
+      .rts(UART0_cts),
+      .cts(UART0_rts)
+   );
 
 endmodule

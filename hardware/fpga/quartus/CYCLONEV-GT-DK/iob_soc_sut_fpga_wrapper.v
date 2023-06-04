@@ -94,7 +94,7 @@ module iob_soc_sut_fpga_wrapper (
 
 `ifdef IOB_SOC_SUT_USE_EXTMEM
    //axi wires between system backend and axi bridge
-   `include "iob_axi_wire.vh"
+   `include "iob_axi_wire.vs"
 `endif
 
    //
@@ -125,7 +125,7 @@ module iob_soc_sut_fpga_wrapper (
       //      .ETHERNET0_TX_EN(ENET_TX_EN),
       //
 `ifdef IOB_SOC_SUT_USE_EXTMEM
-      `include "iob_axi_m_portmap.vh"
+      `include "iob_axi_m_portmap.vs"
 `endif
 
       //UART
