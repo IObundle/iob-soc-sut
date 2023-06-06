@@ -50,19 +50,19 @@ class iob_soc_tester(iob_soc):
             # ({'corename':'SUT0', 'if_name':'UART_rs232', 'port':'', 'bits':[]},                    {'corename':'UART1', 'if_name':'rs232', 'port':'', 'bits':[]}), #Map UART0 of SUT to UART1 of Tester
             # Python scripts do not yet support 'UART0_rs232'. Need to connect each signal independently
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "UART_rxd", "bits": []},
+                {"corename": "SUT0", "if_name": "UART", "port": "rxd", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "txd", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "UART_txd", "bits": []},
+                {"corename": "SUT0", "if_name": "UART", "port": "txd", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "rxd", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "UART_cts", "bits": []},
+                {"corename": "SUT0", "if_name": "UART", "port": "cts", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "rts", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "UART_rts", "bits": []},
+                {"corename": "SUT0", "if_name": "UART", "port": "rts", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "cts", "bits": []},
             ),
             # SUT ETHERNET0
@@ -74,7 +74,7 @@ class iob_soc_tester(iob_soc):
                 {
                     "corename": "SUT0",
                     "if_name": "GPIO0",
-                    "port": "GPIO0_output_ports",
+                    "port": "output_ports",
                     "bits": [],
                 },
             ),
@@ -85,7 +85,7 @@ class iob_soc_tester(iob_soc):
                     "port": "output_ports",
                     "bits": [],
                 },
-                {"corename": "SUT0", "if_name": "GPIO0", "port": "GPIO0_input_ports", "bits": []},
+                {"corename": "SUT0", "if_name": "GPIO0", "port": "input_ports", "bits": []},
             ),
             (
                 {
@@ -100,7 +100,7 @@ class iob_soc_tester(iob_soc):
                 {
                     "corename": "SUT0",
                     "if_name": "GPIO0",
-                    "port": "GPIO0_output_enable",
+                    "port": "output_enable",
                     "bits": [],
                 },
                 {"corename": "external", "if_name": "SUT_GPIO", "port": "", "bits": []},
