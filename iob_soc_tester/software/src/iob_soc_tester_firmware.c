@@ -10,7 +10,7 @@
 #include "iob-uart.h"
 #include "iob-gpio.h"
 #include "printf.h"
-#include "iob_regfileif_swreg.h"
+#include "iob_soc_sut_swreg.h"
 
 //Enable debug messages.
 #define DEBUG 0
@@ -28,17 +28,17 @@ int main()
 
 	//Init uart0
 	uart_init(UART0_BASE,FREQ/BAUD);   
-	//Init REGFILEIF of SUT (connected through IOBNATIVEBRIDGEIF)
-	IOB_REGFILEIF_INIT_BASEADDR(IOBNATIVEBRIDGEIF0_BASE);
+	//Init SUT (connected through REGFILEIF)
+	IOB_SOC_SUT_INIT_BASEADDR(SUT0_BASE);
 	//Init gpio
 	gpio_init(GPIO0_BASE);   
 
 	uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 	
-	//Write data to the registers of REGFILEIF to be read by the SUT.
-	IOB_REGFILEIF_SET_REG1(64);
-	IOB_REGFILEIF_SET_REG2(1024);
-	uart_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the SUT's REGFILEIF.\n\n");
+	//Write data to the registers of the SUT to be read by it.
+	IOB_SOC_SUT_SET_REG1(64);
+	IOB_SOC_SUT_SET_REG2(1024);
+	uart_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the SUT.\n\n");
 	
 	//Write a test pattern to the GPIO outputs to be read by the SUT.
 	gpio_set(0x1234abcd);
@@ -171,21 +171,21 @@ int main()
 	}
 	uart_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 
-	//Read data from REGFILEIF (was written by the SUT)
-	uart_puts("[Tester]: Reading SUT's REGFILEIF contents:\n");
-	printf("[Tester]: Register 3: %d \n", IOB_REGFILEIF_GET_REG3());
-	printf("[Tester]: Register 4: %d \n", IOB_REGFILEIF_GET_REG4());
+	//Read data from the SUT's registers
+	uart_puts("[Tester]: Reading SUT's register contents:\n");
+	printf("[Tester]: Register 3: %d \n", IOB_SOC_SUT_GET_REG3());
+	printf("[Tester]: Register 4: %d \n", IOB_SOC_SUT_GET_REG4());
 
 	//Read pattern from GPIO inputs (was set by the SUT)
 	printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n",gpio_get());
 
 #ifdef USE_EXTMEM
-	uart_puts("\n[Tester] Using shared external memory. Obtain SUT memory string pointer via REGFILEIF register 5...\n");
+	uart_puts("\n[Tester] Using shared external memory. Obtain SUT memory string pointer via SUT's register 5...\n");
 	uart_puts("[Tester]: String pointer is: ");
-	printf("0x%x",IOB_REGFILEIF_GET_REG5());
+	printf("0x%x",IOB_SOC_SUT_GET_REG5());
 	uart_putc('\n');
 	//Get address of first char in string stored in SUT's memory with first bit inverted
-	sutStr=(char*)(IOB_REGFILEIF_GET_REG5() ^ (0b1 << (MEM_ADDR_W-1))); //Note, MEM_ADDR_W may not be the same as DDR_ADDR_W when running in fpga
+	sutStr=(char*)(IOB_SOC_SUT_GET_REG5() ^ (0b1 << (MEM_ADDR_W-1))); //Note, MEM_ADDR_W may not be the same as DDR_ADDR_W when running in fpga
 
 	//Print the string by accessing that address
 	uart_puts("[Tester]: String read from SUT's memory via shared memory:\n");

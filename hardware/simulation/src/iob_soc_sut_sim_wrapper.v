@@ -79,26 +79,26 @@ module iob_soc_sut_sim_wrapper (
       .AXI_ADDR_W(AXI_ADDR_W),
       .AXI_DATA_W(AXI_DATA_W)
    ) uut (
-      .GPIO0_output_enable             (GPIO0_output_enable),
-      .GPIO0_output_ports              (GPIO0_output_ports),
-      .GPIO0_input_ports               (GPIO0_input_ports),
-      .REGFILEIF0_external_iob_ready_o (REGFILEIF0_external_iob_ready_o),
-      .REGFILEIF0_external_iob_rdata_o (REGFILEIF0_external_iob_rdata_o),
-      .REGFILEIF0_external_iob_rvalid_o(REGFILEIF0_external_iob_rvalid_o),
-      .REGFILEIF0_external_iob_wstrb_i (REGFILEIF0_external_iob_wstrb_i),
-      .REGFILEIF0_external_iob_wdata_i (REGFILEIF0_external_iob_wdata_i),
-      .REGFILEIF0_external_iob_addr_i  (REGFILEIF0_external_iob_addr_i),
-      .REGFILEIF0_external_iob_avalid_i(REGFILEIF0_external_iob_avalid_i),
-      .UART0_rts                       (UART0_rts),
-      .UART0_cts                       (UART0_cts),
-      .UART0_rxd                       (UART0_rxd),
-      .UART0_txd                       (UART0_txd),
+      .GPIO0_output_enable(GPIO0_output_enable),
+      .GPIO0_output_ports (GPIO0_output_ports),
+      .GPIO0_input_ports  (GPIO0_input_ports),
+      .iob_ready_o        (REGFILEIF0_external_iob_ready_o),
+      .iob_rdata_o        (REGFILEIF0_external_iob_rdata_o),
+      .iob_rvalid_o       (REGFILEIF0_external_iob_rvalid_o),
+      .iob_wstrb_i        (REGFILEIF0_external_iob_wstrb_i),
+      .iob_wdata_i        (REGFILEIF0_external_iob_wdata_i),
+      .iob_addr_i         (REGFILEIF0_external_iob_addr_i),
+      .iob_avalid_i       (REGFILEIF0_external_iob_avalid_i),
+      .UART_rts           (UART0_rts),
+      .UART_cts           (UART0_cts),
+      .UART_rxd           (UART0_rxd),
+      .UART_txd           (UART0_txd),
 `ifdef IOB_SOC_SUT_USE_EXTMEM
       `include "iob_axi_m_portmap.vs"
 `endif
-      .clk_i                           (clk_i),
-      .arst_i                          (rst_i),
-      .trap_o                          (trap_o)
+      .clk_i              (clk_i),
+      .arst_i             (rst_i),
+      .trap_o             (trap_o)
    );
 
 
