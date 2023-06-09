@@ -10,7 +10,7 @@ from iob_soc_sut import iob_soc_sut
 class iob_soc_tester(iob_soc):
     name = "iob_soc_tester"
     version = "V0.70"
-    flows = "pc-emul emb sim doc fpga"
+    flows = "pc-emul emb sim fpga"
     setup_dir = os.path.dirname(__file__)
     build_dir = f"../{iob_soc_sut.name}_{iob_soc_sut.version}"
 
