@@ -34,8 +34,6 @@ class iob_soc_tester(iob_soc):
 
         cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
 
-        cls._setup_portmap()
-
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
@@ -44,6 +42,7 @@ class iob_soc_tester(iob_soc):
 
     @classmethod
     def _setup_portmap(cls):
+        super()._setup_portmap()
         cls.peripheral_portmap += [
             # ================================================================== SUT IO mappings ==================================================================
             # SUT UART0
