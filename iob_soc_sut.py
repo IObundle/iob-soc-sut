@@ -5,6 +5,7 @@ import copy
 from iob_soc import iob_soc
 from iob_regfileif import iob_regfileif
 from iob_gpio import iob_gpio
+from iob_eth import iob_eth
 
 sut_regs = [
     {
@@ -78,12 +79,14 @@ class iob_soc_sut(iob_soc):
         # Setup submodules
         iob_regfileif_custom.setup()
         iob_gpio.setup()
+        # iob_eth.setup()
 
         # Instantiate SUT peripherals
         cls.peripherals.append(
             iob_regfileif_custom.instance("REGFILEIF0", "Register file interface")
         )
         cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
+        # cls.peripherals.append(iob_eth.instance("ETH0", "Ethernet interface"))
 
         cls.peripheral_portmap += [
             (  # Map REGFILEIF0 to external interface
