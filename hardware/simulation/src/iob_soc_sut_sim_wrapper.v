@@ -4,9 +4,8 @@
 `include "iob_soc_sut_conf.vh"
 `include "iob_lib.vh"
 
-`include "iob_gpio_swreg_def.vh"
-`include "iob_regfileif_swreg_def.vh"
-`include "iob_uart_swreg_def.vh"
+//Peripherals _swreg_def.vh file includes.
+`include "iob_soc_sut_periphs_swreg_def.vs"
 
 `ifndef IOB_UART_SWREG_ADDR_W
 `define IOB_UART_SWREG_ADDR_W 16
@@ -16,39 +15,32 @@
 `endif
 
 module iob_soc_sut_sim_wrapper (
-   output [1:0] trap_o,
-   //tester uart
-   input uart_avalid,
-   input [`IOB_UART_SWREG_ADDR_W-1:0] uart_addr,
-   input [`IOB_SOC_SUT_DATA_W-1:0] uart_wdata,
-   input [3:0] uart_wstrb,
-   output [`IOB_SOC_SUT_DATA_W-1:0] uart_rdata,
-   output uart_ready,
-   output uart_rvalid,
-   input [1-1:0] clk_i,  //V2TEX_IO System clock input.
-   input [1-1:0] rst_i  //V2TEX_IO System reset, asynchronous and active high.
+   output                              trap_o,
+   //IOb-SoC uart
+   input                               uart_avalid,
+   input  [`IOB_UART_SWREG_ADDR_W-1:0] uart_addr,
+   input  [   `IOB_SOC_SUT_DATA_W-1:0] uart_wdata,
+   input  [                       3:0] uart_wstrb,
+   output [   `IOB_SOC_SUT_DATA_W-1:0] uart_rdata,
+   output                              uart_ready,
+   output                              uart_rvalid,
+   input  [                     1-1:0] clk_i,        //V2TEX_IO System clock input.
+   input  [                     1-1:0] rst_i         //V2TEX_IO System reset, asynchronous and active high.
 );
 
    localparam AXI_ID_W = 4;
    localparam AXI_LEN_W = 8;
    localparam AXI_ADDR_W = `DDR_ADDR_W;
-   localparam AXI_DATA_W = `IOB_SOC_SUT_DATA_W;
+   localparam AXI_DATA_W = `DDR_DATA_W;
 
-   wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_output_enable;
-   wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_output_ports;
-   wire [`IOB_SOC_SUT_GPIO0_GPIO_W-1:0] GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
-   wire [1-1:0] REGFILEIF0_external_iob_ready_o;
-   wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] REGFILEIF0_external_iob_rdata_o;
-   wire [1-1:0] REGFILEIF0_external_iob_rvalid_o;
-   wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] REGFILEIF0_external_iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W/8'h0;
-   wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] REGFILEIF0_external_iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
-   wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] REGFILEIF0_external_iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
-   wire [1-1:0] REGFILEIF0_external_iob_avalid_i = 1'b0;
-   wire [1-1:0] UART0_rts;
-   wire [1-1:0] UART0_cts;
-   wire [1-1:0] UART0_rxd;
-   wire [1-1:0] UART0_txd;
+   `include "iob_soc_sut_wrapper_pwires.vs"
 
+   assign GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
+
+   wire [                                 1-1:0] iob_avalid_i = 1'b0;
+   wire [    `IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
+   wire [    `IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
+   wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W / 8'h0;
 
    /////////////////////////////////////////////
    // TEST PROCEDURE
@@ -64,12 +56,6 @@ module iob_soc_sut_sim_wrapper (
    // INSTANTIATE COMPONENTS
    //
 
-   //AXI wires for connecting system to memory
-
-`ifdef IOB_SOC_SUT_USE_EXTMEM
-   `include "iob_axi_wire.vs"
-`endif
-
    //
    // UNIT UNDER TEST
    //
@@ -78,51 +64,49 @@ module iob_soc_sut_sim_wrapper (
       .AXI_LEN_W (AXI_LEN_W),
       .AXI_ADDR_W(AXI_ADDR_W),
       .AXI_DATA_W(AXI_DATA_W)
-   ) uut (
-      .GPIO0_output_enable(GPIO0_output_enable),
-      .GPIO0_output_ports (GPIO0_output_ports),
-      .GPIO0_input_ports  (GPIO0_input_ports),
-      .iob_ready_o        (REGFILEIF0_external_iob_ready_o),
-      .iob_rdata_o        (REGFILEIF0_external_iob_rdata_o),
-      .iob_rvalid_o       (REGFILEIF0_external_iob_rvalid_o),
-      .iob_wstrb_i        (REGFILEIF0_external_iob_wstrb_i),
-      .iob_wdata_i        (REGFILEIF0_external_iob_wdata_i),
-      .iob_addr_i         (REGFILEIF0_external_iob_addr_i),
-      .iob_avalid_i       (REGFILEIF0_external_iob_avalid_i),
-      .UART_rts           (UART0_rts),
-      .UART_cts           (UART0_cts),
-      .UART_rxd           (UART0_rxd),
-      .UART_txd           (UART0_txd),
-`ifdef IOB_SOC_SUT_USE_EXTMEM
-      `include "iob_axi_m_portmap.vs"
-`endif
-      .clk_i              (clk_i),
-      .arst_i             (rst_i),
-      .trap_o             (trap_o)
+   ) iob_soc_sut0 (
+      .iob_avalid_i(iob_avalid_i),
+      .iob_addr_i  (iob_addr_i),
+      .iob_wdata_i (iob_wdata_i),
+      .iob_wstrb_i (iob_wstrb_i),
+      `include "iob_soc_sut_pportmaps.vs"
+      .clk_i       (clk_i),
+      .arst_i      (rst_i),
+      .trap_o      (trap_o)
    );
 
+   `include "iob_soc_sut_interconnect.vs"
 
-   //instantiate the axi memory
 `ifdef IOB_SOC_SUT_USE_EXTMEM
+   //instantiate the axi memory
+   //IOb-SoC and SUT access the same memory.
    axi_ram #(
-      .FILE      ("iob_soc_sut_firmware.hex"),
-      .FILE_SIZE (2 ** (`IOB_SOC_SUT_SRAM_ADDR_W - 2)),
+`ifdef IOB_SOC_SUT_INIT_MEM
+      .FILE      ("init_ddr_contents.hex"),  //This file contains firmware for both systems
+      .FILE_SIZE (2 ** (AXI_ADDR_W - 2)),
+`endif
       .ID_WIDTH  (AXI_ID_W),
-      .DATA_WIDTH(`IOB_SOC_SUT_DATA_W),
-      .ADDR_WIDTH(`DDR_ADDR_W)
+      .DATA_WIDTH(AXI_DATA_W),
+      .ADDR_WIDTH(AXI_ADDR_W)
    ) ddr_model_mem (
-      `include "iob_axi_s_portmap.vs"
+      `include "iob_memory_axi_s_portmap.vs"
+
       .clk_i(clk_i),
       .rst_i(rst_i)
    );
 `endif
 
-
    //finish simulation on trap
-   /* always @(posedge trap) begin
-    #10 $display("Found CPU trap condition");
-    $finish;
-   end*/
+   /* //Sut
+always @(posedge trap[0]) begin
+      #10 $display("Found SUT CPU trap condition");
+      $finish;
+   end
+//IOb-SoC
+always @(posedge trap[1]) begin
+      #10 $display("Found iob_soc_sut CPU trap condition");
+      $finish;
+   end */
 
    //sram monitor - use for debugging programs
    /*
@@ -145,7 +129,8 @@ module iob_soc_sut_sim_wrapper (
       end
     */
    //Manually added testbench uart core. RS232 pins attached to the same pins
-   //of the uut UART0 instance to communicate with it
+   //of the iob_soc_sut UART0 instance to communicate with it
+   // The interface of iob_soc_sut UART0 is assumed to be the first portmapped interface (UART_*)
    wire cke_i = 1'b1;
    iob_uart uart_tb (
       .clk_i (clk_i),
@@ -160,10 +145,43 @@ module iob_soc_sut_sim_wrapper (
       .iob_rvalid_o(uart_rvalid),
       .iob_ready_o (uart_ready),
 
-      .txd(UART0_rxd),
-      .rxd(UART0_txd),
-      .rts(UART0_cts),
-      .cts(UART0_rts)
+      .txd(UART_rxd),
+      .rxd(UART_txd),
+      .rts(UART_cts),
+      .cts(UART_rts)
    );
+
+   //Ethernet
+`ifdef IOB_SOC_SUT_USE_ETHERNET
+   //ethernet clock: 4x slower than system clock
+   reg [1:0] eth_cnt = 2'b0;
+   reg       eth_clk;
+
+   always @(posedge clk_i) begin
+      eth_cnt <= eth_cnt + 1'b1;
+      eth_clk <= eth_cnt[1];
+   end
+
+   // Ethernet Interface signals
+   assign ETHERNET0_RX_CLK     = eth_clk;
+   assign ETHERNET0_TX_CLK     = eth_clk;
+   assign ETHERNET0_PLL_LOCKED = 1'b1;
+
+   //add core test module in testbench
+   iob_eth_tb_gen eth_tb (
+      .clk  (clk_i),
+      .reset(rst_i),
+
+      // This module acts like a loopback
+      .RX_CLK (ETHERNET0_TX_CLK),
+      .RX_DATA(ETHERNET0_TX_DATA),
+      .RX_DV  (ETHERNET0_TX_EN),
+
+      // The wires are thus reversed
+      .TX_CLK (ETHERNET0_RX_CLK),
+      .TX_DATA(ETHERNET0_RX_DATA),
+      .TX_EN  (ETHERNET0_RX_DV)
+   );
+`endif
 
 endmodule
