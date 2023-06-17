@@ -110,6 +110,9 @@ class iob_soc_sut(iob_soc):
         # Run IOb-SoC setup
         super()._run_setup()
 
+        # Remove iob_soc_sut_swreg_gen.v as it is not used
+        os.remove(os.path.join(cls.build_dir, "hardware/src/iob_soc_sut_swreg_gen.v"))
+
     # Public method to set dynamic attributes
     # This method is automatically called by the `setup` method
     @classmethod
