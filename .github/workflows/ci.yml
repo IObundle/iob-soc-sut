@@ -33,11 +33,11 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup
-        run: make setup
+        run: nix-shell --run "make setup"
       - name: pc-emul test
-        run: make -C ../iob_soc_sut_V* pc-emul-test
+        run: nix-shell --run "make -C ../iob_soc_sut_V* pc-emul-test"
 
   verilator:
     runs-on: self-hosted
@@ -54,32 +54,32 @@ jobs:
           submodules: 'recursive'
       # Init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup init_mem
-        run: make setup
+        run: nix-shell --run "make setup"
       - name: verilator test
-        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
+        run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator"
       # No init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup
-        run: make setup INIT_MEM=0
+        run: nix-shell --run "make setup INIT_MEM=0"
       - name: verilator test
-        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
+        run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator"
       # Init mem and Ext mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup init_mem ext_mem
-        run: make setup INIT_MEM=1 USE_EXTMEM=1
+        run: nix-shell --run "make setup INIT_MEM=1 USE_EXTMEM=1"
       - name: verilator test
-        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
+        run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator"
       # No init mem and Ext mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup ext_mem
-        run: make setup INIT_MEM=0 USE_EXTMEM=1
+        run: nix-shell --run "make setup INIT_MEM=0 USE_EXTMEM=1"
       - name: verilator test
-        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator
+        run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=verilator"
   
   icarus:
     runs-on: self-hosted
@@ -94,32 +94,32 @@ jobs:
           submodules: 'recursive'
       # Init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup init_mem
-        run: make setup
+        run: nix-shell --run "make setup"
       - name: icarus test
-        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus
+        run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus"
       # No init mem - Disabled because it takes too long and is already checked by verilator
       #- name: clean
-      #  run: make clean
+      #  run: nix-shell --run "make clean"
       #- name: setup
-      #  run: make setup INIT_MEM=0
+      #  run: nix-shell --run "make setup INIT_MEM=0"
       #- name: icarus test
-      #  run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus
+      #  run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus"
       # Init mem and Ext mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup init_mem ext_mem
-        run: make setup INIT_MEM=1 USE_EXTMEM=1
+        run: nix-shell --run "make setup INIT_MEM=1 USE_EXTMEM=1"
       - name: icarus test
-        run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus
+        run: nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus"
       # No init mem and Ext mem - Disabled because it takes too long and is already checked by verilator
       #- name: clean
-      #  run: make clean
+      #  run nix-shell --run "make clean"
       #- name: setup ext_mem
-      #  run: make setup INIT_MEM=0 USE_EXTMEM=1
+      #  run nix-shell --run "make setup INIT_MEM=0 USE_EXTMEM=1"
       #- name: icarus test
-      #  run: make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus
+      #  run nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus"
 
   tester-icarus:
     runs-on: self-hosted
@@ -136,7 +136,7 @@ jobs:
           submodules: 'recursive'
       # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
       - name: Tester Icarus
-        run: make tester-sim-test-icarus
+        run: nix-shell --run "make tester-sim-test-icarus"
 
   tester-verilator:
     runs-on: self-hosted
@@ -152,7 +152,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester verilator
-        run: make tester-sim-test SIMULATOR=verilator
+        run: nix-shell --run "make tester-sim-test SIMULATOR=verilator"
   
   cyclonev:
     runs-on: self-hosted
@@ -166,23 +166,23 @@ jobs:
           submodules: 'recursive'
       # Init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup init_mem
-        run: make setup
+        run: nix-shell --run "make setup"
       - name: cyclonev test
         run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
       # No init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup
-        run: make setup INIT_MEM=0
+        run: nix-shell --run "make setup INIT_MEM=0"
       - name: cyclonev test
         run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
       # No init mem and Ext mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup ext_mem
-        run: make setup INIT_MEM=0 USE_EXTMEM=1
+        run: nix-shell --run "make setup INIT_MEM=0 USE_EXTMEM=1"
       - name: cyclonev test
         run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
 
@@ -200,7 +200,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester CYCLONEV
-        run: make tester-fpga-test-cyclone
+        run: nix-shell --run "make tester-fpga-test-cyclone"
 
   #tester-netlist-cyclonev:
   #  runs-on: self-hosted
@@ -216,7 +216,7 @@ jobs:
   #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
   #        submodules: 'recursive'
   #    - name: Tester Netlist CYCLONEV
-  #      run: make tester-sut-netlist BOARD=CYCLONEV-GT-DK
+  #      run: nix-shell --run "make tester-sut-netlist BOARD=CYCLONEV-GT-DK"
   
   aes-ku040:
     runs-on: self-hosted
@@ -230,25 +230,25 @@ jobs:
           submodules: 'recursive'
       # Init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup init_mem
-        run: make setup
+        run: nix-shell --run "make setup"
       - name: ku040 test
-        run: make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G
+        run: nix-shell --run "make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G"
       # No init mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup
-        run: make setup INIT_MEM=0
+        run: nix-shell --run "make setup INIT_MEM=0"
       - name: ku040 test
-        run: make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G
+        run: nix-shell --run "make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G"
       # No init mem and Ext mem
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup ext_mem
-        run: make setup INIT_MEM=0 USE_EXTMEM=1
+        run: nix-shell --run "make setup INIT_MEM=0 USE_EXTMEM=1"
       - name: ku040 test
-        run: make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G
+        run: nix-shell --run "make -C ../iob_soc_sut_V* fpga-test BOARD=AES-KU040-DB-G"
 
   tester-aes-ku040:
     runs-on: self-hosted
@@ -264,7 +264,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester KU040
-        run: make tester-fpga-test BOARD=AES-KU040-DB-G
+        run: nix-shell --run "make tester-fpga-test BOARD=AES-KU040-DB-G"
 
   #tester-netlist-aes-ku040:
   #  runs-on: self-hosted
@@ -280,7 +280,7 @@ jobs:
   #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
   #        submodules: 'recursive'
   #    - name: Tester Netlist KU040
-  #      run: make tester-sut-netlist BOARD=AES-KU040-DB-G
+  #      run: nix-shell --run "make tester-sut-netlist BOARD=AES-KU040-DB-G"
   
   doc:
     runs-on: self-hosted
@@ -294,8 +294,8 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: clean
-        run: make clean
+        run: nix-shell --run "make clean"
       - name: setup
-        run: make setup
+        run: nix-shell --run "make setup"
       - name: doc test
-        run: make -C ../iob_soc_sut_V* doc-test
+        run: nix-shell --run "make -C ../iob_soc_sut_V* doc-test"

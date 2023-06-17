@@ -1,5 +1,10 @@
 CORE := iob_soc_sut
 BOARD ?= AES-KU040-DB-G
+
+ifeq ($(TESTER),1)
+TOP_MODULE_NAME :=iob_soc_tester
+endif
+
 include submodules/LIB/setup.mk
 
 INIT_MEM ?= 1
@@ -10,10 +15,6 @@ endif
 
 ifeq ($(USE_EXTMEM),1)
 SETUP_ARGS += USE_EXTMEM
-endif
-
-ifeq ($(TESTER),1)
-SETUP_ARGS += TESTER
 endif
 
 ifeq ($(TESTER_ONLY),1)
