@@ -170,21 +170,21 @@ jobs:
       - name: setup init_mem
         run: nix-shell --run "make setup"
       - name: cyclonev test
-        run: nix-shell --run "make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK"
+        run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
       # No init mem
       - name: clean
         run: nix-shell --run "make clean"
       - name: setup
         run: nix-shell --run "make setup INIT_MEM=0"
       - name: cyclonev test
-        run: nix-shell --run "make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK"
+        run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
       # No init mem and Ext mem
       - name: clean
         run: nix-shell --run "make clean"
       - name: setup ext_mem
         run: nix-shell --run "make setup INIT_MEM=0 USE_EXTMEM=1"
       - name: cyclonev test
-        run: nix-shell --run "make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK"
+        run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
 
   tester-cyclonev:
     runs-on: self-hosted
