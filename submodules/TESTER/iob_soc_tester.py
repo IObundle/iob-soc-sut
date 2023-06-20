@@ -2,9 +2,11 @@
 import os
 
 from iob_soc import iob_soc
+from iob_soc_sut import iob_soc_sut
 from iob_gpio import iob_gpio
 from iob_uart import iob_uart
-from iob_soc_sut import iob_soc_sut
+from iob_axistream_in import iob_axistream_in
+from iob_axistream_out import iob_axistream_out
 
 
 class iob_soc_tester(iob_soc):
@@ -21,6 +23,8 @@ class iob_soc_tester(iob_soc):
         iob_uart.setup()
         iob_soc_sut.setup()
         iob_gpio.setup()
+        iob_axistream_in.setup()
+        iob_axistream_out.setup()
 
         # Instantiate SUT peripherals
         cls.peripherals.append(iob_uart.instance("UART1", "UART interface for communication with SUT"))
@@ -33,6 +37,8 @@ class iob_soc_tester(iob_soc):
                                     }))
 
         cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
+        cls.peripherals.append(iob_axistream_in.instance("AXISTREAMIN0", "Tester AXI input stream interface", parameters={"TDATA_W": "32"}))
+        cls.peripherals.append(iob_axistream_out.instance("AXISTREAMOUT0", "Tester AXI output stream interface", parameters={"TDATA_W": "32"}))
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
@@ -104,6 +110,121 @@ class iob_soc_tester(iob_soc):
                 },
                 {"corename": "external", "if_name": "SUT_GPIO", "port": "", "bits": []},
             ),
+            # SUT AXISTREAM IN
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tlast_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tlast_o",
+                    "bits": [],
+                },
+            ),
+            # SUT AXISTREAM OUT
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tlast_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tlast_i",
+                    "bits": [],
+                },
+            ),
+
         ]
 
     @classmethod

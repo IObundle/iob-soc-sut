@@ -8,6 +8,10 @@
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
 #include "iob_str.h"
+#include "iob-axistream-in.h"
+#include "iob-axistream-out.h"
+
+void axistream_loopback();
 
 int main()
 {
@@ -22,6 +26,9 @@ int main()
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
   //init gpio
   gpio_init(GPIO0_BASE);   
+  //init axistream
+  axistream_in_init(AXISTREAMIN0_BASE);   
+  axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
 
   //Write to UART0 connected to the Tester.
   uart_puts("[SUT]: This message was sent from SUT!\n\n");
@@ -43,6 +50,9 @@ int main()
   gpio_set(0xabcd1234);
   uart_puts("[SUT]: Placed test pattern 0xabcd1234 in GPIO outputs.\n\n");
 
+  // Read AXI stream input and relay data to AXI stream output
+  axistream_loopback();
+
 #ifdef USE_EXTMEM
   char sutMemoryMessage[]="This message is stored in SUT's memory\n";
 
@@ -62,4 +72,29 @@ int main()
   uart_sendfile("test.log", iob_strlen(pass_string), pass_string);
 
   uart_finish();
+}
+
+
+// Read AXI stream input, print, and relay data to AXI stream output
+void axistream_loopback(){
+  uint8_t byte_stream[64];
+  uint8_t i, total_received_bytes;
+  
+  //Check if we are receiving an AXI stream
+  if(!axistream_in_empty()){
+    // Receive bytes while stream does not end (by TLAST signal), or up to 64 bytes
+    for(total_received_bytes=0; !axistream_in_pop(byte_stream+total_received_bytes, &i) && total_received_bytes<64;total_received_bytes+=i);
+    if(total_received_bytes<64)total_received_bytes += i;
+    // Print received bytes
+    uart_puts("[SUT]: Received AXI stream bytes: ");
+    for(i=0;i<total_received_bytes;i++)printf("%d ", byte_stream[i]);
+    // Send bytes to AXI stream output
+    for(i=0;i<total_received_bytes-1;i++)axistream_out_push(byte_stream+i,1,0);
+    axistream_out_push(byte_stream+i,1,1); // Send the last byte with the TLAST signal
+    uart_puts("\n[SUT]: Sent AXI stream bytes back via output interface.\n\n");
+  } else {
+    // Input AXI stream queue is empty
+    uart_puts("[SUT]: AXI stream input is empty. Skipping AXI stream tranfer.\n\n");
+  }
+
 }

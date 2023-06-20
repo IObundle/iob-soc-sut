@@ -6,6 +6,8 @@ from iob_soc import iob_soc
 from iob_regfileif import iob_regfileif
 from iob_gpio import iob_gpio
 from iob_eth import iob_eth
+from iob_axistream_in import iob_axistream_in
+from iob_axistream_out import iob_axistream_out
 
 sut_regs = [
     {
@@ -80,6 +82,8 @@ class iob_soc_sut(iob_soc):
         iob_regfileif_custom.setup()
         iob_gpio.setup()
         # iob_eth.setup()
+        iob_axistream_in.setup()
+        iob_axistream_out.setup()
 
         # Instantiate SUT peripherals
         cls.peripherals.append(
@@ -87,6 +91,20 @@ class iob_soc_sut(iob_soc):
         )
         cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
         # cls.peripherals.append(iob_eth.instance("ETH0", "Ethernet interface"))
+        cls.peripherals.append(
+            iob_axistream_in.instance(
+                "AXISTREAMIN0",
+                "SUT AXI input stream interface",
+                parameters={"TDATA_W": "32"},
+            )
+        )
+        cls.peripherals.append(
+            iob_axistream_out.instance(
+                "AXISTREAMOUT0",
+                "SUT AXI output stream interface",
+                parameters={"TDATA_W": "32"},
+            )
+        )
 
         cls.peripheral_portmap += [
             (  # Map REGFILEIF0 to external interface
