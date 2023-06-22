@@ -16,3 +16,6 @@
 [submodule "submodules/AXISTREAM"]
 	path = submodules/AXISTREAM
 	url = git@github.com:IObundle/iob-axis.git
+[submodule "submodules/TESTER/submodules/ILA"]
+	path = submodules/TESTER/submodules/ILA
+	url = git@github.com:IObundle/iob-ila.git

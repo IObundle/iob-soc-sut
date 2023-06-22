@@ -15,7 +15,8 @@ UTARGETS+=build_iob_soc_sut_software
 
 IOB_SOC_SUT_INCLUDES=-I. -Isrc 
 
-IOB_SOC_SUT_LFLAGS=-Wl,-Bstatic,-T,$(TEMPLATE_LDS),--strip-debug
+IOB_SOC_SUT_BOOT_LFLAGS=-Wl,-Bstatic,-T,src/iob_soc_sut_boot.lds,--strip-debug
+IOB_SOC_SUT_FW_LFLAGS=-Wl,-Bstatic,-T,src/iob_soc_sut_firmware.lds,--strip-debug
 
 # FIRMWARE SOURCES
 IOB_SOC_SUT_FW_SRC=src/iob_soc_sut_firmware.S
@@ -33,8 +34,8 @@ IOB_SOC_SUT_BOOT_SRC+=$(filter-out %_emul.c, $(wildcard src/iob*uart*.c))
 IOB_SOC_SUT_BOOT_SRC+=$(filter-out %_emul.c, $(wildcard src/iob*cache*.c))
 
 build_iob_soc_sut_software:
-	make iob_soc_sut_firmware.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_LFLAGS) -Wl,-Map,iob_soc_sut_firmware.map" SRC="$(IOB_SOC_SUT_FW_SRC)"
-	make iob_soc_sut_boot.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_LFLAGS) -Wl,-Map,iob_soc_sut_boot.map" SRC="$(IOB_SOC_SUT_BOOT_SRC)"
+	make iob_soc_sut_firmware.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_FW_LFLAGS) -Wl,-Map,iob_soc_sut_firmware.map" SRC="$(IOB_SOC_SUT_FW_SRC)" TEMPLATE_LDS="src/iob_soc_sut_firmware.lds"
+	make iob_soc_sut_boot.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_BOOT_LFLAGS) -Wl,-Map,iob_soc_sut_boot.map" SRC="$(IOB_SOC_SUT_BOOT_SRC)" TEMPLATE_LDS="src/iob_soc_sut_boot.lds"
 
 
 .PHONE: build_iob_soc_sut_software
