@@ -9,6 +9,7 @@ from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_ila import iob_ila
 from iob_eth import iob_eth
+from mk_configuration import append_str_config_build_mk
 
 
 class iob_soc_tester(iob_soc):
@@ -90,6 +91,11 @@ class iob_soc_tester(iob_soc):
                 ("SUT0.AXISTREAMIN0.fifo.level_o", 5),
             ],
         )
+
+        # Use Verilator and AES-KU040-DB-G by default.
+        if cls.is_top_module:
+            append_str_config_build_mk("SIMULATOR:=verilator\n", cls.build_dir)
+            append_str_config_build_mk("BOARD:=AES-KU040-DB-G\n", cls.build_dir)
 
     @classmethod
     def _setup_portmap(cls):
