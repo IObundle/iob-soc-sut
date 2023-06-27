@@ -6,6 +6,8 @@
 #include "iob-axistream-out.h"
 #include "iob-gpio.h"
 #include "iob-uart.h"
+#include "iob-ila.h"
+#include "ILA0.h" // ILA0 instance specific defines
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -19,6 +21,7 @@
 
 #define SUT_FIRMWARE_SIZE 24000
 
+void print_ila_samples();
 void send_axistream();
 void receive_axistream();
 
@@ -39,6 +42,8 @@ int main() {
   // init axistream
   axistream_in_init(AXISTREAMIN0_BASE);
   axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
+  // init integrated logic analyzer
+  ila_init(ILA0_BASE);
 
   uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -52,8 +57,17 @@ int main() {
   gpio_set(0x1234abcd);
   uart_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 
+  // Enable all ILA triggers
+  ila_enable_all_triggers();
+
   // Send byte stream via AXI stream
   send_axistream();
+  
+  // Disable all ILA triggers
+  ila_disable_all_triggers();
+  
+  // Print sampled ILA values
+  print_ila_samples();
 
   uart_puts("[Tester]: Initializing SUT via UART...\n");
   // Init and switch to uart1 (connected to the SUT)
@@ -225,10 +239,30 @@ int main() {
   uart_putc('\n');
 #endif
 
+  // Allocate memory for ILA output data
+  uint32_t ila_n_samples = ila_number_samples();
+  uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
+  char* ila_data = (char *)malloc(ila_data_size);
+  // Write data to allocated memory
+  ila_output_data(ila_data, 0, ila_n_samples, ILA0_DWORD_SIZE);
+  // Send ila data to file via UART
+  uart_sendfile("ila_data.bin", ila_data_size-1, ila_data); //Don't send last byte (\0)
+  free(ila_data);
+
   uart_puts("\n[Tester]: Verification successful!\n\n");
 
   // End UART0 connection
   uart_finish();
+}
+
+void print_ila_samples() {
+  uart_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
+  uart_puts("[Tester]: | FIFO level | AXI input value |\n");
+  uint32_t i;
+  for(i=0; i< ila_number_samples(); i++){
+    printf("[Tester]: | 0x%02x       | 0x%08x      |\n",ila_get_large_value(i,1),ila_get_large_value(i,0));
+  }
+  uart_putc('\n');
 }
 
 void send_axistream() {
