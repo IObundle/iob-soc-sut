@@ -186,21 +186,25 @@ jobs:
       - name: cyclonev test
         run: make -C ../iob_soc_sut_V* fpga-test BOARD=CYCLONEV-GT-DK
 
-  tester-cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 60
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ cyclonev ]
-  
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: Tester CYCLONEV
-        run: nix-shell --run "make tester-fpga-test-cyclone"
+  # Disabled because Quartus Prime does not support hierarchical referencing (used by ILA for signal probing)
+  # https://www.intel.com/content/www/us/en/programmable/quartushelp/20.3/index.htm#msgs/msgs/evrfx2_veri_hierarchical_name_not_supported.htm
+  # https://community.intel.com/t5/Intel-Quartus-Prime-Software/Verilog-hierarchical-path-names-in-Quartus/m-p/103845
+  #
+  #tester-cyclonev:
+  #  runs-on: self-hosted
+  #  timeout-minutes: 60
+  #  # always run, except when previous job was cancelled
+  #  if: ${{ !cancelled() }}
+  #  # run after indicated job
+  #  needs: [ cyclonev ]
+  #
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #      with:
+  #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #        submodules: 'recursive'
+  #    - name: Tester CYCLONEV
+  #      run: nix-shell --run "make tester-fpga-test-cyclone"
 
   #tester-netlist-cyclonev:
   #  runs-on: self-hosted
