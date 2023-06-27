@@ -19,7 +19,7 @@
 // Enable debug messages.
 #define DEBUG 0
 
-#define SUT_FIRMWARE_SIZE 24000
+#define SUT_FIRMWARE_SIZE 29000
 
 void print_ila_samples();
 void send_axistream();
@@ -266,12 +266,12 @@ void print_ila_samples() {
 }
 
 void send_axistream() {
-  uint8_t byte_stream[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 150, 200, 250, 255};
+  uint8_t byte_stream[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   uint8_t i;
   // Print byte stream to send
   uart_puts("[Tester]: Sending AXI stream bytes: ");
   for (i = 0; i < sizeof(byte_stream); i++)
-    printf("%d ", byte_stream[i]);
+    printf("0x%x ", byte_stream[i]);
   uart_puts("\n\n");
   // Send bytes to AXI stream output
   for (i = 0; i < sizeof(byte_stream) - 1; i++)
@@ -298,7 +298,7 @@ void receive_axistream() {
     // Print received bytes
     uart_puts("[Tester]: Received AXI stream bytes: ");
     for (i = 0; i < total_received_bytes; i++)
-      printf("%d ", byte_stream[i]);
+      printf("0x%x ", byte_stream[i]);
     uart_puts("\n\n");
   } else {
     // Input AXI stream queue is empty

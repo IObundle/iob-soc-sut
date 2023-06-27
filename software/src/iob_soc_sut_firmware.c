@@ -87,7 +87,7 @@ void axistream_loopback(){
     if(total_received_bytes<64)total_received_bytes += i;
     // Print received bytes
     uart_puts("[SUT]: Received AXI stream bytes: ");
-    for(i=0;i<total_received_bytes;i++)printf("%d ", byte_stream[i]);
+    for(i=0;i<total_received_bytes;i++)printf("0x%x ", byte_stream[i]);
     // Send bytes to AXI stream output
     for(i=0;i<total_received_bytes-1;i++)axistream_out_push(byte_stream+i,1,0);
     axistream_out_push(byte_stream+i,1,1); // Send the last byte with the TLAST signal
