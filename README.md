@@ -234,6 +234,7 @@ rm -r ../iob_soc_tester_V*
 ## UUT's Repository Minimum Requirements
 
 The Unit Under Test (UUT) repository must contain at least the `<uut_name>.py` file to be compatible with the OpenCryptoTester.
+
 Note: The IOb-SoC-SUT system in this repository is an example UUT, and already meets these requirements.
 
 The `<uut_name>.py` python module provides the Tester with information about the UUT, and should contain the following objects:
