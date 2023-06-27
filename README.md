@@ -14,6 +14,8 @@ The Tester SoC is also based on [IOb-SoC](https://github.com/IObundle/iob-soc) a
 The Tester system is compatible with any Unit Under Tester (UUT) as it does not impose any hardware constraints.
 Nonetheless, the UUT's repository must follow the [set of minimum requirements](#uuts-repository-minimum-requirements) presented below.
 
+For details on configuring, building and running the Tester with a generic UUT check out [this section](#instructions-for-installing-the-risc-v-gnu-compiler-toolchain).
+
 ## Dependencies
 
 Before building the system, install the following tools:
@@ -154,7 +156,7 @@ When running from the external memory, the Tester does the same as without exter
 But it also reads a string pointer from the IOb-native interface.
 It inverts the most significant bit of that pointer to access the SUT's address space and then reads the string stored at that location.
 
-More details on configuring, building and running the Tester are available in the [section with instructions for Tester with a generic UUT](instructions-to-configure-the-opencryptotester-with-a-generic-uut).
+More details on configuring, building and running the Tester are available in the [section with instructions for Tester with a generic UUT](#instructions-for-installing-the-risc-v-gnu-compiler-toolchain).
 
 ### Build and run the Tester along with the SUT
 
@@ -310,7 +312,7 @@ For reference, check out the `submodules/TESTER/iob_soc_tester.py` Python module
 
 With the UUT's minimum requirements fulfilled, the steps for setup, building and running the Tester are similar to those of [IOb-SoC](https://github.com/IObundle/iob-soc).
 
-First, create a Makefile that includes the `setup.mk` makefile segment from [IOb-LIB](https://github.com/IObundle/iob-lib).
+First, create a Makefile that includes the `setup.mk` makefile segment from [IOb-Lib](https://github.com/IObundle/iob-lib).
 
 After that, run the following Makefile commands to build the Tester:
 
