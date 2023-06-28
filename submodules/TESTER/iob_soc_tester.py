@@ -62,13 +62,12 @@ class iob_soc_tester(iob_soc):
                 parameters={"TDATA_W": "32"},
             )
         )
-        cls.peripherals.append(
-            iob_ila.instance(
-                "ILA0",
-                "Tester Integrated Logic Analyzer for SUT signals",
-                parameters={"SIGNAL_W": "37", "TRIGGER_W": "1"},
-            )
+        ila0_instance = iob_ila.instance(
+            "ILA0",
+            "Tester Integrated Logic Analyzer for SUT signals",
+            parameters={"SIGNAL_W": "37", "TRIGGER_W": "1", "CLK_COUNTER": "1"},
         )
+        cls.peripherals.append(ila0_instance)
         # cls.peripherals.append(iob_eth.instance("ETH0", "Tester ethernet interface for console"))
         # cls.peripherals.append(iob_eth.instance("ETH1", "Tester ethernet interface for SUT"))
 
@@ -80,8 +79,8 @@ class iob_soc_tester(iob_soc):
 
         # Modify iob_soc_tester.v to include ILA probe wires
         iob_ila.generate_system_wires(
+            ila0_instance,
             "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-            "ILA0",  # Name of the ILA peripheral instance
             sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
             trigger_list=[
                 "SUT0.AXISTREAMIN0.tvalid_i"

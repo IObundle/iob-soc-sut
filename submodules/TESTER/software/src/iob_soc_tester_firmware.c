@@ -257,10 +257,13 @@ int main() {
 
 void print_ila_samples() {
   uart_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart_puts("[Tester]: | FIFO level | AXI input value |\n");
-  uint32_t i;
+  uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value |\n");
+  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level
+  uint32_t i, fifo_value;
+  uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
   for(i=0; i< ila_number_samples(); i++){
-    printf("[Tester]: | 0x%02x       | 0x%08x      |\n",ila_get_large_value(i,1),ila_get_large_value(i,0));
+    fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16, fifo_value);
   }
   uart_putc('\n');
 }
