@@ -4,10 +4,8 @@ HEX:=iob_soc_sut_boot.hex iob_soc_sut_firmware.hex $(HEX)
 
 TEST_LIST:=test-ila-vcd
 test-ila-vcd:
-	make -C ../../ fw-clean SIMULATOR=$(SIMULATOR)
-	make -C ../../ sim-clean SIMULATOR=$(SIMULATOR)
-	make run SIMULATOR=$(SIMULATOR) && echo "Test passed!" > test.log
-ifneq ($(SIM_SERVER),)
+	make -C ../../ sim-run SIMULATOR=$(SIMULATOR) && echo "Test passed!" > test.log
+ifneq ($(VSIM_SERVER)$(IVSIM_SERVER),)
 	scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin .
 endif
 	../../scripts/ilaDataToVCD.py ILA0 ila_data.bin ila_data.vcd
