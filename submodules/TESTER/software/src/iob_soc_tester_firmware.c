@@ -224,12 +224,9 @@ int main() {
   uart_puts("[Tester]: String pointer is: ");
   printf("0x%x", IOB_SOC_SUT_GET_REG5());
   uart_putc('\n');
-  // Get address of first char in string stored in SUT's memory with first bit
-  // inverted
-  sutStr = (char *)(IOB_SOC_SUT_GET_REG5() ^
-                    (0b1 << (MEM_ADDR_W -
-                             1))); // Note, MEM_ADDR_W may not be the same as
-                                   // DDR_ADDR_W when running in fpga
+  // Get address of string stored in SUT's memory
+  // and invert the highest bit of MEM_ADDR_W to access the SUT's memory zone
+  sutStr = (char *)(IOB_SOC_SUT_GET_REG5() ^ (1 << (MEM_ADDR_W - 1)));
 
   // Print the string by accessing that address
   uart_puts("[Tester]: String read from SUT's memory via shared memory:\n");

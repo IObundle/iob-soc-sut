@@ -72,10 +72,6 @@ int main()
   uart_sendfile("test.log", iob_strlen(pass_string), pass_string);
 
   uart_finish();
-
-  #ifndef PCEMUL
-  while(1); // Infinite loop to prevent CPU trap signal
-  #endif
 }
 
 
