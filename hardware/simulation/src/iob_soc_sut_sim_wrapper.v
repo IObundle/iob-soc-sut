@@ -15,17 +15,17 @@
 `endif
 
 module iob_soc_sut_sim_wrapper (
-   output                              trap_o,
+   output trap_o,
    //IOb-SoC uart
-   input                               uart_avalid,
-   input  [`IOB_UART_SWREG_ADDR_W-1:0] uart_addr,
-   input  [   `IOB_SOC_SUT_DATA_W-1:0] uart_wdata,
-   input  [                       3:0] uart_wstrb,
-   output [   `IOB_SOC_SUT_DATA_W-1:0] uart_rdata,
-   output                              uart_ready,
-   output                              uart_rvalid,
-   input  [                     1-1:0] clk_i,        //V2TEX_IO System clock input.
-   input  [                     1-1:0] rst_i         //V2TEX_IO System reset, asynchronous and active high.
+   input uart_avalid,
+   input [`IOB_UART_SWREG_ADDR_W-1:0] uart_addr,
+   input [`IOB_SOC_SUT_DATA_W-1:0] uart_wdata,
+   input [3:0] uart_wstrb,
+   output [`IOB_SOC_SUT_DATA_W-1:0] uart_rdata,
+   output uart_ready,
+   output uart_rvalid,
+   input [1-1:0] clk_i,  //V2TEX_IO System clock input.
+   input [1-1:0] rst_i  //V2TEX_IO System reset, asynchronous and active high.
 );
 
    localparam AXI_ID_W = 4;
@@ -40,9 +40,9 @@ module iob_soc_sut_sim_wrapper (
 
    assign GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
 
-   wire [                                 1-1:0] iob_avalid_i = 1'b0;
-   wire [    `IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
-   wire [    `IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
+   wire [1-1:0] iob_avalid_i = 1'b0;
+   wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
+   wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
    wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W / 8'h0;
 
    /////////////////////////////////////////////

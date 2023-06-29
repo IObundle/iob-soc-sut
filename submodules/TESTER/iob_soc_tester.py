@@ -2,9 +2,14 @@
 import os
 
 from iob_soc import iob_soc
+from iob_soc_sut import iob_soc_sut
 from iob_gpio import iob_gpio
 from iob_uart import iob_uart
-from iob_soc_sut import iob_soc_sut
+from iob_axistream_in import iob_axistream_in
+from iob_axistream_out import iob_axistream_out
+from iob_ila import iob_ila
+from iob_eth import iob_eth
+from mk_configuration import append_str_config_build_mk
 
 
 class iob_soc_tester(iob_soc):
@@ -21,24 +26,75 @@ class iob_soc_tester(iob_soc):
         iob_uart.setup()
         iob_soc_sut.setup()
         iob_gpio.setup()
+        iob_axistream_in.setup()
+        iob_axistream_out.setup()
+        iob_ila.setup()
+        # iob_eth.setup()
 
         # Instantiate SUT peripherals
-        cls.peripherals.append(iob_uart.instance("UART1", "UART interface for communication with SUT"))
         cls.peripherals.append(
-                iob_soc_sut.instance("SUT0", "System Under Test (SUT) peripheral",
-                                    parameters={
-                                        "AXI_ID_W": "AXI_ID_W",
-                                        "AXI_LEN_W": "AXI_LEN_W",
-                                        "AXI_ADDR_W": "AXI_ADDR_W",
-                                    }))
+            iob_uart.instance("UART1", "UART interface for communication with SUT")
+        )
+        cls.peripherals.append(
+            iob_soc_sut.instance(
+                "SUT0",
+                "System Under Test (SUT) peripheral",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                },
+            )
+        )
 
         cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
+        cls.peripherals.append(
+            iob_axistream_in.instance(
+                "AXISTREAMIN0",
+                "Tester AXI input stream interface",
+                parameters={"TDATA_W": "32"},
+            )
+        )
+        cls.peripherals.append(
+            iob_axistream_out.instance(
+                "AXISTREAMOUT0",
+                "Tester AXI output stream interface",
+                parameters={"TDATA_W": "32"},
+            )
+        )
+        ila0_instance = iob_ila.instance(
+            "ILA0",
+            "Tester Integrated Logic Analyzer for SUT signals",
+            parameters={"SIGNAL_W": "37", "TRIGGER_W": "1", "CLK_COUNTER": "1"},
+        )
+        cls.peripherals.append(ila0_instance)
+        # cls.peripherals.append(iob_eth.instance("ETH0", "Tester ethernet interface for console"))
+        # cls.peripherals.append(iob_eth.instance("ETH1", "Tester ethernet interface for SUT"))
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
         # Run IOb-SoC setup
         super()._run_setup()
+
+        # Modify iob_soc_tester.v to include ILA probe wires
+        iob_ila.generate_system_wires(
+            ila0_instance,
+            "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+            sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
+            trigger_list=[
+                "SUT0.AXISTREAMIN0.tvalid_i"
+            ],  # List of signals to use as triggers
+            probe_list=[  # List of signals to probe
+                ("SUT0.AXISTREAMIN0.tdata_i", 32),
+                ("SUT0.AXISTREAMIN0.fifo.level_o", 5),
+            ],
+        )
+
+        # Use Verilator and AES-KU040-DB-G by default.
+        if cls.is_top_module:
+            append_str_config_build_mk("SIMULATOR:=verilator\n", cls.build_dir)
+            append_str_config_build_mk("BOARD:=AES-KU040-DB-G\n", cls.build_dir)
 
     @classmethod
     def _setup_portmap(cls):
@@ -69,7 +125,12 @@ class iob_soc_tester(iob_soc):
             ####({'corename':'SUT0', 'if_name':'ETHERNET1_ethernet', 'port':'', 'bits':[]},         {'corename':'ETHERNET0', 'if_name':'ethernet', 'port':'', 'bits':[]}), #Map ETHERNET0 of SUT to ETHERNET0 of Tester
             # SUT GPIO0
             (
-                {"corename": "GPIO0", "if_name": "gpio", "port": "input_ports", "bits": []},
+                {
+                    "corename": "GPIO0",
+                    "if_name": "gpio",
+                    "port": "input_ports",
+                    "bits": [],
+                },
                 {
                     "corename": "SUT0",
                     "if_name": "GPIO0",
@@ -84,7 +145,12 @@ class iob_soc_tester(iob_soc):
                     "port": "output_ports",
                     "bits": [],
                 },
-                {"corename": "SUT0", "if_name": "GPIO0", "port": "input_ports", "bits": []},
+                {
+                    "corename": "SUT0",
+                    "if_name": "GPIO0",
+                    "port": "input_ports",
+                    "bits": [],
+                },
             ),
             (
                 {
@@ -103,6 +169,163 @@ class iob_soc_tester(iob_soc):
                     "bits": [],
                 },
                 {"corename": "external", "if_name": "SUT_GPIO", "port": "", "bits": []},
+            ),
+            # SUT AXISTREAM IN
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "tlast_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "tlast_o",
+                    "bits": [],
+                },
+            ),
+            # SUT AXISTREAM OUT
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "tlast_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "tlast_i",
+                    "bits": [],
+                },
+            ),
+            # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "ila",
+                    "port": "signal",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "ila",
+                    "port": "trigger",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "ila",
+                    "port": "sampling_clk",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
             ),
         ]
 
@@ -124,11 +347,9 @@ class iob_soc_tester(iob_soc):
         )
 
 
-
-
 ## Function to rename the sim_build.mk and fpga_build.mk files of thee SUT to files named `uut_build_for_iob_soc_tester.mk`
 ## The tester has its own sim_build.mk and fpga_build.mk files, so we need to rename the SUT ones to prevent overwriting
-#def create_sut_uut_build():
+# def create_sut_uut_build():
 #    os.rename(
 #        os.path.join(build_dir, "hardware/simulation/sim_build.mk"),
 #        os.path.join(build_dir, "hardware/simulation/uut_build_for_iob_soc_tester.mk"),
@@ -139,7 +360,7 @@ class iob_soc_tester(iob_soc):
 #    )
 #
 #
-#def custom_setup():
+# def custom_setup():
 #    # Add the following arguments:
 #    # "TESTER_ONLY": setup tester without the SUT (as SUT will be a manually added netlist)
 #    if "TESTER_ONLY" not in sys.argv[1:]:
