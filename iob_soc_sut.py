@@ -138,6 +138,23 @@ class iob_soc_sut(iob_soc):
         super().set_dynamic_attributes()
         cls.regs = sut_regs
 
+    @classmethod
+    def _setup_confs(cls):
+        # Append confs or override them if they exist
+        super()._setup_confs(
+            [
+                # {'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
+                {
+                    "name": "SRAM_ADDR_W",
+                    "type": "P",
+                    "val": "16",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "SRAM address width",
+                },
+            ]
+        )
+
 
 # Custom iob_regfileif subclass for use in SUT system
 class iob_regfileif_custom(iob_regfileif):

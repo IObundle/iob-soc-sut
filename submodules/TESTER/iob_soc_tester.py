@@ -8,8 +8,10 @@ from iob_uart import iob_uart
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_ila import iob_ila
+from iob_pfsm import iob_pfsm
 from iob_eth import iob_eth
 from mk_configuration import append_str_config_build_mk
+from verilog_tools import insert_verilog_in_module
 
 
 class iob_soc_tester(iob_soc):
@@ -29,6 +31,7 @@ class iob_soc_tester(iob_soc):
         iob_axistream_in.setup()
         iob_axistream_out.setup()
         iob_ila.setup()
+        iob_pfsm.setup()
         # iob_eth.setup()
 
         # Instantiate SUT peripherals
@@ -68,6 +71,13 @@ class iob_soc_tester(iob_soc):
             parameters={"SIGNAL_W": "37", "TRIGGER_W": "1", "CLK_COUNTER": "1"},
         )
         cls.peripherals.append(ila0_instance)
+        cls.peripherals.append(
+            iob_pfsm.instance(
+                "PFSM0",
+                "PFSM interface",
+                parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+            )
+        )
         # cls.peripherals.append(iob_eth.instance("ETH0", "Tester ethernet interface for console"))
         # cls.peripherals.append(iob_eth.instance("ETH1", "Tester ethernet interface for SUT"))
 
@@ -89,6 +99,13 @@ class iob_soc_tester(iob_soc):
                 ("SUT0.AXISTREAMIN0.tdata_i", 32),
                 ("SUT0.AXISTREAMIN0.fifo.level_o", 5),
             ],
+        )
+
+        # Create a probe for input of PFSM (to be used as monitor)
+        insert_verilog_in_module(
+            "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.tvalid_i};",
+            cls.build_dir
+            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
         # Use Verilator and AES-KU040-DB-G by default.
@@ -323,6 +340,35 @@ class iob_soc_tester(iob_soc):
                 {
                     "corename": "internal",
                     "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
+            (
+                {
+                    "corename": "PFSM0",
+                    "if_name": "pfsm",
+                    "port": "input_ports",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "PFSM0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "PFSM0",
+                    "if_name": "pfsm",
+                    "port": "output_ports",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "PFSM0",
                     "port": "",
                     "bits": [],
                 },
