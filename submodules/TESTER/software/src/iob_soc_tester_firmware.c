@@ -264,13 +264,14 @@ void pfsm_program(){
   //char bitstreamBuffer[5096];
   char bitstreamBuffer[] = {
     // States memory
-    0x00, 0x00, 0x00, 0x00, // State 0: Wait for trigger
-    0x00, 0x00, 0x00, 0x05, // State 1: Tiggered, enable output and go to state 2
-    0x00, 0x00, 0x00, 0x04, // State 2: Disable output, stay on this state
-    0x00, 0x00, 0x00, 0x00, // State 3: Unused
-    // Conditions memory (only have 1-bit input port, so only have combinations: 0, 1)
-    0x00, 0x00, 0x00, 0x07, // Combination 0: State 0 condition inverse of input (1); State 1 and 2 conditions always enabled; State 3 unused.
-    0x00, 0x00, 0x00, 0x06  // Combination 1: State 0 condition inverse of input (0); State 1 and 2 conditions always enabled; State 3 unused.
+    0x00, 0x00, 0x00, 0x00, // State 0, I=0: Wait for trigger, Jump 0
+    0x00, 0x00, 0x00, 0x02, // State 0, I=1: Wait for trigger, Jump 1
+    0x00, 0x00, 0x00, 0x05, // State 1, I=0: Tiggered, enable output and go to state 2
+    0x00, 0x00, 0x00, 0x05, // State 1, I=1: Tiggered, enable output and go to state 2
+    0x00, 0x00, 0x00, 0x04, // State 2, I=0: Disable output, stay on this state
+    0x00, 0x00, 0x00, 0x04, // State 2, I=1: Disable output, stay on this state
+    0x00, 0x00, 0x00, 0x00, // State 3, I=0: Unused
+    0x00, 0x00, 0x00, 0x00, // State 3, I=1: Unused
     };
   // Receive pfsm bitstream
   //file_size = uart_recvfile(bitstreamBuffer, "pfsm_bitstream.bin");
