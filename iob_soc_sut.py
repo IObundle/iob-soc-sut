@@ -77,7 +77,7 @@ class iob_soc_sut(iob_soc):
 
     # Method that runs the setup process of this class
     @classmethod
-    def _run_setup(cls):
+    def _specific_setup(cls):
         # Setup submodules
         iob_regfileif_custom.setup()
         iob_gpio.setup()
@@ -126,16 +126,17 @@ class iob_soc_sut(iob_soc):
         ]
 
         # Run IOb-SoC setup
-        super()._run_setup()
+        super()._specific_setup()
 
+    @classmethod
+    def _generate_files(cls):
+        super()._generate_files()
         # Remove iob_soc_sut_swreg_gen.v as it is not used
         os.remove(os.path.join(cls.build_dir, "hardware/src/iob_soc_sut_swreg_gen.v"))
 
-    # Public method to set dynamic attributes
-    # This method is automatically called by the `setup` method
     @classmethod
-    def set_dynamic_attributes(cls):
-        super().set_dynamic_attributes()
+    def _init_attributes(cls):
+        super()._init_attributes()
         cls.regs = sut_regs
 
     @classmethod
@@ -158,9 +159,7 @@ class iob_soc_sut(iob_soc):
 
 # Custom iob_regfileif subclass for use in SUT system
 class iob_regfileif_custom(iob_regfileif):
-    # Public method to set dynamic attributes
-    # This method is automatically called by the `setup` method
     @classmethod
-    def set_dynamic_attributes(cls):
-        super().set_dynamic_attributes()
+    def _init_attributes(cls):
+        super()._init_attributes()
         cls.regs = copy.deepcopy(sut_regs)
