@@ -8,8 +8,10 @@ from iob_uart import iob_uart
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_ila import iob_ila
+from iob_pfsm import iob_pfsm
 from iob_eth import iob_eth
 from mk_configuration import append_str_config_build_mk
+from verilog_tools import insert_verilog_in_module
 
 
 class iob_soc_tester(iob_soc):
@@ -19,18 +21,25 @@ class iob_soc_tester(iob_soc):
     setup_dir = os.path.dirname(__file__)
     build_dir = f"../{iob_soc_sut.name}_{iob_soc_sut.version}"
 
+    @classmethod
+    def _create_submodules_list(cls):
+        """Create submodules list with dependencies of this module"""
+        super()._create_submodules_list(
+            [
+                iob_uart,
+                iob_soc_sut,
+                iob_gpio,
+                iob_axistream_in,
+                iob_axistream_out,
+                iob_ila,
+                iob_pfsm,
+                # iob_eth,
+            ]
+        )
+
     # Method that runs the setup process of this class
     @classmethod
-    def _run_setup(cls):
-        # Setup submodules
-        iob_uart.setup()
-        iob_soc_sut.setup()
-        iob_gpio.setup()
-        iob_axistream_in.setup()
-        iob_axistream_out.setup()
-        iob_ila.setup()
-        # iob_eth.setup()
-
+    def _specific_setup(cls):
         # Instantiate SUT peripherals
         cls.peripherals.append(
             iob_uart.instance("UART1", "UART interface for communication with SUT")
@@ -62,12 +71,19 @@ class iob_soc_tester(iob_soc):
                 parameters={"TDATA_W": "32"},
             )
         )
-        ila0_instance = iob_ila.instance(
+        cls.ila0_instance = iob_ila.instance(
             "ILA0",
             "Tester Integrated Logic Analyzer for SUT signals",
             parameters={"SIGNAL_W": "37", "TRIGGER_W": "1", "CLK_COUNTER": "1"},
         )
-        cls.peripherals.append(ila0_instance)
+        cls.peripherals.append(cls.ila0_instance)
+        cls.peripherals.append(
+            iob_pfsm.instance(
+                "PFSM0",
+                "PFSM interface",
+                parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+            )
+        )
         # cls.peripherals.append(iob_eth.instance("ETH0", "Tester ethernet interface for console"))
         # cls.peripherals.append(iob_eth.instance("ETH1", "Tester ethernet interface for SUT"))
 
@@ -75,11 +91,15 @@ class iob_soc_tester(iob_soc):
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
         # Run IOb-SoC setup
-        super()._run_setup()
+        super()._specific_setup()
+
+    @classmethod
+    def _generate_files(cls):
+        super()._generate_files()
 
         # Modify iob_soc_tester.v to include ILA probe wires
         iob_ila.generate_system_wires(
-            ila0_instance,
+            cls.ila0_instance,
             "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
             sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
             trigger_list=[
@@ -89,6 +109,13 @@ class iob_soc_tester(iob_soc):
                 ("SUT0.AXISTREAMIN0.tdata_i", 32),
                 ("SUT0.AXISTREAMIN0.fifo.level_o", 5),
             ],
+        )
+
+        # Create a probe for input of PFSM (to be used as monitor)
+        insert_verilog_in_module(
+            "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.tvalid_i};",
+            cls.build_dir
+            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
         # Use Verilator and AES-KU040-DB-G by default.
@@ -323,6 +350,35 @@ class iob_soc_tester(iob_soc):
                 {
                     "corename": "internal",
                     "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
+            (
+                {
+                    "corename": "PFSM0",
+                    "if_name": "pfsm",
+                    "port": "input_ports",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "PFSM0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "PFSM0",
+                    "if_name": "pfsm",
+                    "port": "output_ports",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "PFSM0",
                     "port": "",
                     "bits": [],
                 },

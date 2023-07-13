@@ -75,16 +75,22 @@ class iob_soc_sut(iob_soc):
     flows = "pc-emul emb sim doc fpga"
     setup_dir = os.path.dirname(__file__)
 
-    # Method that runs the setup process of this class
     @classmethod
-    def _run_setup(cls):
-        # Setup submodules
-        iob_regfileif_custom.setup()
-        iob_gpio.setup()
-        iob_axistream_in.setup()
-        iob_axistream_out.setup()
-        # iob_eth.setup()
+    def _create_submodules_list(cls):
+        """Create submodules list with dependencies of this module"""
+        super()._create_submodules_list(
+            [
+                iob_regfileif_custom,
+                iob_gpio,
+                iob_axistream_in,
+                iob_axistream_out,
+                # iob_eth,
+            ]
+        )
 
+    @classmethod
+    def _specific_setup(cls):
+        """Method that runs the setup process of this class"""
         # Instantiate SUT peripherals
         cls.peripherals.append(
             iob_regfileif_custom.instance("REGFILEIF0", "Register file interface")
@@ -126,24 +132,40 @@ class iob_soc_sut(iob_soc):
         ]
 
         # Run IOb-SoC setup
-        super()._run_setup()
+        super()._specific_setup()
 
+    @classmethod
+    def _generate_files(cls):
+        super()._generate_files()
         # Remove iob_soc_sut_swreg_gen.v as it is not used
         os.remove(os.path.join(cls.build_dir, "hardware/src/iob_soc_sut_swreg_gen.v"))
 
-    # Public method to set dynamic attributes
-    # This method is automatically called by the `setup` method
     @classmethod
-    def set_dynamic_attributes(cls):
-        super().set_dynamic_attributes()
+    def _init_attributes(cls):
+        super()._init_attributes()
         cls.regs = sut_regs
+
+    @classmethod
+    def _setup_confs(cls):
+        # Append confs or override them if they exist
+        super()._setup_confs(
+            [
+                # {'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
+                {
+                    "name": "SRAM_ADDR_W",
+                    "type": "P",
+                    "val": "16",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "SRAM address width",
+                },
+            ]
+        )
 
 
 # Custom iob_regfileif subclass for use in SUT system
 class iob_regfileif_custom(iob_regfileif):
-    # Public method to set dynamic attributes
-    # This method is automatically called by the `setup` method
     @classmethod
-    def set_dynamic_attributes(cls):
-        super().set_dynamic_attributes()
+    def _init_attributes(cls):
+        super()._init_attributes()
         cls.regs = copy.deepcopy(sut_regs)

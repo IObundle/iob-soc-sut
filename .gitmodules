@@ -19,3 +19,6 @@
 [submodule "submodules/TESTER/submodules/ILA"]
 	path = submodules/TESTER/submodules/ILA
 	url = git@github.com:IObundle/iob-ila.git
+[submodule "submodules/PFSM"]
+	path = submodules/PFSM
+	url = git@github.com:IObundle/iob-pfsm.git

@@ -8,6 +8,7 @@
 #include "iob-uart.h"
 #include "iob-ila.h"
 #include "ILA0.h" // ILA0 instance specific defines
+#include "iob-pfsm.h"
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -24,6 +25,7 @@
 void print_ila_samples();
 void send_axistream();
 void receive_axistream();
+void pfsm_program();
 
 int main() {
   uint32_t file_size = 0;
@@ -44,6 +46,8 @@ int main() {
   axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
   // init integrated logic analyzer
   ila_init(ILA0_BASE);
+  // init Programmable Finite State Machine
+  pfsm_init(PFSM0_BASE, 2, 1, 1);
 
   uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -56,6 +60,9 @@ int main() {
   // Write a test pattern to the GPIO outputs to be read by the SUT.
   gpio_set(0x1234abcd);
   uart_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
+
+  // Program PFSM
+  pfsm_program();
 
   // Enable all ILA triggers
   ila_enable_all_triggers();
@@ -250,6 +257,29 @@ int main() {
 
   // End UART0 connection
   uart_finish();
+}
+
+void pfsm_program(){
+  uint32_t file_size = 0;
+  //char bitstreamBuffer[5096];
+  char bitstreamBuffer[] = {
+    // States memory
+    0x00, 0x00, 0x00, 0x00, // State 0, I=0: Wait for trigger, Jump 0
+    0x00, 0x00, 0x00, 0x02, // State 0, I=1: Wait for trigger, Jump 1
+    0x00, 0x00, 0x00, 0x05, // State 1, I=0: Tiggered, enable output and go to state 2
+    0x00, 0x00, 0x00, 0x05, // State 1, I=1: Tiggered, enable output and go to state 2
+    0x00, 0x00, 0x00, 0x04, // State 2, I=0: Disable output, stay on this state
+    0x00, 0x00, 0x00, 0x04, // State 2, I=1: Disable output, stay on this state
+    0x00, 0x00, 0x00, 0x00, // State 3, I=0: Unused
+    0x00, 0x00, 0x00, 0x00, // State 3, I=1: Unused
+    };
+  // Receive pfsm bitstream
+  //file_size = uart_recvfile(bitstreamBuffer, "pfsm_bitstream.bin");
+  // Program PFSM
+  uart_puts("[Tester]: Programming PFSM...\n");
+  printf("[Tester]: Programmed PFSM with %d bytes.\n\n",
+         pfsm_bitstream_program(bitstreamBuffer)
+         );
 }
 
 void print_ila_samples() {
