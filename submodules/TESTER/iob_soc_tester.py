@@ -10,6 +10,7 @@ from iob_axistream_out import iob_axistream_out
 from iob_ila import iob_ila
 from iob_pfsm import iob_pfsm
 from iob_eth import iob_eth
+from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
 from verilog_tools import insert_verilog_in_module
 
@@ -34,6 +35,9 @@ class iob_soc_tester(iob_soc):
                 iob_ila,
                 iob_pfsm,
                 # iob_eth,
+                # Modules required for AXISTREAM
+                (iob_ram_2p_be, {"purpose": "simulation"}),
+                (iob_ram_2p_be, {"purpose": "fpga"}),
             ]
         )
 

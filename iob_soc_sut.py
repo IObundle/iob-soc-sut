@@ -8,6 +8,7 @@ from iob_gpio import iob_gpio
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_eth import iob_eth
+from iob_ram_2p_be import iob_ram_2p_be
 
 sut_regs = [
     {
@@ -85,6 +86,9 @@ class iob_soc_sut(iob_soc):
                 iob_axistream_in,
                 iob_axistream_out,
                 # iob_eth,
+                # Modules required for AXISTREAM
+                (iob_ram_2p_be, {"purpose": "simulation"}),
+                (iob_ram_2p_be, {"purpose": "fpga"}),
             ]
         )
 
