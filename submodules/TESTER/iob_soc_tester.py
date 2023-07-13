@@ -21,19 +21,25 @@ class iob_soc_tester(iob_soc):
     setup_dir = os.path.dirname(__file__)
     build_dir = f"../{iob_soc_sut.name}_{iob_soc_sut.version}"
 
+    @classmethod
+    def _create_submodules_list(cls):
+        """Create submodules list with dependencies of this module"""
+        super()._create_submodules_list(
+            [
+                iob_uart,
+                iob_soc_sut,
+                iob_gpio,
+                iob_axistream_in,
+                iob_axistream_out,
+                iob_ila,
+                iob_pfsm,
+                # iob_eth,
+            ]
+        )
+
     # Method that runs the setup process of this class
     @classmethod
     def _specific_setup(cls):
-        # Setup submodules
-        iob_uart.setup()
-        iob_soc_sut.setup()
-        iob_gpio.setup()
-        iob_axistream_in.setup()
-        iob_axistream_out.setup()
-        iob_ila.setup()
-        iob_pfsm.setup()
-        # iob_eth.setup()
-
         # Instantiate SUT peripherals
         cls.peripherals.append(
             iob_uart.instance("UART1", "UART interface for communication with SUT")

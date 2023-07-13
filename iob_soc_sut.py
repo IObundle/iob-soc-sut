@@ -75,16 +75,22 @@ class iob_soc_sut(iob_soc):
     flows = "pc-emul emb sim doc fpga"
     setup_dir = os.path.dirname(__file__)
 
-    # Method that runs the setup process of this class
+    @classmethod
+    def _create_submodules_list(cls):
+        """Create submodules list with dependencies of this module"""
+        super()._create_submodules_list(
+            [
+                iob_regfileif_custom,
+                iob_gpio,
+                iob_axistream_in,
+                iob_axistream_out,
+                # iob_eth,
+            ]
+        )
+
     @classmethod
     def _specific_setup(cls):
-        # Setup submodules
-        iob_regfileif_custom.setup()
-        iob_gpio.setup()
-        iob_axistream_in.setup()
-        iob_axistream_out.setup()
-        # iob_eth.setup()
-
+        """Method that runs the setup process of this class"""
         # Instantiate SUT peripherals
         cls.peripherals.append(
             iob_regfileif_custom.instance("REGFILEIF0", "Register file interface")
