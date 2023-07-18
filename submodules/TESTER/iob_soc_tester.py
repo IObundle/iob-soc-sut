@@ -46,10 +46,10 @@ class iob_soc_tester(iob_soc):
     def _specific_setup(cls):
         # Instantiate SUT peripherals
         cls.peripherals.append(
-            iob_uart.instance("UART1", "UART interface for communication with SUT")
+            iob_uart("UART1", "UART interface for communication with SUT")
         )
         cls.peripherals.append(
-            iob_soc_sut.instance(
+            iob_soc_sut(
                 "SUT0",
                 "System Under Test (SUT) peripheral",
                 parameters={
@@ -60,36 +60,36 @@ class iob_soc_tester(iob_soc):
             )
         )
 
-        cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
+        cls.peripherals.append(iob_gpio("GPIO0", "GPIO interface"))
         cls.peripherals.append(
-            iob_axistream_in.instance(
+            iob_axistream_in(
                 "AXISTREAMIN0",
                 "Tester AXI input stream interface",
                 parameters={"TDATA_W": "32"},
             )
         )
         cls.peripherals.append(
-            iob_axistream_out.instance(
+            iob_axistream_out(
                 "AXISTREAMOUT0",
                 "Tester AXI output stream interface",
                 parameters={"TDATA_W": "32"},
             )
         )
-        cls.ila0_instance = iob_ila.instance(
+        cls.ila0_instance = iob_ila(
             "ILA0",
             "Tester Integrated Logic Analyzer for SUT signals",
             parameters={"SIGNAL_W": "37", "TRIGGER_W": "1", "CLK_COUNTER": "1"},
         )
         cls.peripherals.append(cls.ila0_instance)
         cls.peripherals.append(
-            iob_pfsm.instance(
+            iob_pfsm(
                 "PFSM0",
                 "PFSM interface",
                 parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
             )
         )
-        # cls.peripherals.append(iob_eth.instance("ETH0", "Tester ethernet interface for console"))
-        # cls.peripherals.append(iob_eth.instance("ETH1", "Tester ethernet interface for SUT"))
+        # cls.peripherals.append(iob_eth("ETH0", "Tester ethernet interface for console"))
+        # cls.peripherals.append(iob_eth("ETH1", "Tester ethernet interface for SUT"))
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"

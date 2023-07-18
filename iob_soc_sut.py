@@ -97,24 +97,24 @@ class iob_soc_sut(iob_soc):
         """Method that runs the setup process of this class"""
         # Instantiate SUT peripherals
         cls.peripherals.append(
-            iob_regfileif_custom.instance("REGFILEIF0", "Register file interface")
+            iob_regfileif_custom("REGFILEIF0", "Register file interface")
         )
-        cls.peripherals.append(iob_gpio.instance("GPIO0", "GPIO interface"))
+        cls.peripherals.append(iob_gpio("GPIO0", "GPIO interface"))
         cls.peripherals.append(
-            iob_axistream_in.instance(
+            iob_axistream_in(
                 "AXISTREAMIN0",
                 "SUT AXI input stream interface",
                 parameters={"TDATA_W": "32"},
             )
         )
         cls.peripherals.append(
-            iob_axistream_out.instance(
+            iob_axistream_out(
                 "AXISTREAMOUT0",
                 "SUT AXI output stream interface",
                 parameters={"TDATA_W": "32"},
             )
         )
-        # cls.peripherals.append(iob_eth.instance("ETH0", "Ethernet interface"))
+        # cls.peripherals.append(iob_eth("ETH0", "Ethernet interface"))
 
         cls.peripheral_portmap += [
             (  # Map REGFILEIF0 to external interface
