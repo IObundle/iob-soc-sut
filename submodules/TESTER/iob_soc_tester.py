@@ -13,6 +13,7 @@ from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
 from verilog_tools import insert_verilog_in_module
+from iob_fsm_program import iob_fsm_program, iob_fsm_record
 
 
 class iob_soc_tester(iob_soc):
@@ -78,7 +79,13 @@ class iob_soc_tester(iob_soc):
         cls.ila0_instance = iob_ila(
             "ILA0",
             "Tester Integrated Logic Analyzer for SUT signals",
-            parameters={"SIGNAL_W": "37", "TRIGGER_W": "1", "CLK_COUNTER": "1"},
+            parameters={
+                "SIGNAL_W": "38",
+                "TRIGGER_W": "1",
+                "CLK_COUNTER": "1",
+                "MONITOR": "1",
+                "MONITOR_STATE_W": "3",
+            },
         )
         cls.peripherals.append(cls.ila0_instance)
         cls.peripherals.append(
@@ -98,6 +105,90 @@ class iob_soc_tester(iob_soc):
         super()._specific_setup()
 
     @classmethod
+    def _generate_monitor_bitstream(cls):
+        """Generate bitstream for the Monitor PFSM of the ILA."""
+        ila_parameters = cls.ila0_instance.parameters
+        monitor_prog = iob_fsm_program(
+            ila_parameters[
+                "MONITOR_STATE_W"
+            ],  # Monitor STATE_W defined in ILA parameter
+            ila_parameters[
+                "TRIGGER_W"
+            ],  # Monitor INPUT_W = ILA TRIGGER_W because ILA trigger signals connected as inputs of Monitor.
+            1,  # Monitor OUTPUT_W always 1. It is the internal trigger signal for the ILA.
+        )
+
+        # Create a Monitor PFSM program that always has the trigger output
+        # enabled (to keep recording samples) until a certain sequence is detected
+        # in the input.
+        # In this example, When the input is 1 for one pulse, it disables the trigger output
+        # 4 clocks after it. This allows us to record the two pulses emitted by the Tester's example PFSM.
+        monitor_prog.add_record(
+            [
+                # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
+                iob_fsm_record(
+                    "state_0", "0", "state_0", "1"
+                ),  # Keep jumping to this state while input is not high.
+                iob_fsm_record(
+                    "", "1", "state_0", "1"
+                ),  # If the input is still high (more than 1 clock pulse), then go back to state 0.
+                iob_fsm_record("", "", "", "1"),  # Wait one clock
+                iob_fsm_record("", "", "", "1"),  # Wait one clock
+                iob_fsm_record(
+                    "state_finish", "-", "state_finish", "0"
+                ),  # Disable the trigger output. Keep jumping to this state to keep the trigger output disabled.
+            ]
+        )
+
+        # monitor_prog.print_truth_table(0)  # DEBUG: Print truth table for record with index given
+
+        # Generate bitstream in simulation directory
+        monitor_prog.generate_bitstream(
+            os.path.join(cls.build_dir, "hardware/simulation/monitor_pfsm.bit")
+        )
+        # Create symlink for this bitstream in the fpga directory
+        os.symlink(
+            os.path.join(cls.build_dir, "hardware/simulation/monitor_pfsm.bit"),
+            os.path.join(cls.build_dir, "hardware/fpga/monitor_pfsm.bit"),
+        )
+
+    @classmethod
+    def _generate_pfsm_bitstream(cls):
+        """Generate bitstream for the independent PFSM peripheral."""
+        pfsm_prog = iob_fsm_program(
+            2,  # This PFSM has 2^2 states
+            1,  # This PFSM has 1 input
+            1,  # This PFSM has 1 output
+        )
+
+        # Create a PFSM program that pulses two times, when its input is set.
+        pfsm_prog.add_record(
+            [
+                # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
+                iob_fsm_record(
+                    "state_0", "0", "state_0", "0"
+                ),  # Keep jumping to state_0 while input is not high.
+                iob_fsm_record("", "", "", "1"),  # Set output to 1
+                iob_fsm_record("", "", "", "0"),  # Set output to 0
+                iob_fsm_record(
+                    "", "-", "state_0", "1"
+                ),  # Set output to 1. Always jump to state_0.
+            ]
+        )
+
+        # pfsm_prog.print_truth_table(0)  # DEBUG: Print truth table for record with index given
+
+        # Generate bitstream in simulation directory
+        pfsm_prog.generate_bitstream(
+            os.path.join(cls.build_dir, "hardware/simulation/pfsm.bit")
+        )
+        # Create symlink for this bitstream in the fpga directory
+        os.symlink(
+            os.path.join(cls.build_dir, "hardware/simulation/pfsm.bit"),
+            os.path.join(cls.build_dir, "hardware/fpga/pfsm.bit"),
+        )
+
+    @classmethod
     def _generate_files(cls):
         super()._generate_files()
 
@@ -112,10 +203,13 @@ class iob_soc_tester(iob_soc):
             probe_list=[  # List of signals to probe
                 ("SUT0.AXISTREAMIN0.tdata_i", 32),
                 ("SUT0.AXISTREAMIN0.fifo.level_o", 5),
+                ("PFSM0.output_ports", 1),
             ],
         )
 
-        # Create a probe for input of PFSM (to be used as monitor)
+        # Create a probe for input of (independent) PFSM
+        # This PFSM will be used as an example, reacting to values of tvalid_i.
+        # The output of this PFSM will be captured by the ILA.
         insert_verilog_in_module(
             "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.tvalid_i};",
             cls.build_dir
