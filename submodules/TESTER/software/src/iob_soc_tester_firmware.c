@@ -25,12 +25,12 @@
 void print_ila_samples();
 void send_axistream();
 void receive_axistream();
-void pfsm_program();
-void ila_monitor_program();
+void pfsm_program(char *);
+void ila_monitor_program(char *);
 
 int main() {
   uint32_t file_size = 0;
-  char c, msgBuffer[5096], *sutStr;
+  char c, buffer[5096], *sutStr;
   int i = 0;
 #ifndef INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
@@ -61,9 +61,9 @@ int main() {
   uart_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 
   // Program PFSM
-  pfsm_program();
+  pfsm_program(buffer);
   // Program Monitor PFSM (internal to ILA)
-  ila_monitor_program();
+  ila_monitor_program(buffer);
 
   // Enable all ILA triggers
   ila_enable_all_triggers();
@@ -102,18 +102,18 @@ int main() {
   while (uart_getc() != FRX)
     ;
   // Receive filename
-  for (i = 0; (msgBuffer[i] = uart_getc()) != '\0'; i++)
+  for (i = 0; (buffer[i] = uart_getc()) != '\0'; i++)
     ;
   // Switch back to UART0
   IOB_UART_INIT_BASEADDR(UART0_BASE);
 
   uart_puts("[Tester]: Received firmware transfer request with filename: ");
-  uart_puts(msgBuffer);
+  uart_puts(buffer);
   uart_putc('\n');
   uart_puts("[Tester]: Sending transfer request to console...\n");
 
   // Make request to host
-  file_size = uart_recvfile(msgBuffer, sut_firmware);
+  file_size = uart_recvfile(buffer, sut_firmware);
 
   uart_puts(
       "[Tester]: SUT firmware obtained. Transfering it to SUT via UART...\n");
@@ -150,7 +150,7 @@ int main() {
   while (uart_getc() != FTX)
     ;
   // Receive filename
-  for (i = 0; (msgBuffer[i] = uart_getc()) != '\0'; i++)
+  for (i = 0; (buffer[i] = uart_getc()) != '\0'; i++)
     ;
 
   // receive file size
@@ -178,7 +178,7 @@ int main() {
   // Read and store messages sent from SUT
   // Up until it sends the test.log file
   while ((c = uart_getc()) != FTX) {
-    msgBuffer[i] = c;
+    buffer[i] = c;
     if (DEBUG) {
       IOB_UART_INIT_BASEADDR(UART0_BASE);
       uart_putc(c);
@@ -186,7 +186,7 @@ int main() {
     }
     i++;
   }
-  msgBuffer[i] = EOT;
+  buffer[i] = EOT;
 
   // Receive filename (test.log)
   for (i = 0; uart_getc() != '\0'; i++)
@@ -210,8 +210,8 @@ int main() {
 
   // Send messages previously stored from SUT
   uart_puts("[Tester]: #### Messages received from SUT: ####\n\n");
-  for (i = 0; msgBuffer[i] != EOT; i++) {
-    uart_putc(msgBuffer[i]);
+  for (i = 0; buffer[i] != EOT; i++) {
+    uart_putc(buffer[i]);
   }
   uart_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 
@@ -261,11 +261,10 @@ int main() {
 }
 
 // Program independent PFSM peripheral of the Tester
-void pfsm_program(){
+void pfsm_program(char *bitstreamBuffer){
   // init Programmable Finite State Machine
   pfsm_init(PFSM0_BASE, 2, 1, 1);
   uint32_t file_size = 0;
-  char bitstreamBuffer[5096];
   //char bitstreamBuffer[] = {
   //  // States memory
   //  0x00, 0x00, 0x00, 0x00, // State 0, I=0: Wait for trigger, Jump 0
@@ -278,7 +277,7 @@ void pfsm_program(){
   //  0x00, 0x00, 0x00, 0x00, // State 3, I=1: Unused
   //  };
   // Receive pfsm bitstream
-  file_size = uart_recvfile(bitstreamBuffer, "pfsm.bit");
+  file_size = uart_recvfile("pfsm.bit", bitstreamBuffer);
   // Program PFSM
   uart_puts("[Tester]: Programming PFSM...\n");
   printf("[Tester]: Programmed PFSM with %d bytes.\n\n",
@@ -287,13 +286,12 @@ void pfsm_program(){
 }
 
 // Program Monitor PFSM internal to ILA.
-void ila_monitor_program(){
+void ila_monitor_program(char *bitstreamBuffer){
   // init ILA Monitor (PFSM)
   pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 3, 1, 1);
   uint32_t file_size = 0;
-  char bitstreamBuffer[5096];
   // Receive pfsm bitstream
-  file_size = uart_recvfile(bitstreamBuffer, "monitor_pfsm.bit");
+  file_size = uart_recvfile("monitor_pfsm.bit", bitstreamBuffer);
   // Program PFSM
   uart_puts("[Tester]: Programming Monitor PFSM...\n");
   printf("[Tester]: Programmed Monitor PFSM with %d bytes.\n\n",

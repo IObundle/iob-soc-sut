@@ -13,7 +13,7 @@ from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
 from verilog_tools import insert_verilog_in_module
-from iob_fsm_program import iob_fsm_program, iob_fsm_record
+from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
 
 
 class iob_soc_tester(iob_soc):
@@ -108,7 +108,7 @@ class iob_soc_tester(iob_soc):
     def _generate_monitor_bitstream(cls):
         """Generate bitstream for the Monitor PFSM of the ILA."""
         ila_parameters = cls.ila0_instance.parameters
-        monitor_prog = iob_fsm_program(
+        monitor_prog = iob_pfsm_program(
             ila_parameters[
                 "MONITOR_STATE_W"
             ],  # Monitor STATE_W defined in ILA parameter
@@ -123,7 +123,7 @@ class iob_soc_tester(iob_soc):
         # in the input.
         # In this example, When the input is 1 for one pulse, it disables the trigger output
         # 4 clocks after it. This allows us to record the two pulses emitted by the Tester's example PFSM.
-        monitor_prog.add_record(
+        monitor_prog.set_records(
             [
                 # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
                 iob_fsm_record(
@@ -148,21 +148,21 @@ class iob_soc_tester(iob_soc):
         )
         # Create symlink for this bitstream in the fpga directory
         os.symlink(
-            os.path.join(cls.build_dir, "hardware/simulation/monitor_pfsm.bit"),
+            os.path.join("../simulation/monitor_pfsm.bit"),
             os.path.join(cls.build_dir, "hardware/fpga/monitor_pfsm.bit"),
         )
 
     @classmethod
     def _generate_pfsm_bitstream(cls):
         """Generate bitstream for the independent PFSM peripheral."""
-        pfsm_prog = iob_fsm_program(
+        pfsm_prog = iob_pfsm_program(
             2,  # This PFSM has 2^2 states
             1,  # This PFSM has 1 input
             1,  # This PFSM has 1 output
         )
 
         # Create a PFSM program that pulses two times, when its input is set.
-        pfsm_prog.add_record(
+        pfsm_prog.set_records(
             [
                 # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
                 iob_fsm_record(
@@ -184,7 +184,7 @@ class iob_soc_tester(iob_soc):
         )
         # Create symlink for this bitstream in the fpga directory
         os.symlink(
-            os.path.join(cls.build_dir, "hardware/simulation/pfsm.bit"),
+            os.path.join("../simulation/pfsm.bit"),
             os.path.join(cls.build_dir, "hardware/fpga/pfsm.bit"),
         )
 
@@ -215,6 +215,9 @@ class iob_soc_tester(iob_soc):
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
+
+        cls._generate_monitor_bitstream()
+        cls._generate_pfsm_bitstream()
 
         # Use Verilator and AES-KU040-DB-G by default.
         if cls.is_top_module:
