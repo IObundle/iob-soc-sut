@@ -45,7 +45,7 @@ class iob_soc_tester(iob_soc):
     # Method that runs the setup process of this class
     @classmethod
     def _specific_setup(cls):
-        # Instantiate SUT peripherals
+        # Instantiate TESTER peripherals
         cls.peripherals.append(
             iob_uart("UART1", "UART interface for communication with SUT")
         )
