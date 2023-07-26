@@ -47,6 +47,9 @@ int main() {
   axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
   // init integrated logic analyzer
   ila_init(ILA0_BASE);
+  // Enable ILA circular buffer
+  // This allows for continuous sampling while the enable signal is active
+  ila_set_circular_buffer(1);
 
   uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -301,13 +304,13 @@ void ila_monitor_program(char *bitstreamBuffer){
 
 void print_ila_samples() {
   uart_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value |\n");
-  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level
+  uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
   uint32_t i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
   for(i=0; i< ila_number_samples(); i++){
     fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
-    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16, fifo_value);
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16 & 0x1f, fifo_value, ila_get_large_value(i,1)>>21 & 0x1);
   }
   uart_putc('\n');
 }

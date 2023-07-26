@@ -80,6 +80,7 @@ class iob_soc_tester(iob_soc):
             "ILA0",
             "Tester Integrated Logic Analyzer for SUT signals",
             parameters={
+                "BUFFER_W": "3",
                 "SIGNAL_W": "38",
                 "TRIGGER_W": "1",
                 "CLK_COUNTER": "1",
