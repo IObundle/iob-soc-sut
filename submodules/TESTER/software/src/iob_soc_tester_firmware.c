@@ -248,14 +248,15 @@ int main() {
 #endif
 
   // Allocate memory for ILA output data
-  uint32_t ila_n_samples = ila_number_samples();
+  const uint32_t ila_n_samples = (1<<4); //Same as buffer size
   uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
-  char* ila_data = (char *)malloc(ila_data_size);
+
   // Write data to allocated memory
-  ila_output_data(ila_data, 0, ila_n_samples, ILA0_DWORD_SIZE);
+  uint32_t latest_sample_index = ila_number_samples();
+  ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
+
   // Send ila data to file via UART
-  uart_sendfile("ila_data.bin", ila_data_size-1, ila_data); //Don't send last byte (\0)
-  free(ila_data);
+  uart_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
 
   uart_puts("\n[Tester]: Verification successful!\n\n");
 
@@ -280,7 +281,7 @@ void pfsm_program(char *bitstreamBuffer){
 // Program Monitor PFSM internal to ILA.
 void ila_monitor_program(char *bitstreamBuffer){
   // init ILA Monitor (PFSM)
-  pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 3, 1, 1);
+  pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 2, 1, 1);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
   file_size = uart_recvfile("monitor_pfsm.bit", bitstreamBuffer);
@@ -295,9 +296,13 @@ void print_ila_samples() {
   uart_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
   uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
-  uint32_t i, fifo_value;
+  uint32_t j, i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
-  for(i=0; i< ila_number_samples(); i++){
+  uint32_t latest_sample_index = ila_number_samples();
+  const uint32_t ila_buffer_size = (1<<4);
+  // For every sample in the buffer (2^4 samples)
+  for(j=0; j<ila_buffer_size; j++){
+    i = latest_sample_index + j%ila_buffer_size;
     fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
     printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16 & 0x1f, fifo_value, ila_get_large_value(i,1)>>21 & 0x1);
   }

@@ -80,12 +80,12 @@ class iob_soc_tester(iob_soc):
             "ILA0",
             "Tester Integrated Logic Analyzer for SUT signals",
             parameters={
-                "BUFFER_W": "3",
+                "BUFFER_W": "4",
                 "SIGNAL_W": "38",
                 "TRIGGER_W": "1",
                 "CLK_COUNTER": "1",
                 "MONITOR": "1",
-                "MONITOR_STATE_W": "3",
+                "MONITOR_STATE_W": "2",
             },
         )
         cls.peripherals.append(cls.ila0_instance)
@@ -128,16 +128,21 @@ class iob_soc_tester(iob_soc):
             [
                 # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
                 iob_fsm_record(
-                    "state_0", "0", "state_0", "1"
-                ),  # Keep jumping to this state while input is not high.
+                    # Keep jumping to this state while input is not high.
+                    "state_0",
+                    "0",
+                    "state_0",
+                    "i[0]",
+                ),
                 iob_fsm_record(
-                    "", "1", "state_0", "1"
-                ),  # If the input is still high (more than 1 clock pulse), then go back to state 0.
+                    # If the input is still high (more than 1 clock pulse), then go back to state 0.
+                    "",
+                    "1",
+                    "state_0",
+                    "1",
+                ),
                 iob_fsm_record("", "", "", "1"),  # Wait one clock
-                iob_fsm_record("", "", "", "1"),  # Wait one clock
-                iob_fsm_record(
-                    "state_finish", "-", "state_finish", "0"
-                ),  # Disable the trigger output. Keep jumping to this state to keep the trigger output disabled.
+                iob_fsm_record("", "-", "state_0", "1"),  # Jump to state 0
             ]
         )
 
