@@ -25,11 +25,12 @@
 void print_ila_samples();
 void send_axistream();
 void receive_axistream();
-void pfsm_program();
+void pfsm_program(char *);
+void ila_monitor_program(char *);
 
 int main() {
   uint32_t file_size = 0;
-  char c, msgBuffer[5096], *sutStr;
+  char c, buffer[5096], *sutStr;
   int i = 0;
 #ifndef INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
@@ -46,8 +47,9 @@ int main() {
   axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
   // init integrated logic analyzer
   ila_init(ILA0_BASE);
-  // init Programmable Finite State Machine
-  pfsm_init(PFSM0_BASE, 2, 1, 1);
+  // Enable ILA circular buffer
+  // This allows for continuous sampling while the enable signal is active
+  ila_set_circular_buffer(1);
 
   uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -62,7 +64,9 @@ int main() {
   uart_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 
   // Program PFSM
-  pfsm_program();
+  pfsm_program(buffer);
+  // Program Monitor PFSM (internal to ILA)
+  ila_monitor_program(buffer);
 
   // Enable all ILA triggers
   ila_enable_all_triggers();
@@ -101,18 +105,18 @@ int main() {
   while (uart_getc() != FRX)
     ;
   // Receive filename
-  for (i = 0; (msgBuffer[i] = uart_getc()) != '\0'; i++)
+  for (i = 0; (buffer[i] = uart_getc()) != '\0'; i++)
     ;
   // Switch back to UART0
   IOB_UART_INIT_BASEADDR(UART0_BASE);
 
   uart_puts("[Tester]: Received firmware transfer request with filename: ");
-  uart_puts(msgBuffer);
+  uart_puts(buffer);
   uart_putc('\n');
   uart_puts("[Tester]: Sending transfer request to console...\n");
 
   // Make request to host
-  file_size = uart_recvfile(msgBuffer, sut_firmware);
+  file_size = uart_recvfile(buffer, sut_firmware);
 
   uart_puts(
       "[Tester]: SUT firmware obtained. Transfering it to SUT via UART...\n");
@@ -149,7 +153,7 @@ int main() {
   while (uart_getc() != FTX)
     ;
   // Receive filename
-  for (i = 0; (msgBuffer[i] = uart_getc()) != '\0'; i++)
+  for (i = 0; (buffer[i] = uart_getc()) != '\0'; i++)
     ;
 
   // receive file size
@@ -177,7 +181,7 @@ int main() {
   // Read and store messages sent from SUT
   // Up until it sends the test.log file
   while ((c = uart_getc()) != FTX) {
-    msgBuffer[i] = c;
+    buffer[i] = c;
     if (DEBUG) {
       IOB_UART_INIT_BASEADDR(UART0_BASE);
       uart_putc(c);
@@ -185,7 +189,7 @@ int main() {
     }
     i++;
   }
-  msgBuffer[i] = EOT;
+  buffer[i] = EOT;
 
   // Receive filename (test.log)
   for (i = 0; uart_getc() != '\0'; i++)
@@ -209,8 +213,8 @@ int main() {
 
   // Send messages previously stored from SUT
   uart_puts("[Tester]: #### Messages received from SUT: ####\n\n");
-  for (i = 0; msgBuffer[i] != EOT; i++) {
-    uart_putc(msgBuffer[i]);
+  for (i = 0; buffer[i] != EOT; i++) {
+    uart_putc(buffer[i]);
   }
   uart_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 
@@ -244,14 +248,15 @@ int main() {
 #endif
 
   // Allocate memory for ILA output data
-  uint32_t ila_n_samples = ila_number_samples();
+  const uint32_t ila_n_samples = (1<<4); //Same as buffer size
   uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
-  char* ila_data = (char *)malloc(ila_data_size);
+
   // Write data to allocated memory
-  ila_output_data(ila_data, 0, ila_n_samples, ILA0_DWORD_SIZE);
+  uint32_t latest_sample_index = ila_number_samples();
+  ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
+
   // Send ila data to file via UART
-  uart_sendfile("ila_data.bin", ila_data_size-1, ila_data); //Don't send last byte (\0)
-  free(ila_data);
+  uart_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
 
   uart_puts("\n[Tester]: Verification successful!\n\n");
 
@@ -259,22 +264,13 @@ int main() {
   uart_finish();
 }
 
-void pfsm_program(){
+// Program independent PFSM peripheral of the Tester
+void pfsm_program(char *bitstreamBuffer){
+  // init Programmable Finite State Machine
+  pfsm_init(PFSM0_BASE, 2, 1, 1);
   uint32_t file_size = 0;
-  //char bitstreamBuffer[5096];
-  char bitstreamBuffer[] = {
-    // States memory
-    0x00, 0x00, 0x00, 0x00, // State 0, I=0: Wait for trigger, Jump 0
-    0x00, 0x00, 0x00, 0x02, // State 0, I=1: Wait for trigger, Jump 1
-    0x00, 0x00, 0x00, 0x05, // State 1, I=0: Tiggered, enable output and go to state 2
-    0x00, 0x00, 0x00, 0x05, // State 1, I=1: Tiggered, enable output and go to state 2
-    0x00, 0x00, 0x00, 0x04, // State 2, I=0: Disable output, stay on this state
-    0x00, 0x00, 0x00, 0x04, // State 2, I=1: Disable output, stay on this state
-    0x00, 0x00, 0x00, 0x00, // State 3, I=0: Unused
-    0x00, 0x00, 0x00, 0x00, // State 3, I=1: Unused
-    };
   // Receive pfsm bitstream
-  //file_size = uart_recvfile(bitstreamBuffer, "pfsm_bitstream.bin");
+  file_size = uart_recvfile("pfsm.bit", bitstreamBuffer);
   // Program PFSM
   uart_puts("[Tester]: Programming PFSM...\n");
   printf("[Tester]: Programmed PFSM with %d bytes.\n\n",
@@ -282,15 +278,33 @@ void pfsm_program(){
          );
 }
 
+// Program Monitor PFSM internal to ILA.
+void ila_monitor_program(char *bitstreamBuffer){
+  // init ILA Monitor (PFSM)
+  pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 2, 1, 1);
+  uint32_t file_size = 0;
+  // Receive pfsm bitstream
+  file_size = uart_recvfile("monitor_pfsm.bit", bitstreamBuffer);
+  // Program PFSM
+  uart_puts("[Tester]: Programming Monitor PFSM...\n");
+  printf("[Tester]: Programmed Monitor PFSM with %d bytes.\n\n",
+         pfsm_bitstream_program(bitstreamBuffer)
+         );
+}
+
 void print_ila_samples() {
   uart_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value |\n");
-  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level
-  uint32_t i, fifo_value;
+  uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
+  uint32_t j, i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
-  for(i=0; i< ila_number_samples(); i++){
+  uint32_t latest_sample_index = ila_number_samples();
+  const uint32_t ila_buffer_size = (1<<4);
+  // For every sample in the buffer (2^4 samples)
+  for(j=0; j<ila_buffer_size; j++){
+    i = latest_sample_index + j%ila_buffer_size;
     fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
-    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16, fifo_value);
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16 & 0x1f, fifo_value, ila_get_large_value(i,1)>>21 & 0x1);
   }
   uart_putc('\n');
 }
