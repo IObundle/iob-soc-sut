@@ -20,6 +20,7 @@ int main()
 
   //init uart
   uart_init(UART0_BASE,FREQ/BAUD);   
+  printf_init(&uart_putc);
   uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 
   //init regfileif

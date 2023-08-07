@@ -154,7 +154,14 @@ class iob_soc_sut(iob_soc):
         # Append confs or override them if they exist
         super()._setup_confs(
             [
-                # {'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
+                {
+                    "name": "BOOTROM_ADDR_W",
+                    "type": "P",
+                    "val": "13",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "Boot ROM address width",
+                },
                 {
                     "name": "SRAM_ADDR_W",
                     "type": "P",

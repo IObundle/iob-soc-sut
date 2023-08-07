@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import os
 
-from iob_soc import iob_soc
+from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_soc_sut import iob_soc_sut
 from iob_gpio import iob_gpio
-from iob_uart import iob_uart
+from iob_uart16550 import iob_uart16550
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_ila import iob_ila
@@ -12,11 +12,11 @@ from iob_pfsm import iob_pfsm
 from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
-from verilog_tools import insert_verilog_in_module
+from verilog_tools import insert_verilog_in_module, remove_verilog_line_from_source
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
 
 
-class iob_soc_tester(iob_soc):
+class iob_soc_tester(iob_soc_opencryptolinux):
     name = "iob_soc_tester"
     version = "V0.70"
     flows = "pc-emul emb sim fpga"
@@ -28,7 +28,7 @@ class iob_soc_tester(iob_soc):
         """Create submodules list with dependencies of this module"""
         super()._create_submodules_list(
             [
-                iob_uart,
+                iob_uart16550,
                 iob_soc_sut,
                 iob_gpio,
                 iob_axistream_in,
@@ -47,7 +47,7 @@ class iob_soc_tester(iob_soc):
     def _specific_setup(cls):
         # Instantiate TESTER peripherals
         cls.peripherals.append(
-            iob_uart("UART1", "UART interface for communication with SUT")
+            iob_uart16550("UART1", "UART interface for communication with SUT")
         )
         cls.peripherals.append(
             iob_soc_sut(
@@ -222,6 +222,18 @@ class iob_soc_tester(iob_soc):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
+        # Remove UART0 interrupt connection to PLIC
+        remove_verilog_line_from_source(
+            "assign PLIC0_src",
+            cls.build_dir + "/hardware/src/iob_soc_tester.v",
+        )
+        # Connect UART0 and UART1 interrupt signals
+        insert_verilog_in_module(
+            "   assign PLIC0_src     = {{30{1'b0}}, UART1_interrupt, UART_interrupt};\n",
+            cls.build_dir
+            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+        )
+
         cls._generate_monitor_bitstream()
         cls._generate_pfsm_bitstream()
 
@@ -236,8 +248,17 @@ class iob_soc_tester(iob_soc):
         cls.peripheral_portmap += [
             # ================================================================== SUT IO mappings ==================================================================
             # SUT UART0
-            # ({'corename':'SUT0', 'if_name':'UART_rs232', 'port':'', 'bits':[]},                    {'corename':'UART1', 'if_name':'rs232', 'port':'', 'bits':[]}), #Map UART0 of SUT to UART1 of Tester
-            # Python scripts do not yet support 'UART0_rs232'. Need to connect each signal independently
+            # Map interrupt port to internal wire
+            (
+                {
+                    "corename": "UART1",
+                    "if_name": "interrupt",
+                    "port": "interrupt",
+                    "bits": [],
+                },
+                {"corename": "internal", "if_name": "UART1", "port": "", "bits": []},
+            ),
+            # RS232
             (
                 {"corename": "SUT0", "if_name": "UART", "port": "rxd", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "txd", "bits": []},
