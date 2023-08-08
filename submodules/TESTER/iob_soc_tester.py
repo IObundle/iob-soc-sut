@@ -260,19 +260,19 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             ),
             # RS232
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "rxd", "bits": []},
+                {"corename": "SUT0", "if_name": "uart", "port": "rxd_i", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "txd", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "txd", "bits": []},
+                {"corename": "SUT0", "if_name": "uart", "port": "txd_o", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "rxd", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "cts", "bits": []},
+                {"corename": "SUT0", "if_name": "uart", "port": "cts_i", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "rts", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "UART", "port": "rts", "bits": []},
+                {"corename": "SUT0", "if_name": "uart", "port": "rts_o", "bits": []},
                 {"corename": "UART1", "if_name": "rs232", "port": "cts", "bits": []},
             ),
             # SUT ETHERNET0
