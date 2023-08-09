@@ -15,7 +15,7 @@ endif
 include submodules/LIB/setup.mk
 
 INIT_MEM ?= 1
-RUN_LINUX ?= 1
+RUN_LINUX ?= 0
 
 ifeq ($(INIT_MEM),1)
 SETUP_ARGS += INIT_MEM
