@@ -136,7 +136,7 @@ jobs:
           submodules: 'recursive'
       # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
       - name: Tester Icarus
-        run: nix-shell --run "make tester-sim-test-icarus"
+        run: nix-shell --run "make tester-sim-test-icarus RUN_LINUX=0"
 
   tester-verilator:
     runs-on: self-hosted
@@ -152,7 +152,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester verilator
-        run: nix-shell --run "make tester-sim-test SIMULATOR=verilator"
+        run: nix-shell --run "make tester-sim-test RUN_LINUX=0 SIMULATOR=verilator"
   
   cyclonev:
     runs-on: self-hosted
@@ -204,7 +204,7 @@ jobs:
   #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
   #        submodules: 'recursive'
   #    - name: Tester CYCLONEV
-  #      run: nix-shell --run "make tester-fpga-test-cyclone"
+  #      run: nix-shell --run "make tester-fpga-test-cyclone RUN_LINUX=0"
 
   #tester-netlist-cyclonev:
   #  runs-on: self-hosted
@@ -268,7 +268,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: Tester KU040
-        run: nix-shell --run "make tester-fpga-test BOARD=AES-KU040-DB-G"
+        run: nix-shell --run "make tester-fpga-test RUN_LINUX=0 BOARD=AES-KU040-DB-G"
 
   #tester-netlist-aes-ku040:
   #  runs-on: self-hosted
