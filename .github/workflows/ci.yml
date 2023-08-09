@@ -121,26 +121,27 @@ jobs:
       #- name: icarus test
       #  run nix-shell --run "make -C ../iob_soc_sut_V* sim-test SIMULATOR=icarus"
 
-  tester-icarus:
-    runs-on: self-hosted
-    timeout-minutes: 90
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ icarus ]
-  
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
-      - name: Tester Icarus
-        run: nix-shell --run "make tester-sim-test-icarus RUN_LINUX=0"
+  # Disabled because OpenCryptoLinux does not support Icarus
+  #tester-icarus:
+  #  runs-on: self-hosted
+  #  timeout-minutes: 90
+  #  # always run, except when previous job was cancelled
+  #  if: ${{ !cancelled() }}
+  #  # run after indicated job
+  #  needs: [ icarus ]
+  #
+  #  steps:
+  #    - uses: actions/checkout@v3
+  #      with:
+  #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #        submodules: 'recursive'
+  #    # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
+  #    - name: Tester Icarus
+  #      run: nix-shell --run "make tester-sim-test-icarus RUN_LINUX=0"
 
   tester-verilator:
     runs-on: self-hosted
-    timeout-minutes: 30
+    timeout-minutes: 90
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
