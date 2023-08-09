@@ -229,7 +229,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         )
         # Connect UART0 and UART1 interrupt signals
         insert_verilog_in_module(
-            "   assign PLIC0_src     = {{30{1'b0}}, UART1_interrupt, UART_interrupt};\n",
+            "   assign PLIC0_src     = {{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o};\n",
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
@@ -253,7 +253,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "UART1",
                     "if_name": "interrupt",
-                    "port": "interrupt",
+                    "port": "interrupt_o",
                     "bits": [],
                 },
                 {"corename": "internal", "if_name": "UART1", "port": "", "bits": []},
@@ -261,19 +261,19 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             # RS232
             (
                 {"corename": "SUT0", "if_name": "uart", "port": "rxd_i", "bits": []},
-                {"corename": "UART1", "if_name": "rs232", "port": "txd", "bits": []},
+                {"corename": "UART1", "if_name": "rs232", "port": "txd_o", "bits": []},
             ),
             (
                 {"corename": "SUT0", "if_name": "uart", "port": "txd_o", "bits": []},
-                {"corename": "UART1", "if_name": "rs232", "port": "rxd", "bits": []},
+                {"corename": "UART1", "if_name": "rs232", "port": "rxd_i", "bits": []},
             ),
             (
                 {"corename": "SUT0", "if_name": "uart", "port": "cts_i", "bits": []},
-                {"corename": "UART1", "if_name": "rs232", "port": "rts", "bits": []},
+                {"corename": "UART1", "if_name": "rs232", "port": "rts_o", "bits": []},
             ),
             (
                 {"corename": "SUT0", "if_name": "uart", "port": "rts_o", "bits": []},
-                {"corename": "UART1", "if_name": "rs232", "port": "cts", "bits": []},
+                {"corename": "UART1", "if_name": "rs232", "port": "cts_i", "bits": []},
             ),
             # SUT ETHERNET0
             ####({'corename':'SUT0', 'if_name':'ETHERNET0_ethernet', 'port':'', 'bits':[]},         {'corename':'', 'if_name':'', 'port':'', 'bits':[]}), #Map ETHERNET0 of Tester to external interface
