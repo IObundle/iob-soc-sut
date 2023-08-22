@@ -9,6 +9,7 @@ from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_ila import iob_ila
 from iob_pfsm import iob_pfsm
+from iob_dma import iob_dma
 from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
@@ -35,6 +36,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 iob_axistream_out,
                 iob_ila,
                 iob_pfsm,
+                iob_dma,
                 # iob_eth,
                 # Modules required for AXISTREAM
                 (iob_ram_2p_be, {"purpose": "simulation"}),
@@ -57,11 +59,26 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
                     "AXI_ADDR_W": "AXI_ADDR_W",
+                    # SUT memory offset is equal to half the address width (MEM_ADDR_W-1)
+                    # The first half of the memory is used for the Tester.
+                    # The second half of the memory is used for the SUT.
+                    "MEM_ADDR_OFFSET": eval(
+                        "2**("
+                        + next(i["val"] for i in cls.confs if i["name"] == "MEM_ADDR_W")
+                        + "-1)"
+                    ),
                 },
             )
         )
 
         cls.peripherals.append(iob_gpio("GPIO0", "GPIO interface"))
+        cls.peripherals.append(
+            iob_gpio(
+                "GPIO1",
+                "GPIO interface to receive FIFO interrupts.",
+                parameters={"GPIO_W": "2"},
+            )
+        )
         cls.peripherals.append(
             iob_axistream_in(
                 "AXISTREAMIN0",
@@ -94,6 +111,20 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 "PFSM0",
                 "PFSM interface",
                 parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+            )
+        )
+
+        cls.peripherals.append(
+            iob_dma(
+                "DMA0",
+                "DMA interface",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "N_INPUTS": "1",
+                    "N_OUTPUTS": "1",
+                },
             )
         )
         # cls.peripherals.append(iob_eth("ETH0", "Tester ethernet interface for console"))
@@ -438,6 +469,140 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "port": "tlast_i",
                     "bits": [],
                 },
+            ),
+            # Tester AXISTREAM IN DMA
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "dma",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "dma",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "dma",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "interrupt",
+                    "port": "fifo_threshold_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "GPIO1",
+                    "if_name": "gpio",
+                    "port": "input_ports",
+                    "bits": [0],
+                },
+            ),
+            # TESTER AXISTREAM OUT DMA
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "dma",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_output",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "dma",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_output",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "dma",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_output",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "interrupt",
+                    "port": "fifo_threshold_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "GPIO1",
+                    "if_name": "gpio",
+                    "port": "input_ports",
+                    "bits": [1],
+                },
+            ),
+            # GPIO1 unused ports
+            # Connect them to internal floating wires
+            (
+                {
+                    "corename": "GPIO1",
+                    "if_name": "gpio",
+                    "port": "output_ports",
+                    "bits": [],
+                },
+                {"corename": "internal", "if_name": "GPIO1", "port": "", "bits": []},
+            ),
+            (
+                {
+                    "corename": "GPIO1",
+                    "if_name": "gpio",
+                    "port": "output_enable",
+                    "bits": [],
+                },
+                {"corename": "internal", "if_name": "GPIO1", "port": "", "bits": []},
             ),
             # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
             (

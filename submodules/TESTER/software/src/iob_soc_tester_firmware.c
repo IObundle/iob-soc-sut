@@ -9,6 +9,8 @@
 #include "iob-ila.h"
 #include "ILA0.h" // ILA0 instance specific defines
 #include "iob-pfsm.h"
+#include "iob-dma.h"
+#include "iob-cache.h"
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -51,6 +53,10 @@ int main() {
   // Enable ILA circular buffer
   // This allows for continuous sampling while the enable signal is active
   ila_set_circular_buffer(1);
+  // init dma
+  dma_init(DMA0_BASE);
+  // init cache
+  cache_init(0, 31);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -311,42 +317,47 @@ void print_ila_samples() {
 }
 
 void send_axistream() {
-  uint8_t byte_stream[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   uint8_t i;
+  uint8_t words_in_byte_stream = 4; 
+  // Allocate memory for byte stream
+  uint32_t *byte_stream = (uint32_t *)malloc(words_in_byte_stream*sizeof(uint32_t));
+  // Fill byte stream to send
+  byte_stream[0] = 0x03020100;
+  byte_stream[1] = 0x07060504;
+  byte_stream[2] = 0xbbaa0908;
+  byte_stream[3] = 0xffeeddcc;
+
   // Print byte stream to send
   uart16550_puts("[Tester]: Sending AXI stream bytes: ");
-  for (i = 0; i < sizeof(byte_stream); i++)
-    printf("0x%x ", byte_stream[i]);
+  for (i = 0; i < words_in_byte_stream*4; i++)
+    printf("0x%x ", ((uint8_t *)byte_stream)[i]);
   uart16550_puts("\n\n");
-  // Send bytes to AXI stream output
-  for (i = 0; i < sizeof(byte_stream) - 1; i++)
-    axistream_out_push(byte_stream + i, 1, 0);
-  axistream_out_push(byte_stream + i, 1,
-                     1); // Send the last byte with the TLAST signal
+
+  // Send bytes to AXI stream output via DMA, except the last word.
+  dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
+  // Send the last word with via SWregs with the TLAST signal.
+  axistream_out_push_word(byte_stream[words_in_byte_stream-1], 0xf);
+
+  free(byte_stream);
 }
 
 void receive_axistream() {
-  uint8_t byte_stream[64];
-  uint8_t i, total_received_bytes;
+  uint8_t i;
+  uint8_t n_received_words = axistream_in_fifo_level();
+  // Allocate memory for byte stream
+  uint32_t *byte_stream = (uint32_t *)malloc(n_received_words*sizeof(uint32_t));
 
-  // Check if we are receiving an AXI stream
-  if (!axistream_in_empty()) {
-    // Receive bytes while stream does not end (by TLAST signal), or up to 64
-    // bytes
-    for (total_received_bytes = 0;
-         !axistream_in_pop(byte_stream + total_received_bytes, &i) &&
-         total_received_bytes < 64;
-         total_received_bytes += i)
-      ;
-    if (total_received_bytes < 64)
-      total_received_bytes += i;
-    // Print received bytes
-    uart16550_puts("[Tester]: Received AXI stream bytes: ");
-    for (i = 0; i < total_received_bytes; i++)
-      printf("0x%x ", byte_stream[i]);
-    uart16550_puts("\n\n");
-  } else {
-    // Input AXI stream queue is empty
-    uart16550_puts("[Tester]: Error: AXI stream input is empty.\n\n");
-  }
+  // Transfer bytes from AXI stream input via DMA
+  dma_start_transfer(byte_stream, n_received_words, 1, 0);
+
+  // Flush cache
+  cache_invalidate();
+
+  // Print byte stream received
+  uart16550_puts("[Tester]: Received AXI stream bytes: ");
+  for (i = 0; i < n_received_words*4; i++)
+    printf("0x%x ", ((uint8_t *)byte_stream)[i]);
+  uart16550_puts("\n\n");
+
+  free(byte_stream);
 }
