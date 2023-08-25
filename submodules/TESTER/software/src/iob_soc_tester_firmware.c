@@ -56,7 +56,7 @@ int main() {
   // init dma
   dma_init(DMA0_BASE);
   // init cache
-  cache_init(0, 31);
+  cache_init(1<<E, MEM_ADDR_W);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -330,12 +330,14 @@ void send_axistream() {
   // Print byte stream to send
   uart16550_puts("[Tester]: Sending AXI stream bytes: ");
   for (i = 0; i < words_in_byte_stream*4; i++)
-    printf("0x%x ", ((uint8_t *)byte_stream)[i]);
+    printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
   uart16550_puts("\n\n");
 
   // Send bytes to AXI stream output via DMA, except the last word.
+  uart16550_puts("[Tester]: Loading AXI words via DMA...\n");
   dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
   // Send the last word with via SWregs with the TLAST signal.
+  uart16550_puts("[Tester]: Loading last AXI word via SWregs...\n");
   axistream_out_push_word(byte_stream[words_in_byte_stream-1], 0xf);
 
   free(byte_stream);
@@ -344,11 +346,17 @@ void send_axistream() {
 void receive_axistream() {
   uint8_t i;
   uint8_t n_received_words = axistream_in_fifo_level();
+  
+  // FIXME: The `+1` in the lines below is a workaround for an issue where the first word of the allocated memory is always read with zero value.
+  //        I'm not sure why this happens. Decompiling the generated iob_soc_tester_firmware.elf seem to show instructions for correct access to memory.
+  //        However, generated VCD waves do not seem to show accesses by the CPU to the memory (not even the cache) after the `cache_invalidate`.
+
   // Allocate memory for byte stream
-  uint32_t *byte_stream = (uint32_t *)malloc(n_received_words*sizeof(uint32_t));
+  volatile uint32_t *byte_stream = (uint32_t *)malloc((n_received_words+1)*sizeof(uint32_t));
 
   // Transfer bytes from AXI stream input via DMA
-  dma_start_transfer(byte_stream, n_received_words, 1, 0);
+  uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
+  dma_start_transfer((uint32_t *)byte_stream+1, n_received_words, 1, 0);
 
   // Flush cache
   cache_invalidate();
@@ -356,8 +364,8 @@ void receive_axistream() {
   // Print byte stream received
   uart16550_puts("[Tester]: Received AXI stream bytes: ");
   for (i = 0; i < n_received_words*4; i++)
-    printf("0x%x ", ((uint8_t *)byte_stream)[i]);
+    printf("0x%02x ", ((uint8_t *)byte_stream)[i+4]);
   uart16550_puts("\n\n");
 
-  free(byte_stream);
+  free((uint32_t *)byte_stream);
 }

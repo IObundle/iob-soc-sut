@@ -647,6 +647,50 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "bits": [],
                 },
             ),
+            # ILA DMA
+            # Connect these signals to internal floating wires.
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "dma",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "dma",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "dma",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
             # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
             (
                 {
