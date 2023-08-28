@@ -235,11 +235,11 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
             sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
             trigger_list=[
-                "SUT0.AXISTREAMIN0.tvalid_i"
+                "SUT0.AXISTREAMIN0.axis_tvalid_i"
             ],  # List of signals to use as triggers
             probe_list=[  # List of signals to probe
-                ("SUT0.AXISTREAMIN0.tdata_i", 32),
-                ("SUT0.AXISTREAMIN0.fifo.level_o", 5),
+                ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
+                ("SUT0.AXISTREAMIN0.data_fifo.w_level_o", 5),
                 ("PFSM0.output_ports", 1),
             ],
         )
@@ -248,7 +248,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         # This PFSM will be used as an example, reacting to values of tvalid_i.
         # The output of this PFSM will be captured by the ILA.
         insert_verilog_in_module(
-            "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.tvalid_i};",
+            "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i};",
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
@@ -291,19 +291,39 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             ),
             # RS232
             (
-                {"corename": "SUT0", "if_name": "uart", "port": "rxd_i", "bits": []},
+                {
+                    "corename": "SUT0",
+                    "if_name": "uart",
+                    "port": "uart_rxd_i",
+                    "bits": [],
+                },
                 {"corename": "UART1", "if_name": "rs232", "port": "txd_o", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "uart", "port": "txd_o", "bits": []},
+                {
+                    "corename": "SUT0",
+                    "if_name": "uart",
+                    "port": "uart_txd_o",
+                    "bits": [],
+                },
                 {"corename": "UART1", "if_name": "rs232", "port": "rxd_i", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "uart", "port": "cts_i", "bits": []},
+                {
+                    "corename": "SUT0",
+                    "if_name": "uart",
+                    "port": "uart_cts_i",
+                    "bits": [],
+                },
                 {"corename": "UART1", "if_name": "rs232", "port": "rts_o", "bits": []},
             ),
             (
-                {"corename": "SUT0", "if_name": "uart", "port": "rts_o", "bits": []},
+                {
+                    "corename": "SUT0",
+                    "if_name": "uart",
+                    "port": "uart_rts_o",
+                    "bits": [],
+                },
                 {"corename": "UART1", "if_name": "rs232", "port": "cts_i", "bits": []},
             ),
             # SUT ETHERNET0
@@ -320,7 +340,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "GPIO0",
-                    "port": "output_ports",
+                    "port": "GPIO0_output_ports",
                     "bits": [],
                 },
             ),
@@ -334,7 +354,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "GPIO0",
-                    "port": "input_ports",
+                    "port": "GPIO0_input_ports",
                     "bits": [],
                 },
             ),
@@ -351,23 +371,109 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "GPIO0",
-                    "port": "output_enable",
+                    "port": "GPIO0_output_enable",
                     "bits": [],
                 },
-                {"corename": "external", "if_name": "SUT_GPIO", "port": "", "bits": []},
+                {"corename": "external", "if_name": "SUT", "port": "", "bits": []},
+            ),
+            # SUT AXISTREAM IN - General signals
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "AXISTREAMIN0_axis_clk_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT_AXISTREAMIN",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "AXISTREAMIN0_axis_cke_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT_AXISTREAMIN",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "AXISTREAMIN0_axis_arst_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT_AXISTREAMIN",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # Tester AXISTREAM IN - General signals
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_clk_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_cke_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_arst_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
             ),
             # SUT AXISTREAM IN
             (
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tvalid_i",
+                    "port": "AXISTREAMIN0_axis_tvalid_i",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tvalid_o",
+                    "port": "axis_tvalid_o",
                     "bits": [],
                 },
             ),
@@ -375,13 +481,13 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tready_o",
+                    "port": "AXISTREAMIN0_axis_tready_o",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tready_i",
+                    "port": "axis_tready_i",
                     "bits": [],
                 },
             ),
@@ -389,13 +495,13 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tdata_i",
+                    "port": "AXISTREAMIN0_axis_tdata_i",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tdata_o",
+                    "port": "axis_tdata_o",
                     "bits": [],
                 },
             ),
@@ -403,13 +509,99 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tlast_i",
+                    "port": "AXISTREAMIN0_axis_tlast_i",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tlast_o",
+                    "port": "axis_tlast_o",
+                    "bits": [],
+                },
+            ),
+            # SUT AXISTREAM OUT - General signals
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "AXISTREAMOUT0_axis_clk_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT_AXISTREAMOUT",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "AXISTREAMOUT0_axis_cke_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT_AXISTREAMOUT",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "AXISTREAMOUT0_axis_arst_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT_AXISTREAMOUT",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # Tester AXISTREAM OUT - General signals
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_clk_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_cke_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_arst_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
                     "bits": [],
                 },
             ),
@@ -418,13 +610,13 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMOUT0",
-                    "port": "tvalid_o",
+                    "port": "AXISTREAMOUT0_axis_tvalid_o",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tvalid_i",
+                    "port": "axis_tvalid_i",
                     "bits": [],
                 },
             ),
@@ -432,13 +624,13 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMOUT0",
-                    "port": "tready_i",
+                    "port": "AXISTREAMOUT0_axis_tready_i",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tready_o",
+                    "port": "axis_tready_o",
                     "bits": [],
                 },
             ),
@@ -446,13 +638,13 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMOUT0",
-                    "port": "tdata_o",
+                    "port": "AXISTREAMOUT0_axis_tdata_o",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tdata_i",
+                    "port": "axis_tdata_i",
                     "bits": [],
                 },
             ),
@@ -460,13 +652,13 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 {
                     "corename": "SUT0",
                     "if_name": "AXISTREAMOUT0",
-                    "port": "tlast_o",
+                    "port": "AXISTREAMOUT0_axis_tlast_o",
                     "bits": [],
                 },
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tlast_i",
+                    "port": "axis_tlast_i",
                     "bits": [],
                 },
             ),

@@ -138,7 +138,7 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tvalid_i",
+                    "port": "axis_clk_i",
                     "bits": [],
                 },
                 {
@@ -152,13 +152,13 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tready_o",
+                    "port": "axis_cke_i",
                     "bits": [],
                 },
                 {
                     "corename": "external",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tready_i",
+                    "port": "",
                     "bits": [],
                 },
             ),
@@ -166,13 +166,13 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tdata_i",
+                    "port": "axis_arst_i",
                     "bits": [],
                 },
                 {
                     "corename": "external",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tdata_o",
+                    "port": "",
                     "bits": [],
                 },
             ),
@@ -180,13 +180,55 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMIN0",
                     "if_name": "axistream",
-                    "port": "tlast_i",
+                    "port": "axis_tvalid_i",
                     "bits": [],
                 },
                 {
                     "corename": "external",
                     "if_name": "AXISTREAMIN0",
-                    "port": "tlast_o",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tready_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tlast_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
                     "bits": [],
                 },
             ),
@@ -253,7 +295,7 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tvalid_o",
+                    "port": "axis_clk_i",
                     "bits": [],
                 },
                 {
@@ -267,7 +309,7 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tready_i",
+                    "port": "axis_cke_i",
                     "bits": [],
                 },
                 {
@@ -281,7 +323,7 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tdata_o",
+                    "port": "axis_arst_i",
                     "bits": [],
                 },
                 {
@@ -295,7 +337,49 @@ class iob_soc_sut(iob_soc):
                 {
                     "corename": "AXISTREAMOUT0",
                     "if_name": "axistream",
-                    "port": "tlast_o",
+                    "port": "axis_tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tlast_o",
                     "bits": [],
                 },
                 {

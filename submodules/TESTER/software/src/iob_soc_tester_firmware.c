@@ -47,7 +47,7 @@ int main() {
   gpio_init(GPIO0_BASE);
   // init axistream
   axistream_in_init(AXISTREAMIN0_BASE);
-  axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
+  axistream_out_init(AXISTREAMOUT0_BASE, 4);
   // init integrated logic analyzer
   ila_init(ILA0_BASE);
   // Enable ILA circular buffer
@@ -331,14 +331,14 @@ void send_axistream() {
   uart16550_puts("[Tester]: Sending AXI stream bytes: ");
   for (i = 0; i < words_in_byte_stream*4; i++)
     printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
-  uart16550_puts("\n\n");
+  uart16550_puts("\n");
 
   // Send bytes to AXI stream output via DMA, except the last word.
   uart16550_puts("[Tester]: Loading AXI words via DMA...\n");
   dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
   // Send the last word with via SWregs with the TLAST signal.
-  uart16550_puts("[Tester]: Loading last AXI word via SWregs...\n");
-  axistream_out_push_word(byte_stream[words_in_byte_stream-1], 0xf);
+  uart16550_puts("[Tester]: Loading last AXI word via SWregs...\n\n");
+  axistream_out_push(byte_stream[words_in_byte_stream-1], 1, 1);
 
   free(byte_stream);
 }

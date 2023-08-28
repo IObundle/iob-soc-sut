@@ -33,11 +33,24 @@ module iob_soc_sut_sim_wrapper (
    localparam AXI_DATA_W = `DDR_DATA_W;
 
    wire clk = clk_i;
+   wire cke = 1'b1;
    wire rst = rst_i;
 
    `include "iob_soc_sut_wrapper_pwires.vs"
 
    assign GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
+   assign AXISTREAMIN0_axis_clk_i = clk;
+   assign AXISTREAMIN0_axis_cke_i = cke;
+   assign AXISTREAMIN0_axis_arst_i = rst;
+   assign AXISTREAMIN0_axis_tvalid_i = 1'b0;
+   assign AXISTREAMIN0_axis_tdata_i = {`IOB_SOC_SUT_AXISTREAMIN0_TDATA_W{1'b0}};
+   assign AXISTREAMIN0_axis_tlast_i = 1'b0;
+
+   assign AXISTREAMOUT0_axis_clk_i = clk;
+   assign AXISTREAMOUT0_axis_cke_i = cke;
+   assign AXISTREAMOUT0_axis_arst_i = rst;
+   assign AXISTREAMOUT0_axis_tready_i = 1'b0;
+
 
    wire [1-1:0] iob_avalid_i = 1'b0;
    wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
@@ -73,6 +86,7 @@ module iob_soc_sut_sim_wrapper (
       .iob_wstrb_i (iob_wstrb_i),
       `include "iob_soc_sut_pportmaps.vs"
       .clk_i       (clk),
+      .cke_i       (cke),
       .arst_i      (rst),
       .trap_o      (trap_o)
    );
@@ -133,7 +147,6 @@ always @(posedge trap[1]) begin
    //Manually added testbench uart core. RS232 pins attached to the same pins
    //of the iob_soc_sut UART0 instance to communicate with it
    // The interface of iob_soc_sut UART0 is assumed to be the first portmapped interface (UART_*)
-   wire cke = 1'b1;
    iob_uart uart_tb (
       .clk_i (clk),
       .cke_i (cke),
