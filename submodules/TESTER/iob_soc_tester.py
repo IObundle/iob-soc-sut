@@ -265,6 +265,26 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
+        # Connect General signals from iob-axis cores
+        insert_verilog_in_module(
+            """
+    assign SUT_AXISTREAMIN_AXISTREAMIN0_axis_clk_i = clk_i;
+    assign SUT_AXISTREAMIN_AXISTREAMIN0_axis_cke_i = cke_i;
+    assign SUT_AXISTREAMIN_AXISTREAMIN0_axis_arst_i = arst_i;
+    assign AXISTREAMIN0_axis_clk_i = clk_i;
+    assign AXISTREAMIN0_axis_cke_i = cke_i;
+    assign AXISTREAMIN0_axis_arst_i = arst_i;
+    assign SUT_AXISTREAMOUT_AXISTREAMOUT0_axis_clk_i = clk_i;
+    assign SUT_AXISTREAMOUT_AXISTREAMOUT0_axis_cke_i = cke_i;
+    assign SUT_AXISTREAMOUT_AXISTREAMOUT0_axis_arst_i = arst_i;
+    assign AXISTREAMOUT0_axis_clk_i = clk_i;
+    assign AXISTREAMOUT0_axis_cke_i = cke_i;
+    assign AXISTREAMOUT0_axis_arst_i = arst_i;
+             """,
+            cls.build_dir
+            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+        )
+
         cls._generate_monitor_bitstream()
         cls._generate_pfsm_bitstream()
 
