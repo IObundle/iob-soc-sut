@@ -34,21 +34,21 @@ module iob_soc_sut_sim_wrapper (
 
    wire clk = clk_i;
    wire cke = 1'b1;
-   wire rst = rst_i;
+   wire arst = rst_i;
 
    `include "iob_soc_sut_wrapper_pwires.vs"
 
    assign GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
    assign AXISTREAMIN0_axis_clk_i = clk;
    assign AXISTREAMIN0_axis_cke_i = cke;
-   assign AXISTREAMIN0_axis_arst_i = rst;
+   assign AXISTREAMIN0_axis_arst_i = arst;
    assign AXISTREAMIN0_axis_tvalid_i = 1'b0;
    assign AXISTREAMIN0_axis_tdata_i = {`IOB_SOC_SUT_AXISTREAMIN0_TDATA_W{1'b0}};
    assign AXISTREAMIN0_axis_tlast_i = 1'b0;
 
    assign AXISTREAMOUT0_axis_clk_i = clk;
    assign AXISTREAMOUT0_axis_cke_i = cke;
-   assign AXISTREAMOUT0_axis_arst_i = rst;
+   assign AXISTREAMOUT0_axis_arst_i = arst;
    assign AXISTREAMOUT0_axis_tready_i = 1'b0;
 
 
@@ -87,7 +87,7 @@ module iob_soc_sut_sim_wrapper (
       `include "iob_soc_sut_pportmaps.vs"
       .clk_i       (clk),
       .cke_i       (cke),
-      .arst_i      (rst),
+      .arst_i      (arst),
       .trap_o      (trap_o)
    );
 
@@ -108,7 +108,7 @@ module iob_soc_sut_sim_wrapper (
       `include "iob_memory_axi_s_portmap.vs"
 
       .clk_i(clk),
-      .rst_i(rst)
+      .rst_i(arst)
    );
 `endif
 
@@ -150,7 +150,7 @@ always @(posedge trap[1]) begin
    iob_uart uart_tb (
       .clk_i (clk),
       .cke_i (cke),
-      .arst_i(rst),
+      .arst_i(arst),
 
       .iob_avalid_i(uart_avalid),
       .iob_addr_i  (uart_addr),
@@ -185,7 +185,7 @@ always @(posedge trap[1]) begin
    //add core test module in testbench
    iob_eth_tb_gen eth_tb (
       .clk  (clk),
-      .reset(rst),
+      .reset(arst),
 
       // This module acts like a loopback
       .RX_CLK (ETHERNET0_TX_CLK),
