@@ -92,8 +92,13 @@ int main() {
   uart16550_init(UART1_BASE, FREQ/(16*BAUD));
 
   // Wait for ENQ signal from SUT
-  while (uart16550_getc() != ENQ)
-    ;
+  while ((c = uart16550_getc()) != ENQ)
+    if (DEBUG) {
+      uart16550_base(UART0_BASE);
+      uart16550_putc(c);
+      uart16550_base(UART1_BASE);
+    };
+    
   // Send ack to sut
   uart16550_putc(ACK);
 

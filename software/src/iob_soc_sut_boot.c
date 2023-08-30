@@ -14,6 +14,7 @@
 #define PROGNAME "IOb-Bootloader"
 
 int main() {
+  uint32_t i;
 
   // init uart
   uart_init(UART_BASE, FREQ / BAUD);
@@ -25,10 +26,10 @@ int main() {
   // connect with console
   do {
     if (IOB_UART_GET_TXREADY())
-      uart_putc((char)ENQ);
+      // Send 0xff (to allow start bit synchronization) followed by ENQ
+      uart_puts((char [3]){0xff, ENQ, 0x00});
   } while (!IOB_UART_GET_RXREADY());
 
-  uint32_t i;
   for ( i = 0; i < 5000; i++)asm("nop"); //Delay to allow time for tester to print debug messages
 
 
