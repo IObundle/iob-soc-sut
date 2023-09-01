@@ -352,24 +352,25 @@ void receive_axistream() {
   uint8_t i;
   uint8_t n_received_words = axistream_in_fifo_level();
   
-  // FIXME: The `+1` in the lines below is a workaround for an issue where the first word of the allocated memory is always read with zero value.
-  //        I'm not sure why this happens. Decompiling the generated iob_soc_tester_firmware.elf seem to show instructions for correct access to memory.
-  //        However, generated VCD waves do not seem to show accesses by the CPU to the memory (not even the cache) after the `cache_invalidate`.
-
   // Allocate memory for byte stream
-  volatile uint32_t *byte_stream = (uint32_t *)malloc((n_received_words+1)*sizeof(uint32_t));
+  volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
 
   // Transfer bytes from AXI stream input via DMA
   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
-  dma_start_transfer((uint32_t *)byte_stream+1, n_received_words, 1, 0);
+  dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
 
   // Flush cache
   cache_invalidate();
 
+  // FIXME: The values read below are not comming from the memory.
+  // Either the cache is not working or the compiler
+  // is optimizing away the memory accesses.
+  // The DMA seems to be writing to memory correctly from what I have seen in the VCD waves.
+  
   // Print byte stream received
   uart16550_puts("[Tester]: Received AXI stream bytes: ");
   for (i = 0; i < n_received_words*4; i++)
-    printf("0x%02x ", ((uint8_t *)byte_stream)[i+4]);
+    printf("0x%02x ", ((volatile uint8_t *)byte_stream)[i]);
   uart16550_puts("\n\n");
 
   free((uint32_t *)byte_stream);
