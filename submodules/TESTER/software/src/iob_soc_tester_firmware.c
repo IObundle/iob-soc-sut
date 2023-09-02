@@ -5,10 +5,12 @@
 #include "iob-axistream-in.h"
 #include "iob-axistream-out.h"
 #include "iob-gpio.h"
-#include "iob-uart.h"
+#include "iob-uart16550.h"
 #include "iob-ila.h"
 #include "ILA0.h" // ILA0 instance specific defines
 #include "iob-pfsm.h"
+#include "iob-dma.h"
+#include "iob-cache.h"
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -37,31 +39,36 @@ int main() {
 #endif
 
   // Init uart0
-  uart_init(UART0_BASE, FREQ / BAUD);
+  uart16550_init(UART0_BASE, FREQ/(16*BAUD));
+  printf_init(&uart16550_putc);
   // Init SUT (connected through REGFILEIF)
   IOB_SOC_SUT_INIT_BASEADDR(SUT0_BASE);
   // Init gpio
   gpio_init(GPIO0_BASE);
   // init axistream
   axistream_in_init(AXISTREAMIN0_BASE);
-  axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
+  axistream_out_init(AXISTREAMOUT0_BASE, 4);
   // init integrated logic analyzer
   ila_init(ILA0_BASE);
   // Enable ILA circular buffer
   // This allows for continuous sampling while the enable signal is active
   ila_set_circular_buffer(1);
+  // init dma
+  dma_init(DMA0_BASE);
+  // init cache
+  cache_init(1<<E, MEM_ADDR_W);
 
-  uart_puts("\n\n[Tester]: Hello from tester!\n\n\n");
+  uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
   // Write data to the registers of the SUT to be read by it.
   IOB_SOC_SUT_SET_REG1(64);
   IOB_SOC_SUT_SET_REG2(1024);
-  uart_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
+  uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
             "SUT.\n\n");
 
   // Write a test pattern to the GPIO outputs to be read by the SUT.
   gpio_set(0x1234abcd);
-  uart_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
+  uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 
   // Program PFSM
   pfsm_program(buffer);
@@ -80,146 +87,151 @@ int main() {
   // Print sampled ILA values
   print_ila_samples();
 
-  uart_puts("[Tester]: Initializing SUT via UART...\n");
+  uart16550_puts("[Tester]: Initializing SUT via UART...\n");
   // Init and switch to uart1 (connected to the SUT)
-  uart_init(UART1_BASE, FREQ / BAUD);
+  uart16550_init(UART1_BASE, FREQ/(16*BAUD));
 
   // Wait for ENQ signal from SUT
-  while (uart_getc() != ENQ)
-    ;
+  while ((c = uart16550_getc()) != ENQ)
+    if (DEBUG) {
+      uart16550_base(UART0_BASE);
+      uart16550_putc(c);
+      uart16550_base(UART1_BASE);
+    };
+    
   // Send ack to sut
-  uart_putc(ACK);
+  uart16550_putc(ACK);
 
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
-  uart_puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
-  IOB_UART_INIT_BASEADDR(UART1_BASE);
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
+  uart16550_base(UART1_BASE);
 
 #ifndef INIT_MEM
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
-  uart_puts("[Tester]: SUT memory is not initalized. Waiting for firmware "
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: SUT memory is not initalized. Waiting for firmware "
             "transfer request from SUT...\n");
-  IOB_UART_INIT_BASEADDR(UART1_BASE);
+  uart16550_base(UART1_BASE);
 
   // receive firmware request from SUT
   // Wait for FRX signal from SUT
-  while (uart_getc() != FRX)
+  while (uart16550_getc() != FRX)
     ;
   // Receive filename
-  for (i = 0; (buffer[i] = uart_getc()) != '\0'; i++)
+  for (i = 0; (buffer[i] = uart16550_getc()) != '\0'; i++)
     ;
   // Switch back to UART0
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
+  uart16550_base(UART0_BASE);
 
-  uart_puts("[Tester]: Received firmware transfer request with filename: ");
-  uart_puts(buffer);
-  uart_putc('\n');
-  uart_puts("[Tester]: Sending transfer request to console...\n");
+  uart16550_puts("[Tester]: Received firmware transfer request with filename: ");
+  uart16550_puts(buffer);
+  uart16550_putc('\n');
+  uart16550_puts("[Tester]: Sending transfer request to console...\n");
 
   // Make request to host
-  file_size = uart_recvfile(buffer, sut_firmware);
+  file_size = uart16550_recvfile(buffer, sut_firmware);
 
-  uart_puts(
+  uart16550_puts(
       "[Tester]: SUT firmware obtained. Transfering it to SUT via UART...\n");
 
   // Switch back to UART1
-  IOB_UART_INIT_BASEADDR(UART1_BASE);
+  uart16550_base(UART1_BASE);
 
   // send file size
-  uart_putc((char)(file_size & 0x0ff));
-  uart_putc((char)((file_size & 0x0ff00) >> 8));
-  uart_putc((char)((file_size & 0x0ff0000) >> 16));
-  uart_putc((char)((file_size & 0x0ff000000) >> 24));
+  uart16550_putc((char)(file_size & 0x0ff));
+  uart16550_putc((char)((file_size & 0x0ff00) >> 8));
+  uart16550_putc((char)((file_size & 0x0ff0000) >> 16));
+  uart16550_putc((char)((file_size & 0x0ff000000) >> 24));
 
   // Wait for ACK signal from SUT
-  while (uart_getc() != ACK)
+  while (uart16550_getc() != ACK)
     ;
   if (DEBUG) {
-    IOB_UART_INIT_BASEADDR(UART0_BASE);
-    uart_puts("[Tester] Got ack! Sending firmware to SUT...\n");
-    IOB_UART_INIT_BASEADDR(UART1_BASE);
+    uart16550_base(UART0_BASE);
+    uart16550_puts("[Tester] Got ack! Sending firmware to SUT...\n");
+    uart16550_base(UART1_BASE);
   }
 
   // send file contents
   for (i = 0; i < file_size; i++)
-    uart_putc(sut_firmware[i]);
+    uart16550_putc(sut_firmware[i]);
 
   // Ignore firmware sent back
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
-  uart_puts("[Tester]: SUT firmware transfered. Ignoring firmware readback "
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: SUT firmware transfered. Ignoring firmware readback "
             "sent by SUT...\n");
-  IOB_UART_INIT_BASEADDR(UART1_BASE);
+  uart16550_base(UART1_BASE);
 
   // Wait for FTX signal from SUT
-  while (uart_getc() != FTX)
+  while (uart16550_getc() != FTX)
     ;
   // Receive filename
-  for (i = 0; (buffer[i] = uart_getc()) != '\0'; i++)
+  for (i = 0; (buffer[i] = uart16550_getc()) != '\0'; i++)
     ;
 
   // receive file size
-  file_size = uart_getc();
-  file_size |= ((uint32_t)uart_getc()) << 8;
-  file_size |= ((uint32_t)uart_getc()) << 16;
-  file_size |= ((uint32_t)uart_getc()) << 24;
+  file_size = uart16550_getc();
+  file_size |= ((uint32_t)uart16550_getc()) << 8;
+  file_size |= ((uint32_t)uart16550_getc()) << 16;
+  file_size |= ((uint32_t)uart16550_getc()) << 24;
 
   // ignore file contents received
   for (i = 0; i < file_size; i++) {
-    uart_getc();
+    uart16550_getc();
   }
 
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
-  uart_puts("[Tester]: Finished receiving firmware readback.\n");
-  IOB_UART_INIT_BASEADDR(UART1_BASE);
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: Finished receiving firmware readback.\n");
+  uart16550_base(UART1_BASE);
 
 #endif
 
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
-  uart_puts("[Tester]: Reading SUT messages...\n");
-  IOB_UART_INIT_BASEADDR(UART1_BASE);
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: Reading SUT messages...\n");
+  uart16550_base(UART1_BASE);
 
   i = 0;
   // Read and store messages sent from SUT
   // Up until it sends the test.log file
-  while ((c = uart_getc()) != FTX) {
+  while ((c = uart16550_getc()) != FTX) {
     buffer[i] = c;
     if (DEBUG) {
-      IOB_UART_INIT_BASEADDR(UART0_BASE);
-      uart_putc(c);
-      IOB_UART_INIT_BASEADDR(UART1_BASE);
+      uart16550_base(UART0_BASE);
+      uart16550_putc(c);
+      uart16550_base(UART1_BASE);
     }
     i++;
   }
   buffer[i] = EOT;
 
   // Receive filename (test.log)
-  for (i = 0; uart_getc() != '\0'; i++)
+  for (i = 0; uart16550_getc() != '\0'; i++)
     ;
 
   // receive file size (test.log)
-  file_size = uart_getc();
-  file_size |= ((uint32_t)uart_getc()) << 8;
-  file_size |= ((uint32_t)uart_getc()) << 16;
-  file_size |= ((uint32_t)uart_getc()) << 24;
+  file_size = uart16550_getc();
+  file_size |= ((uint32_t)uart16550_getc()) << 8;
+  file_size |= ((uint32_t)uart16550_getc()) << 16;
+  file_size |= ((uint32_t)uart16550_getc()) << 24;
 
   // ignore file contents received (test.log)
   for (i = 0; i < file_size; i++)
-    uart_getc();
+    uart16550_getc();
 
   // End UART1 connection with SUT
-  uart_finish();
+  uart16550_finish();
 
   // Switch back to UART0
-  IOB_UART_INIT_BASEADDR(UART0_BASE);
+  uart16550_base(UART0_BASE);
 
   // Send messages previously stored from SUT
-  uart_puts("[Tester]: #### Messages received from SUT: ####\n\n");
+  uart16550_puts("[Tester]: #### Messages received from SUT: ####\n\n");
   for (i = 0; buffer[i] != EOT; i++) {
-    uart_putc(buffer[i]);
+    uart16550_putc(buffer[i]);
   }
-  uart_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
+  uart16550_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 
   // Read data from the SUT's registers
-  uart_puts("[Tester]: Reading SUT's register contents:\n");
+  uart16550_puts("[Tester]: Reading SUT's register contents:\n");
   printf("[Tester]: Register 3: %d \n", IOB_SOC_SUT_GET_REG3());
   printf("[Tester]: Register 4: %d \n", IOB_SOC_SUT_GET_REG4());
 
@@ -230,21 +242,21 @@ int main() {
   receive_axistream();
 
 #ifdef USE_EXTMEM
-  uart_puts("\n[Tester] Using shared external memory. Obtain SUT memory string "
+  uart16550_puts("\n[Tester] Using shared external memory. Obtain SUT memory string "
             "pointer via SUT's register 5...\n");
-  uart_puts("[Tester]: String pointer is: ");
+  uart16550_puts("[Tester]: String pointer is: ");
   printf("0x%x", IOB_SOC_SUT_GET_REG5());
-  uart_putc('\n');
+  uart16550_putc('\n');
   // Get address of string stored in SUT's memory
   // and invert the highest bit of MEM_ADDR_W to access the SUT's memory zone
   sutStr = (char *)(IOB_SOC_SUT_GET_REG5() ^ (1 << (MEM_ADDR_W - 1)));
 
   // Print the string by accessing that address
-  uart_puts("[Tester]: String read from SUT's memory via shared memory:\n");
+  uart16550_puts("[Tester]: String read from SUT's memory via shared memory:\n");
   for (i = 0; sutStr[i] != '\0'; i++) {
-    uart_putc(sutStr[i]);
+    uart16550_putc(sutStr[i]);
   }
-  uart_putc('\n');
+  uart16550_putc('\n');
 #endif
 
   // Allocate memory for ILA output data
@@ -256,12 +268,12 @@ int main() {
   ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
 
   // Send ila data to file via UART
-  uart_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
+  uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
 
-  uart_puts("\n[Tester]: Verification successful!\n\n");
+  uart16550_puts("\n[Tester]: Verification successful!\n\n");
 
   // End UART0 connection
-  uart_finish();
+  uart16550_finish();
 }
 
 // Program independent PFSM peripheral of the Tester
@@ -270,9 +282,9 @@ void pfsm_program(char *bitstreamBuffer){
   pfsm_init(PFSM0_BASE, 2, 1, 1);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
-  file_size = uart_recvfile("pfsm.bit", bitstreamBuffer);
+  file_size = uart16550_recvfile("pfsm.bit", bitstreamBuffer);
   // Program PFSM
-  uart_puts("[Tester]: Programming PFSM...\n");
+  uart16550_puts("[Tester]: Programming PFSM...\n");
   printf("[Tester]: Programmed PFSM with %d bytes.\n\n",
          pfsm_bitstream_program(bitstreamBuffer)
          );
@@ -284,17 +296,17 @@ void ila_monitor_program(char *bitstreamBuffer){
   pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 2, 1, 1);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
-  file_size = uart_recvfile("monitor_pfsm.bit", bitstreamBuffer);
+  file_size = uart16550_recvfile("monitor_pfsm.bit", bitstreamBuffer);
   // Program PFSM
-  uart_puts("[Tester]: Programming Monitor PFSM...\n");
+  uart16550_puts("[Tester]: Programming Monitor PFSM...\n");
   printf("[Tester]: Programmed Monitor PFSM with %d bytes.\n\n",
          pfsm_bitstream_program(bitstreamBuffer)
          );
 }
 
 void print_ila_samples() {
-  uart_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
+  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
   uint32_t j, i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
@@ -306,46 +318,57 @@ void print_ila_samples() {
     fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
     printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16 & 0x1f, fifo_value, ila_get_large_value(i,1)>>21 & 0x1);
   }
-  uart_putc('\n');
+  uart16550_putc('\n');
 }
 
 void send_axistream() {
-  uint8_t byte_stream[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   uint8_t i;
+  uint8_t words_in_byte_stream = 4; 
+  // Allocate memory for byte stream
+  uint32_t *byte_stream = (uint32_t *)malloc(words_in_byte_stream*sizeof(uint32_t));
+  // Fill byte stream to send
+  byte_stream[0] = 0x03020100;
+  byte_stream[1] = 0x07060504;
+  byte_stream[2] = 0xbbaa0908;
+  byte_stream[3] = 0xffeeddcc;
+
   // Print byte stream to send
-  uart_puts("[Tester]: Sending AXI stream bytes: ");
-  for (i = 0; i < sizeof(byte_stream); i++)
-    printf("0x%x ", byte_stream[i]);
-  uart_puts("\n\n");
-  // Send bytes to AXI stream output
-  for (i = 0; i < sizeof(byte_stream) - 1; i++)
-    axistream_out_push(byte_stream + i, 1, 0);
-  axistream_out_push(byte_stream + i, 1,
-                     1); // Send the last byte with the TLAST signal
+  uart16550_puts("[Tester]: Sending AXI stream bytes: ");
+  for (i = 0; i < words_in_byte_stream*4; i++)
+    printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+  uart16550_puts("\n");
+
+  // Send bytes to AXI stream output via DMA, except the last word.
+  uart16550_puts("[Tester]: Loading AXI words via DMA...\n");
+  dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
+  // Send the last word with via SWregs with the TLAST signal.
+  uart16550_puts("[Tester]: Loading last AXI word via SWregs...\n\n");
+  axistream_out_push(byte_stream[words_in_byte_stream-1], 1, 1);
+
+  free(byte_stream);
 }
 
 void receive_axistream() {
-  uint8_t byte_stream[64];
-  uint8_t i, total_received_bytes;
+  uint8_t i;
+  uint8_t n_received_words = axistream_in_fifo_level();
+  
+  // Allocate memory for byte stream
+  volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
 
-  // Check if we are receiving an AXI stream
-  if (!axistream_in_empty()) {
-    // Receive bytes while stream does not end (by TLAST signal), or up to 64
-    // bytes
-    for (total_received_bytes = 0;
-         !axistream_in_pop(byte_stream + total_received_bytes, &i) &&
-         total_received_bytes < 64;
-         total_received_bytes += i)
-      ;
-    if (total_received_bytes < 64)
-      total_received_bytes += i;
-    // Print received bytes
-    uart_puts("[Tester]: Received AXI stream bytes: ");
-    for (i = 0; i < total_received_bytes; i++)
-      printf("0x%x ", byte_stream[i]);
-    uart_puts("\n\n");
-  } else {
-    // Input AXI stream queue is empty
-    uart_puts("[Tester]: Error: AXI stream input is empty.\n\n");
-  }
+  // Transfer bytes from AXI stream input via DMA
+  uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
+  dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
+
+  // Flush system cache
+  cache_invalidate();
+  // Flush VexRiscv CPU internal cache
+  asm volatile(".word 0x500F" ::: "memory");
+
+  // Print byte stream received
+  uart16550_puts("[Tester]: Received AXI stream bytes: ");
+  for (i = 0; i < n_received_words*4; i++)
+    printf("0x%02x ", ((volatile uint8_t *)byte_stream)[i]);
+  uart16550_puts("\n\n");
+
+  free((uint32_t *)byte_stream);
 }

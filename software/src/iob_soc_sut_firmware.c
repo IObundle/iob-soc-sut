@@ -20,6 +20,7 @@ int main()
 
   //init uart
   uart_init(UART0_BASE,FREQ/BAUD);   
+  printf_init(&uart_putc);
   uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 
   //init regfileif
@@ -28,7 +29,7 @@ int main()
   gpio_init(GPIO0_BASE);   
   //init axistream
   axistream_in_init(AXISTREAMIN0_BASE);   
-  axistream_out_init_tdata_w(AXISTREAMOUT0_BASE, 4);
+  axistream_out_init(AXISTREAMOUT0_BASE, 4);
 
   //Write to UART0 connected to the Tester.
   uart_puts("[SUT]: This message was sent from SUT!\n\n");
@@ -77,20 +78,24 @@ int main()
 
 // Read AXI stream input, print, and relay data to AXI stream output
 void axistream_loopback(){
-  uint8_t byte_stream[64];
-  uint8_t i, total_received_bytes;
+  uint32_t byte_stream[16];
+  uint8_t i, rstrb, received_words;
   
   //Check if we are receiving an AXI stream
   if(!axistream_in_empty()){
-    // Receive bytes while stream does not end (by TLAST signal), or up to 64 bytes
-    for(total_received_bytes=0; !axistream_in_pop(byte_stream+total_received_bytes, &i) && total_received_bytes<64;total_received_bytes+=i);
-    if(total_received_bytes<64)total_received_bytes += i;
+    // Receive bytes while stream does not end (by TLAST signal), or up to 16 32-bit words
+    for(received_words=0, i=0; i<1 && received_words<16; received_words++)
+      byte_stream[received_words] = axistream_in_pop(&rstrb, &i);
+    
     // Print received bytes
     uart_puts("[SUT]: Received AXI stream bytes: ");
-    for(i=0;i<total_received_bytes;i++)printf("0x%x ", byte_stream[i]);
+    for(i=0;i<received_words*4;i++)
+      printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+
     // Send bytes to AXI stream output
-    for(i=0;i<total_received_bytes-1;i++)axistream_out_push(byte_stream+i,1,0);
-    axistream_out_push(byte_stream+i,1,1); // Send the last byte with the TLAST signal
+    for(i=0;i<received_words-1;i++)
+      axistream_out_push(byte_stream[i],1,0);
+    axistream_out_push(byte_stream[i],1,1); // Send the last word with the TLAST signal
     uart_puts("\n[SUT]: Sent AXI stream bytes back via output interface.\n\n");
   } else {
     // Input AXI stream queue is empty

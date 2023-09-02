@@ -133,6 +133,320 @@ class iob_soc_sut(iob_soc):
                     "remove_string_from_port_names": "external_",  # Remove this string from the port names of the external IO
                 },
             ),
+            # AXISTREAM IN
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_clk_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_cke_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_arst_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tvalid_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tready_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "axistream",
+                    "port": "axis_tlast_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # AXISTREAM IN DMA
+            # Connect these signals to internal floating wires.
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "dma",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "dma",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "dma",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMIN0",
+                    "if_name": "interrupt",
+                    "port": "fifo_threshold_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTREAMIN0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # AXISTREAM OUT
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_clk_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_cke_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_arst_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "axistream",
+                    "port": "axis_tlast_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "AXISTREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # AXISTREAM OUT DMA
+            # Connect these signals to internal floating wires.
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "dma",
+                    "port": "tvalid_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTRREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "dma",
+                    "port": "tready_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTRREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "dma",
+                    "port": "tdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTRREAMOUT0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "AXISTREAMOUT0",
+                    "if_name": "interrupt",
+                    "port": "fifo_threshold_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "AXISTRREAMOUT0",
+                    "port": "input_ports",
+                    "bits": [1],
+                },
+            ),
         ]
 
         # Run IOb-SoC setup
@@ -154,7 +468,14 @@ class iob_soc_sut(iob_soc):
         # Append confs or override them if they exist
         super()._setup_confs(
             [
-                # {'name':'BOOTROM_ADDR_W','type':'P', 'val':'13', 'min':'1', 'max':'32', 'descr':"Boot ROM address width"},
+                {
+                    "name": "BOOTROM_ADDR_W",
+                    "type": "P",
+                    "val": "13",
+                    "min": "1",
+                    "max": "32",
+                    "descr": "Boot ROM address width",
+                },
                 {
                     "name": "SRAM_ADDR_W",
                     "type": "P",
