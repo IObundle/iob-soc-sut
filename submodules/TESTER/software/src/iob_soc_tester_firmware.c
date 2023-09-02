@@ -359,14 +359,11 @@ void receive_axistream() {
   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
   dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
 
-  // Flush cache
+  // Flush system cache
   cache_invalidate();
+  // Flush VexRiscv CPU internal cache
+  asm volatile(".word 0x500F" ::: "memory");
 
-  // FIXME: The values read below are not comming from the memory.
-  // Either the cache is not working or the compiler
-  // is optimizing away the memory accesses.
-  // The DMA seems to be writing to memory correctly from what I have seen in the VCD waves.
-  
   // Print byte stream received
   uart16550_puts("[Tester]: Received AXI stream bytes: ");
   for (i = 0; i < n_received_words*4; i++)
