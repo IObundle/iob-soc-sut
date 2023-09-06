@@ -305,20 +305,34 @@ void ila_monitor_program(char *bitstreamBuffer){
 }
 
 void print_ila_samples() {
-  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
   uint32_t j, i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
   uint32_t latest_sample_index = ila_number_samples();
   const uint32_t ila_buffer_size = (1<<4);
-  // For every sample in the buffer (2^4 samples)
+
+  // Allocate memory for samples
+  // Each buffer sample has 2 * 32 bit words
+  volatile uint32_t *samples = (volatile uint32_t *)malloc((ila_buffer_size*2)*sizeof(uint32_t));
+
+  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
+  dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+
+  // Flush system cache
+  cache_invalidate();
+  // Flush VexRiscv CPU internal cache
+  asm volatile(".word 0x500F" ::: "memory");
+
+  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
+  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  // For every sample in the buffer
   for(j=0; j<ila_buffer_size; j++){
-    i = latest_sample_index + j%ila_buffer_size;
-    fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
-    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16 & 0x1f, fifo_value, ila_get_large_value(i,1)>>21 & 0x1);
+    fifo_value = samples[i+1]<<16 | samples[i]>>16;
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
   }
   uart16550_putc('\n');
+
+  free(samples);
 }
 
 void send_axistream() {

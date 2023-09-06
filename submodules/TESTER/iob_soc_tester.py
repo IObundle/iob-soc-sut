@@ -122,7 +122,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
                     "AXI_ADDR_W": "AXI_ADDR_W",
-                    "N_INPUTS": "1",
+                    "N_INPUTS": "2",
                     "N_OUTPUTS": "1",
                 },
             )
@@ -694,7 +694,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tvalid_i",
-                    "bits": [],
+                    "bits": [0],
                 },
             ),
             (
@@ -708,7 +708,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tready_o",
-                    "bits": [],
+                    "bits": [0],
                 },
             ),
             (
@@ -722,7 +722,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tdata_i",
-                    "bits": [],
+                    "bits": list(range(32)),
                 },
             ),
             (
@@ -869,10 +869,10 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tvalid_i",
+                    "bits": [1],
                 },
             ),
             (
@@ -883,10 +883,10 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tready_o",
+                    "bits": [1],
                 },
             ),
             (
@@ -897,10 +897,10 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tdata_i",
+                    "bits": list(range(32, 64)),
                 },
             ),
             # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
