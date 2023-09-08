@@ -236,7 +236,7 @@ int main() {
   printf("[Tester]: Register 4: %d \n", IOB_SOC_SUT_GET_REG4());
 
   // Read pattern from GPIO inputs (was set by the SUT)
-  printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n", gpio_get());
+  printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n\n", gpio_get());
 
   // Read byte stream via AXI stream
   receive_axistream();
@@ -315,6 +315,9 @@ void print_ila_samples() {
   // Each buffer sample has 2 * 32 bit words
   volatile uint32_t *samples = (volatile uint32_t *)malloc((ila_buffer_size*2)*sizeof(uint32_t));
 
+  // Point ila cursor to the latest sample
+  ila_set_cursor(latest_sample_index,0);
+
   uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
   dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
 
@@ -326,13 +329,13 @@ void print_ila_samples() {
   uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
   uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // For every sample in the buffer
-  for(j=0; j<ila_buffer_size; j++){
+  for(i=0; i<ila_buffer_size*2; i+=2){
     fifo_value = samples[i+1]<<16 | samples[i]>>16;
     printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
   }
   uart16550_putc('\n');
 
-  free(samples);
+  free((uint32_t *)samples);
 }
 
 void send_axistream() {
