@@ -85,7 +85,7 @@ class iob_soc_sut(iob_soc):
                 iob_gpio,
                 iob_axistream_in,
                 iob_axistream_out,
-                # iob_eth,
+                iob_eth,
                 # Modules required for AXISTREAM
                 (iob_ram_2p_be, {"purpose": "simulation"}),
                 (iob_ram_2p_be, {"purpose": "fpga"}),
@@ -114,7 +114,7 @@ class iob_soc_sut(iob_soc):
                 parameters={"TDATA_W": "32"},
             )
         )
-        # cls.peripherals.append(iob_eth("ETH0", "Ethernet interface"))
+        cls.peripherals.append(iob_eth("ETH0", "Ethernet interface"))
 
         cls.peripheral_portmap += [
             (  # Map REGFILEIF0 to external interface
@@ -445,6 +445,289 @@ class iob_soc_sut(iob_soc):
                     "if_name": "AXISTRREAMOUT0",
                     "port": "input_ports",
                     "bits": [1],
+                },
+            ),
+            # ETHERNET
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "general",
+                    "port": "inta_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # iob_m_port - connect to internal signal (unused)
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_avalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_addr_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_wdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_wstrb_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_rvalid_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_rdata_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "iob_m_port",
+                    "port": "iob_ready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # phy - connect to external interface
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxD",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxEn",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxErr",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxDv",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxD",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxErr",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MColl",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MCrS",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MDC",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MDIO",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
                 },
             ),
         ]
