@@ -326,6 +326,8 @@ void print_ila_samples() {
   // Flush VexRiscv CPU internal cache
   asm volatile(".word 0x500F" ::: "memory");
 
+  // TODO: Try adding delay to see if it is a problem of trying to read too fast from the fpga memory.
+
   uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
   uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // For every sample in the buffer
