@@ -127,8 +127,30 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 },
             )
         )
-        cls.peripherals.append(iob_eth("ETH0", "Tester ethernet interface for console"))
-        cls.peripherals.append(iob_eth("ETH1", "Tester ethernet interface for SUT"))
+        cls.peripherals.append(
+            iob_eth(
+                "ETH0",
+                "Tester ethernet interface for console",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                },
+            )
+        )
+        cls.peripherals.append(
+            iob_eth(
+                "ETH1",
+                "Tester ethernet interface for SUT",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                },
+            )
+        )
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"

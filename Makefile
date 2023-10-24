@@ -40,7 +40,7 @@ sim-test:
 	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
 
 tester-sim-test: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1
+	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1. Ethernet also only supports USE_EXTMEM=1.
 	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
@@ -48,7 +48,7 @@ tester-sim-test: build_dir_name
 	# make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
 tester-sim-test-icarus: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1
+	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1. Ethernet also only supports USE_EXTMEM=1.
 	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 

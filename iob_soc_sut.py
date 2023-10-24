@@ -114,7 +114,18 @@ class iob_soc_sut(iob_soc):
                 parameters={"TDATA_W": "32"},
             )
         )
-        cls.peripherals.append(iob_eth("ETH0", "Ethernet interface"))
+        cls.peripherals.append(
+            iob_eth(
+                "ETH0",
+                "Ethernet interface",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                },
+            )
+        )
 
         cls.peripheral_portmap += [
             (  # Map REGFILEIF0 to external interface
