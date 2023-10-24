@@ -22,7 +22,7 @@ sut_regs = [
                 "rst_val": 0,
                 "addr": -1,
                 "log2n_items": 0,
-                "autologic": True,
+                "autoreg": True,
                 "descr": "Write register: 8 bit",
             },
             {
@@ -32,7 +32,7 @@ sut_regs = [
                 "rst_val": 0,
                 "addr": -1,
                 "log2n_items": 0,
-                "autologic": True,
+                "autoreg": True,
                 "descr": "Write register: 16 bit",
             },
             {
@@ -42,7 +42,7 @@ sut_regs = [
                 "rst_val": 0,
                 "addr": -1,
                 "log2n_items": 0,
-                "autologic": True,
+                "autoreg": True,
                 "descr": "Read register: 8 bit",
             },
             {
@@ -52,7 +52,7 @@ sut_regs = [
                 "rst_val": 0,
                 "addr": -1,
                 "log2n_items": 0,
-                "autologic": True,
+                "autoreg": True,
                 "descr": "Read register 16 bit",
             },
             {
@@ -62,7 +62,7 @@ sut_regs = [
                 "rst_val": 0,
                 "addr": -1,
                 "log2n_items": 0,
-                "autologic": True,
+                "autoreg": True,
                 "descr": "Read register 32 bit. In this example, we use this to pass the sutMemoryMessage address.",
             },
         ],
