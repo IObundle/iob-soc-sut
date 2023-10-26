@@ -33,6 +33,9 @@ ifeq ($(RUN_LINUX),1)
 SETUP_ARGS += RUN_LINUX
 endif
 
+setup:
+	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
+
 sim-test:
 	make clean && make setup && make -C ../iob_soc_sut_V*/ sim-test
 	make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ sim-test
