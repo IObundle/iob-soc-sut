@@ -22,6 +22,7 @@ int main()
   char fail_string[] = "Test failed!";
   int i;
   char buffer[64];
+  int ethernet_connected = 0;
 
   //init uart
   uart_init(UART0_BASE,FREQ/BAUD);   
@@ -39,7 +40,10 @@ int main()
   eth_init(ETH0_BASE, &clear_cache);
 
   //Test receive data from Tester via Ethernet
-  eth_rcv_file(buffer, 64);
+  if(eth_rcv_frame(buffer,46,1000) == 0){
+    ethernet_connected = 1;
+    eth_rcv_file(buffer, 64);
+  }
 
   //Delay to allow time for tester to print debug messages
   for ( i = 0; i < 5000; i++)asm("nop");
@@ -49,10 +53,12 @@ int main()
   //Write to UART0 connected to the Tester.
   uart_puts("[SUT]: This message was sent from SUT!\n\n");
 
-  uart_puts("[SUT]: Data received via ethernet:\n");
-  for(i=0; i<64; i++)
-    printf("%d ", buffer[i]);
-  uart_putc('\n'); uart_putc('\n');
+  if(ethernet_connected){
+    uart_puts("[SUT]: Data received via ethernet:\n");
+    for(i=0; i<64; i++)
+      printf("%d ", buffer[i]);
+    uart_putc('\n'); uart_putc('\n');
+  }
   
   //Print contents of REGFILEIF registers 1 and 2
   uart_puts("[SUT]: Reading REGFILEIF contents:\n");
