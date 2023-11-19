@@ -1,1 +1,1 @@
-submodules/LIB/scripts/default.nix
+submodules/IOBSOC/submodules/LIB/scripts/default.nix

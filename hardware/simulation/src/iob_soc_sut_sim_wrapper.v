@@ -178,8 +178,8 @@ always @(posedge trap[1]) begin
    end
 
    // Ethernet Interface signals
-   assign ETHERNET0_MRxClk     = eth_clk;
-   assign ETHERNET0_MTxClk     = eth_clk;
+   assign ETH0_MRxClk     = eth_clk;
+   assign ETH0_MTxClk     = eth_clk;
 
    //add core test module in testbench
    iob_eth_tb_gen eth_tb (
@@ -187,16 +187,16 @@ always @(posedge trap[1]) begin
       .reset(arst),
 
       // This module acts like a loopback
-      .MRxClk (ETHERNET0_MTxClk),
-      .MRxD   (ETHERNET0_MTxD),
-      .MRxDv  (ETHERNET0_MTxEn),
-      .MRxErr (ETHERNET0_MTxErr),
+      .MRxClk (ETH0_MTxClk),
+      .MRxD   (ETH0_MTxD),
+      .MRxDv  (ETH0_MTxEn),
+      .MRxErr (ETH0_MTxErr),
 
       // The wires are thus reversed
-      .MTxClk (ETHERNET0_MRxClk),
-      .MTxD   (ETHERNET0_MRxD),
-      .MTxEn  (ETHERNET0_MRxDv),
-      .MTxErr (ETHERNET0_MRxErr),
+      .MTxClk (ETH0_MRxClk),
+      .MTxD   (ETH0_MRxD),
+      .MTxEn  (ETH0_MRxDv),
+      .MTxErr (ETH0_MRxErr),
 
       .MColl(1'b0),
       .MCrS(1'b0),

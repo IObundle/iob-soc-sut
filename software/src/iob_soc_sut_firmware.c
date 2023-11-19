@@ -5,6 +5,8 @@
 #include "iob_soc_sut_conf.h"
 #include "iob-uart.h"
 #include "iob-gpio.h"
+#include "iob-cache.h"
+#include "iob-eth.h"
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
 #include "iob_str.h"
@@ -12,17 +14,18 @@
 #include "iob-axistream-out.h"
 
 void axistream_loopback();
+void clear_cache();
 
 int main()
 {
   char pass_string[] = "Test passed!";
   char fail_string[] = "Test failed!";
+  int i;
+  char buffer[64];
 
   //init uart
   uart_init(UART0_BASE,FREQ/BAUD);   
   printf_init(&uart_putc);
-  uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
-
   //init regfileif
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
   //init gpio
@@ -30,9 +33,26 @@ int main()
   //init axistream
   axistream_in_init(AXISTREAMIN0_BASE);   
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
+  // init cache
+  cache_init(1<<E, MEM_ADDR_W);
+  // init eth
+  eth_init(ETH0_BASE, &clear_cache);
+
+  //Test receive data from Tester via Ethernet
+  eth_rcv_file(buffer, 64);
+
+  //Delay to allow time for tester to print debug messages
+  for ( i = 0; i < 5000; i++)asm("nop");
+
+  uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 
   //Write to UART0 connected to the Tester.
   uart_puts("[SUT]: This message was sent from SUT!\n\n");
+
+  uart_puts("[SUT]: Data received via ethernet:\n");
+  for(i=0; i<64; i++)
+    printf("%d ", buffer[i]);
+  uart_putc('\n'); uart_putc('\n');
   
   //Print contents of REGFILEIF registers 1 and 2
   uart_puts("[SUT]: Reading REGFILEIF contents:\n");
@@ -102,4 +122,9 @@ void axistream_loopback(){
     uart_puts("[SUT]: AXI stream input is empty. Skipping AXI stream tranfer.\n\n");
   }
 
+}
+
+void clear_cache(){
+  // Flush system cache
+  IOB_CACHE_SET_INVALIDATE(1);
 }

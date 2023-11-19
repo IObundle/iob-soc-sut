@@ -118,6 +118,7 @@ class iob_soc_sut(iob_soc):
                     "AXI_LEN_W": "AXI_LEN_W",
                     "AXI_ADDR_W": "AXI_ADDR_W",
                     "AXI_DATA_W": "AXI_DATA_W",
+                    "MEM_ADDR_OFFSET": "MEM_ADDR_OFFSET",
                 },
             )
         )

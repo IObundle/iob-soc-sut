@@ -13,7 +13,7 @@ from iob_dma import iob_dma
 from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
-from verilog_tools import insert_verilog_in_module, remove_verilog_line_from_source
+from verilog_tools import insert_verilog_in_module, inplace_change
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
 
 
@@ -46,7 +46,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
 
     # Method that runs the setup process of this class
     @classmethod
-    def _specific_setup(cls):
+    def _create_instances(cls):
         # Instantiate TESTER peripherals
         cls.peripherals.append(
             iob_uart16550("UART1", "UART interface for communication with SUT")
@@ -67,6 +67,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                         + next(i["val"] for i in cls.confs if i["name"] == "MEM_ADDR_W")
                         + "-1)"
                     ),
+                    "ETH0_MEM_ADDR_OFFSET": "`IOB_SOC_TESTER_SUT0_MEM_ADDR_OFFSET",
                 },
             )
         )
@@ -156,7 +157,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
         # Run IOb-SoC setup
-        super()._specific_setup()
+        super()._create_instances()
 
     @classmethod
     def _generate_monitor_bitstream(cls):
@@ -275,16 +276,12 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
-        # Remove UART0 interrupt connection to PLIC
-        remove_verilog_line_from_source(
-            "assign PLIC0_src",
-            cls.build_dir + "/hardware/src/iob_soc_tester.v",
-        )
         # Connect UART0 and UART1 interrupt signals
-        insert_verilog_in_module(
-            "   assign PLIC0_src     = {{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o};\n",
+        inplace_change(
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+            ".plicInterrupts({{31{1'b0}}, uart_interrupt_o}),",
+            ".plicInterrupts({{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o}),",
         )
 
         # Connect General signals from iob-axis cores
@@ -302,6 +299,18 @@ class iob_soc_tester(iob_soc_opencryptolinux):
     assign AXISTREAMOUT0_axis_clk_i = clk_i;
     assign AXISTREAMOUT0_axis_cke_i = cke_i;
     assign AXISTREAMOUT0_axis_arst_i = arst_i;
+             """,
+            cls.build_dir
+            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+        )
+
+        # Connect ethernet clocks
+        insert_verilog_in_module(
+            """
+    assign ETH1_MTxClk = ETH0_MTxClk;
+    assign SUT0_ETH0_ETH0_MTxClk = ETH0_MTxClk;
+    assign ETH1_MRxClk = ETH0_MRxClk;
+    assign SUT0_ETH0_ETH0_MRxClk = ETH0_MRxClk;
              """,
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
@@ -1422,6 +1431,14 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",
+                },
+                {
+                    "name": "USE_ETHERNET",
+                    "type": "M",
+                    "val": True,
+                    "min": "0",
+                    "max": "1",
+                    "descr": "Enable ethernet support.",
                 },
             ]
         )

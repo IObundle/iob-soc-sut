@@ -10,7 +10,7 @@
 #include "ILA0.h" // ILA0 instance specific defines
 #include "iob-pfsm.h"
 #include "iob-dma.h"
-#include "iob-cache.h"
+#include "iob-eth.h"
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -29,11 +29,12 @@ void send_axistream();
 void receive_axistream();
 void pfsm_program(char *);
 void ila_monitor_program(char *);
+void clear_cache();
 
 int main() {
   uint32_t file_size = 0;
   char c, buffer[5096], *sutStr;
-  int i = 0;
+  int i;
 #ifndef INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
 #endif
@@ -55,8 +56,8 @@ int main() {
   ila_set_circular_buffer(1);
   // init dma
   dma_init(DMA0_BASE);
-  // init cache
-  cache_init(1<<E, MEM_ADDR_W);
+  // init eth
+  eth_init(ETH1_BASE, &clear_cache);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -104,6 +105,7 @@ int main() {
 
   uart16550_base(UART0_BASE);
   uart16550_puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
+  
   uart16550_base(UART1_BASE);
 
 #ifndef INIT_MEM
@@ -186,6 +188,14 @@ int main() {
 #endif
 
   uart16550_base(UART0_BASE);
+  // Test sending data to SUT via ethernet
+  uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
+  for(i=0; i<64; i++) {
+    buffer[i] = i; 
+    printf("%d ", buffer[i]);
+  }
+  uart16550_putc('\n'); uart16550_putc('\n');
+  eth_send_file(buffer, 64);
   uart16550_puts("[Tester]: Reading SUT messages...\n");
   uart16550_base(UART1_BASE);
 
@@ -321,10 +331,7 @@ void print_ila_samples() {
   uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
   dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
 
-  // Flush system cache
-  cache_invalidate();
-  // Flush VexRiscv CPU internal cache
-  asm volatile(".word 0x500F" ::: "memory");
+  clear_cache();
 
   // TODO: Try adding delay to see if it is a problem of trying to read too fast from the fpga memory.
 
@@ -378,10 +385,7 @@ void receive_axistream() {
   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
   dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
 
-  // Flush system cache
-  cache_invalidate();
-  // Flush VexRiscv CPU internal cache
-  asm volatile(".word 0x500F" ::: "memory");
+  clear_cache();
 
   // Print byte stream received
   uart16550_puts("[Tester]: Received AXI stream bytes: ");
@@ -390,4 +394,9 @@ void receive_axistream() {
   uart16550_puts("\n\n");
 
   free((uint32_t *)byte_stream);
+}
+
+void clear_cache(){
+  // Flush VexRiscv CPU internal cache
+  asm volatile(".word 0x500F" ::: "memory");
 }
