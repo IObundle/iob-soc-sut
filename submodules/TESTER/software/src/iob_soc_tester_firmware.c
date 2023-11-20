@@ -195,6 +195,9 @@ int main() {
     printf("%d ", buffer[i]);
   }
   uart16550_putc('\n'); uart16550_putc('\n');
+  // Send a 'Sync' frame to tell SUT that ethernet is connected (frame with random data)
+  eth_send_frame(buffer,46);
+  // Send file
   eth_send_file(buffer, 64);
   uart16550_puts("[Tester]: Reading SUT messages...\n");
   uart16550_base(UART1_BASE);

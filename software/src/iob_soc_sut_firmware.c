@@ -40,7 +40,7 @@ int main()
   eth_init(ETH0_BASE, &clear_cache);
 
   //Test receive data from Tester via Ethernet
-  if(eth_rcv_frame(buffer,46,1000) == 0){
+  if(eth_rcv_frame(buffer,46,1000) == 0){ // Check if received a 'Sync' frame
     ethernet_connected = 1;
     eth_rcv_file(buffer, 64);
   }
