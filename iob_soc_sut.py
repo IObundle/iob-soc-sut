@@ -2,6 +2,8 @@
 import os
 import copy
 
+import build_srcs
+
 from iob_soc import iob_soc
 from iob_regfileif import iob_regfileif
 from iob_gpio import iob_gpio
@@ -92,7 +94,14 @@ class iob_soc_sut(iob_soc):
         """Method that runs the setup process of this class"""
         # Instantiate SUT peripherals
         cls.peripherals.append(
-            iob_regfileif_custom("REGFILEIF0", "Register file interface")
+            iob_regfileif_custom(
+                "REGFILEIF0",
+                "Register file interface",
+                parameters={
+                    "SYSTEM_VERSION": "16'h"
+                    + build_srcs.version_str_to_digits(cls.version)
+                },
+            )
         )
         cls.peripherals.append(iob_gpio("GPIO0", "GPIO interface"))
         cls.peripherals.append(
