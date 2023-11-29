@@ -11,6 +11,8 @@ from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
+from verilog_tools import insert_verilog_in_module
+from mk_configuration import append_str_config_build_mk
 
 sut_regs = [
     {
@@ -657,6 +659,62 @@ class iob_soc_sut(iob_soc):
         super()._generate_files()
         # Remove iob_soc_sut_swreg_gen.v as it is not used
         os.remove(os.path.join(cls.build_dir, "hardware/src/iob_soc_sut_swreg_gen.v"))
+        # Update sim_wrapper connections
+        if cls.is_top_module:
+            insert_verilog_in_module(
+                """
+`include "iob_regfileif_inverted_swreg_def.vh"
+
+   assign GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
+   assign AXISTREAMIN0_axis_clk_i = clk;
+   assign AXISTREAMIN0_axis_cke_i = cke;
+   assign AXISTREAMIN0_axis_arst_i = arst;
+   assign AXISTREAMIN0_axis_tvalid_i = 1'b0;
+   assign AXISTREAMIN0_axis_tdata_i = {`IOB_SOC_SUT_AXISTREAMIN0_TDATA_W{1'b0}};
+   assign AXISTREAMIN0_axis_tlast_i = 1'b0;
+
+   assign AXISTREAMOUT0_axis_clk_i = clk;
+   assign AXISTREAMOUT0_axis_cke_i = cke;
+   assign AXISTREAMOUT0_axis_arst_i = arst;
+   assign AXISTREAMOUT0_axis_tready_i = 1'b0;
+
+
+   wire [1-1:0] iob_avalid_i = 1'b0;
+   wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
+   wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
+   wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W / 8'h0;
+                """,
+                cls.build_dir
+                + "/hardware/simulation/src/iob_soc_sut_sim_wrapper.v",  # Name of the system file to generate the probe wires
+                after_line="iob_soc_sut_wrapper_pwires.vs",
+            )
+            insert_verilog_in_module(
+                """
+      .iob_avalid_i(iob_avalid_i),
+      .iob_addr_i  (iob_addr_i),
+      .iob_wdata_i (iob_wdata_i),
+      .iob_wstrb_i (iob_wstrb_i),
+                """,
+                cls.build_dir
+                + "/hardware/simulation/src/iob_soc_sut_sim_wrapper.v",  # Name of the system file to generate the probe wires
+                after_line="iob_soc_sut0",
+            )
+        # DEBUG: Set ethernet MAC address
+        if cls.is_top_module:
+            append_str_config_build_mk(
+                """
+#Mac address of pc interface connected to ethernet peripheral (based on board name)
+ifeq ($(BOARD),AES-KU040-DB-G)
+RMAC_ADDR ?=4437e6a6893b
+endif
+ifeq ($(BOARD),CYCLONEV-GT-DK)
+RMAC_ADDR ?=309c231e624b
+endif
+RMAC_ADDR ?=000000000000
+PYTHON_ENV ?= /opt/pyeth3/bin/python
+                """,
+                cls.build_dir,
+            )
 
     @classmethod
     def _init_attributes(cls):
@@ -683,6 +741,14 @@ class iob_soc_sut(iob_soc):
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",
+                },
+                {
+                    "name": "USE_ETHERNET",
+                    "type": "M",
+                    "val": True,
+                    "min": "0",
+                    "max": "1",
+                    "descr": "Enable ethernet support.",
                 },
             ]
         )

@@ -16,12 +16,37 @@
 void axistream_loopback();
 void clear_cache();
 
+// Send signal by uart to receive file by ethernet
+uint32_t uart_recvfile_ethernet(char *file_name) {
+
+  uart_puts(UART_PROGNAME);
+  uart_puts (": requesting to receive by ethernet file\n");
+
+  //send file receive by ethernet request
+  uart_putc (0x13);
+
+  //send file name (including end of string)
+  uart_puts(file_name); uart_putc(0);
+
+  // receive file size
+  uint32_t file_size = uart_getc();
+  file_size |= ((uint32_t)uart_getc()) << 8;
+  file_size |= ((uint32_t)uart_getc()) << 16;
+  file_size |= ((uint32_t)uart_getc()) << 24;
+
+  // send ACK before receiving file
+  uart_putc(ACK);
+
+  return file_size;
+}
+
 int main()
 {
   char pass_string[] = "Test passed!";
   char fail_string[] = "Test failed!";
   int i;
   char buffer[64];
+  char file_buffer[1024]; //DEBUG
   int ethernet_connected = 0;
 
   //init uart
@@ -39,10 +64,18 @@ int main()
   // init eth
   eth_init(ETH0_BASE, &clear_cache);
 
+
   //Test receive data from Tester via Ethernet
   if(eth_rcv_frame(buffer,46,1000) == 0){ // Check if received a 'Sync' frame
     ethernet_connected = 1;
     eth_rcv_file(buffer, 64);
+  } else {
+    // DEBUG Test receive data from console via ethernet (no tester)
+    uint32_t file_size;
+    file_size = uart_recvfile_ethernet("Makefile");
+    eth_rcv_file(file_buffer,file_size);
+    for(i=0; i<file_size; i++)
+      uart_putc(file_buffer[i]);
   }
 
   //Delay to allow time for tester to print debug messages

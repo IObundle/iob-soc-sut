@@ -252,29 +252,32 @@ class iob_soc_tester(iob_soc_opencryptolinux):
     def _generate_files(cls):
         super()._generate_files()
 
-        # Modify iob_soc_tester.v to include ILA probe wires
-        iob_ila.generate_system_wires(
-            cls.ila0_instance,
-            "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-            sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
-            trigger_list=[
-                "SUT0.AXISTREAMIN0.axis_tvalid_i"
-            ],  # List of signals to use as triggers
-            probe_list=[  # List of signals to probe
-                ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
-                ("SUT0.AXISTREAMIN0.data_fifo.w_level_o", 5),
-                ("PFSM0.output_ports", 1),
-            ],
-        )
+        # Don't use hierarchical references for Quartus boards
+        if os.getenv("BOARD") != "CYCLONEV-GT-DK":
 
-        # Create a probe for input of (independent) PFSM
-        # This PFSM will be used as an example, reacting to values of tvalid_i.
-        # The output of this PFSM will be captured by the ILA.
-        insert_verilog_in_module(
-            "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i};",
-            cls.build_dir
-            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-        )
+            # Modify iob_soc_tester.v to include ILA probe wires
+            iob_ila.generate_system_wires(
+                cls.ila0_instance,
+                "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+                sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
+                trigger_list=[
+                    "SUT0.AXISTREAMIN0.axis_tvalid_i"
+                ],  # List of signals to use as triggers
+                probe_list=[  # List of signals to probe
+                    ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
+                    ("SUT0.AXISTREAMIN0.data_fifo.w_level_o", 5),
+                    ("PFSM0.output_ports", 1),
+                ],
+            )
+
+            # Create a probe for input of (independent) PFSM
+            # This PFSM will be used as an example, reacting to values of tvalid_i.
+            # The output of this PFSM will be captured by the ILA.
+            insert_verilog_in_module(
+                "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i};",
+                cls.build_dir
+                + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+            )
 
         # Connect UART0 and UART1 interrupt signals
         inplace_change(
@@ -319,10 +322,36 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         cls._generate_monitor_bitstream()
         cls._generate_pfsm_bitstream()
 
-        # Use Verilator and AES-KU040-DB-G by default.
+        # Temporary fix for regfileif (will not be needed with python-gen)
         if cls.is_top_module:
+            insert_verilog_in_module(
+                """
+`include "iob_regfileif_inverted_swreg_def.vh"
+                """,
+                cls.build_dir
+                + "/hardware/simulation/src/iob_soc_tester_sim_wrapper.v",  # Name of the system file to generate the probe wires
+                after_line="iob_soc_tester_wrapper_pwires.vs",
+            )
+
+        if cls.is_top_module:
+            # Use Verilator and AES-KU040-DB-G by default.
             append_str_config_build_mk("SIMULATOR:=verilator\n", cls.build_dir)
             append_str_config_build_mk("BOARD:=AES-KU040-DB-G\n", cls.build_dir)
+            # Set ethernet MAC address
+            append_str_config_build_mk(
+                """
+#Mac address of pc interface connected to ethernet peripheral (based on board name)
+ifeq ($(BOARD),AES-KU040-DB-G)
+RMAC_ADDR ?=4437e6a6893b
+endif
+ifeq ($(BOARD),CYCLONEV-GT-DK)
+RMAC_ADDR ?=309c231e624b
+endif
+RMAC_ADDR ?=000000000000
+PYTHON_ENV ?= /opt/pyeth3/bin/python
+                """,
+                cls.build_dir,
+            )
 
     @classmethod
     def _setup_portmap(cls):

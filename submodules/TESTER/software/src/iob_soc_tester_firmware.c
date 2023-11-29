@@ -7,7 +7,13 @@
 #include "iob-gpio.h"
 #include "iob-uart16550.h"
 #include "iob-ila.h"
+
+// System may not use ILA for Quartus boards
+#if __has_include("ILA0.h")
 #include "ILA0.h" // ILA0 instance specific defines
+#define USE_ILA
+#endif
+
 #include "iob-pfsm.h"
 #include "iob-dma.h"
 #include "iob-eth.h"
@@ -49,46 +55,55 @@ int main() {
   // init axistream
   axistream_in_init(AXISTREAMIN0_BASE);
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
-  // init integrated logic analyzer
-  ila_init(ILA0_BASE);
-  // Enable ILA circular buffer
-  // This allows for continuous sampling while the enable signal is active
-  ila_set_circular_buffer(1);
+
+#ifdef USE_ILA
+    // init integrated logic analyzer
+    ila_init(ILA0_BASE);
+    // Enable ILA circular buffer
+    // This allows for continuous sampling while the enable signal is active
+    ila_set_circular_buffer(1);
+#endif
+
   // init dma
   dma_init(DMA0_BASE);
   // init eth
   eth_init(ETH1_BASE, &clear_cache);
 
-  uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
-
-  // Write data to the registers of the SUT to be read by it.
-  IOB_SOC_SUT_SET_REG1(64);
-  IOB_SOC_SUT_SET_REG2(1024);
-  uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
-            "SUT.\n\n");
-
-  // Write a test pattern to the GPIO outputs to be read by the SUT.
-  gpio_set(0x1234abcd);
-  uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
-
-  // Program PFSM
-  pfsm_program(buffer);
-  // Program Monitor PFSM (internal to ILA)
-  ila_monitor_program(buffer);
-
-  // Enable all ILA triggers
-  ila_enable_all_triggers();
-
-  // Send byte stream via AXI stream
-  send_axistream();
-  
-  // Disable all ILA triggers
-  ila_disable_all_triggers();
-  
-  // Print sampled ILA values
-  print_ila_samples();
-
-  uart16550_puts("[Tester]: Initializing SUT via UART...\n");
+  //  uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
+  //
+  //  // Write data to the registers of the SUT to be read by it.
+  //  IOB_SOC_SUT_SET_REG1(64);
+  //  IOB_SOC_SUT_SET_REG2(1024);
+  //  uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
+  //            "SUT.\n\n");
+  //
+  //  // Write a test pattern to the GPIO outputs to be read by the SUT.
+  //  gpio_set(0x1234abcd);
+  //  uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
+  //
+  //#ifdef USE_ILA
+  //    // Program PFSM
+  //    pfsm_program(buffer);
+  //
+  //    // Program Monitor PFSM (internal to ILA)
+  //    ila_monitor_program(buffer);
+  //
+  //    // Enable all ILA triggers
+  //    ila_enable_all_triggers();
+  //#endif
+  //
+  //  // Send byte stream via AXI stream
+  //  send_axistream();
+  //  
+  //#ifdef USE_ILA
+  //    // Disable all ILA triggers
+  //    ila_disable_all_triggers();
+  //    
+  //    // Print sampled ILA values
+  //    print_ila_samples();
+  //#endif
+  //
+  //  uart16550_puts("[Tester]: Initializing SUT via UART...\n");
   // Init and switch to uart1 (connected to the SUT)
   uart16550_init(UART1_BASE, FREQ/(16*BAUD));
 
@@ -272,16 +287,18 @@ int main() {
   uart16550_putc('\n');
 #endif
 
-  // Allocate memory for ILA output data
-  const uint32_t ila_n_samples = (1<<4); //Same as buffer size
-  uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
+#ifdef USE_ILA
+    // Allocate memory for ILA output data
+    const uint32_t ila_n_samples = (1<<4); //Same as buffer size
+    uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
 
-  // Write data to allocated memory
-  uint32_t latest_sample_index = ila_number_samples();
-  ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
+    // Write data to allocated memory
+    uint32_t latest_sample_index = ila_number_samples();
+    ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
 
-  // Send ila data to file via UART
-  uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
+    // Send ila data to file via UART
+    uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
+#endif
 
   uart16550_puts("\n[Tester]: Verification successful!\n\n");
 
