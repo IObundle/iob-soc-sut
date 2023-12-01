@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 
 from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_soc_sut import iob_soc_sut
@@ -16,6 +17,10 @@ from mk_configuration import append_str_config_build_mk
 from verilog_tools import insert_verilog_in_module, inplace_change
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
 
+# Select if should include ILA and PFSM peripherals.
+# Disable this to reduce the amount of FPGA resources used.
+USE_ILA_PFSM = False if "NO_ILA" in sys.argv else True
+
 
 class iob_soc_tester(iob_soc_opencryptolinux):
     name = "iob_soc_tester"
@@ -27,22 +32,24 @@ class iob_soc_tester(iob_soc_opencryptolinux):
     @classmethod
     def _create_submodules_list(cls):
         """Create submodules list with dependencies of this module"""
-        super()._create_submodules_list(
-            [
-                iob_uart16550,
-                iob_soc_sut,
-                iob_gpio,
-                iob_axistream_in,
-                iob_axistream_out,
+        submodules = [
+            iob_uart16550,
+            iob_soc_sut,
+            iob_gpio,
+            iob_axistream_in,
+            iob_axistream_out,
+            iob_dma,
+            iob_eth,
+            # Modules required for AXISTREAM
+            (iob_ram_2p_be, {"purpose": "simulation"}),
+            (iob_ram_2p_be, {"purpose": "fpga"}),
+        ]
+        if USE_ILA_PFSM:
+            submodules += [
                 iob_ila,
                 iob_pfsm,
-                iob_dma,
-                iob_eth,
-                # Modules required for AXISTREAM
-                (iob_ram_2p_be, {"purpose": "simulation"}),
-                (iob_ram_2p_be, {"purpose": "fpga"}),
             ]
-        )
+        super()._create_submodules_list(submodules)
 
     # Method that runs the setup process of this class
     @classmethod
@@ -94,26 +101,27 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 parameters={"TDATA_W": "32"},
             )
         )
-        cls.ila0_instance = iob_ila(
-            "ILA0",
-            "Tester Integrated Logic Analyzer for SUT signals",
-            parameters={
-                "BUFFER_W": "4",
-                "SIGNAL_W": "38",
-                "TRIGGER_W": "1",
-                "CLK_COUNTER": "1",
-                "MONITOR": "1",
-                "MONITOR_STATE_W": "2",
-            },
-        )
-        cls.peripherals.append(cls.ila0_instance)
-        cls.peripherals.append(
-            iob_pfsm(
-                "PFSM0",
-                "PFSM interface",
-                parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+        if USE_ILA_PFSM:
+            cls.ila0_instance = iob_ila(
+                "ILA0",
+                "Tester Integrated Logic Analyzer for SUT signals",
+                parameters={
+                    "BUFFER_W": "4",
+                    "SIGNAL_W": "38",
+                    "TRIGGER_W": "1",
+                    "CLK_COUNTER": "1",
+                    "MONITOR": "1",
+                    "MONITOR_STATE_W": "2",
+                },
             )
-        )
+            cls.peripherals.append(cls.ila0_instance)
+            cls.peripherals.append(
+                iob_pfsm(
+                    "PFSM0",
+                    "PFSM interface",
+                    parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+                )
+            )
 
         cls.peripherals.append(
             iob_dma(
@@ -123,7 +131,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
                     "AXI_ADDR_W": "AXI_ADDR_W",
-                    "N_INPUTS": "2",
+                    "N_INPUTS": "2" if USE_ILA_PFSM else "1",
                     "N_OUTPUTS": "1",
                 },
             )
@@ -253,7 +261,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         super()._generate_files()
 
         # Don't use hierarchical references for Quartus boards
-        if os.getenv("BOARD") != "CYCLONEV-GT-DK":
+        if os.getenv("BOARD") != "CYCLONEV-GT-DK" and USE_ILA_PFSM:
 
             # Modify iob_soc_tester.v to include ILA probe wires
             iob_ila.generate_system_wires(
@@ -319,8 +327,9 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
-        cls._generate_monitor_bitstream()
-        cls._generate_pfsm_bitstream()
+        if USE_ILA_PFSM:
+            cls._generate_monitor_bitstream()
+            cls._generate_pfsm_bitstream()
 
         # Temporary fix for regfileif (will not be needed with python-gen)
         if cls.is_top_module:
@@ -341,17 +350,34 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             append_str_config_build_mk(
                 """
 #Mac address of pc interface connected to ethernet peripheral (based on board name)
+$(if $(findstring sim,$(MAKECMDGOALS))$(SIMULATOR),$(eval BOARD=))
 ifeq ($(BOARD),AES-KU040-DB-G)
-RMAC_ADDR ?=4437e6a6893b
+RMAC_ADDR ?=989096c0632c
 endif
 ifeq ($(BOARD),CYCLONEV-GT-DK)
 RMAC_ADDR ?=309c231e624b
 endif
 RMAC_ADDR ?=000000000000
+export RMAC_ADDR
 PYTHON_ENV ?= /opt/pyeth3/bin/python
                 """,
                 cls.build_dir,
             )
+
+        # Allow quartus to use all processor cores
+        if cls.is_top_module:
+            file_path = cls.build_dir + "/hardware/fpga/quartus/build.tcl"
+            with open(file_path, "r") as file:
+                lines = file.readlines()
+            with open(file_path, "w") as file:
+                for idx, line in enumerate(lines):
+                    if "set_global_assignment" in line:
+                        lines.insert(
+                            idx,
+                            "set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL\n",
+                        )
+                        break
+                file.writelines(lines)
 
     @classmethod
     def _setup_portmap(cls):
@@ -876,122 +902,6 @@ PYTHON_ENV ?= /opt/pyeth3/bin/python
                 },
                 {"corename": "internal", "if_name": "GPIO1", "port": "", "bits": []},
             ),
-            # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "ila",
-                    "port": "signal",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "ila",
-                    "port": "trigger",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "ila",
-                    "port": "sampling_clk",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
-            # ILA DMA
-            # Connect these signals to internal floating wires.
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "dma",
-                    "port": "tvalid_o",
-                    "bits": [],
-                },
-                {
-                    "corename": "DMA0",
-                    "if_name": "dma_input",
-                    "port": "tvalid_i",
-                    "bits": [1],
-                },
-            ),
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "dma",
-                    "port": "tready_i",
-                    "bits": [],
-                },
-                {
-                    "corename": "DMA0",
-                    "if_name": "dma_input",
-                    "port": "tready_o",
-                    "bits": [1],
-                },
-            ),
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "dma",
-                    "port": "tdata_o",
-                    "bits": [],
-                },
-                {
-                    "corename": "DMA0",
-                    "if_name": "dma_input",
-                    "port": "tdata_i",
-                    "bits": list(range(32, 64)),
-                },
-            ),
-            # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
-            (
-                {
-                    "corename": "PFSM0",
-                    "if_name": "pfsm",
-                    "port": "input_ports",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "PFSM0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
-            (
-                {
-                    "corename": "PFSM0",
-                    "if_name": "pfsm",
-                    "port": "output_ports",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "PFSM0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
             # ETHERNET 0
             (
                 {
@@ -1446,6 +1356,126 @@ PYTHON_ENV ?= /opt/pyeth3/bin/python
                 },
             ),
         ]
+
+        if USE_ILA_PFSM:
+            cls.peripheral_portmap += [
+                # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "ila",
+                        "port": "signal",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "ILA0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "ila",
+                        "port": "trigger",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "ILA0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "ila",
+                        "port": "sampling_clk",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "ILA0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                # ILA DMA
+                # Connect these signals to internal floating wires.
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "dma",
+                        "port": "tvalid_o",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "DMA0",
+                        "if_name": "dma_input",
+                        "port": "tvalid_i",
+                        "bits": [1],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "dma",
+                        "port": "tready_i",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "DMA0",
+                        "if_name": "dma_input",
+                        "port": "tready_o",
+                        "bits": [1],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "dma",
+                        "port": "tdata_o",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "DMA0",
+                        "if_name": "dma_input",
+                        "port": "tdata_i",
+                        "bits": list(range(32, 64)),
+                    },
+                ),
+                # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
+                (
+                    {
+                        "corename": "PFSM0",
+                        "if_name": "pfsm",
+                        "port": "input_ports",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "PFSM0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "PFSM0",
+                        "if_name": "pfsm",
+                        "port": "output_ports",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "PFSM0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+            ]
 
     @classmethod
     def _setup_confs(cls):

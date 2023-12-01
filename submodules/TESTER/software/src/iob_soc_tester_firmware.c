@@ -6,15 +6,15 @@
 #include "iob-axistream-out.h"
 #include "iob-gpio.h"
 #include "iob-uart16550.h"
-#include "iob-ila.h"
 
-// System may not use ILA for Quartus boards
+// System may not use ILA/PFSM for Quartus boards
 #if __has_include("ILA0.h")
 #include "ILA0.h" // ILA0 instance specific defines
-#define USE_ILA
+#include "iob-ila.h"
+#include "iob-pfsm.h"
+#define USE_ILA_PFSM
 #endif
 
-#include "iob-pfsm.h"
 #include "iob-dma.h"
 #include "iob-eth.h"
 #include "iob_soc_sut_swreg.h"
@@ -56,7 +56,7 @@ int main() {
   axistream_in_init(AXISTREAMIN0_BASE);
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
 
-#ifdef USE_ILA
+#ifdef USE_ILA_PFSM
     // init integrated logic analyzer
     ila_init(ILA0_BASE);
     // Enable ILA circular buffer
@@ -69,41 +69,41 @@ int main() {
   // init eth
   eth_init(ETH1_BASE, &clear_cache);
 
-  //  uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
-  //
-  //  // Write data to the registers of the SUT to be read by it.
-  //  IOB_SOC_SUT_SET_REG1(64);
-  //  IOB_SOC_SUT_SET_REG2(1024);
-  //  uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
-  //            "SUT.\n\n");
-  //
-  //  // Write a test pattern to the GPIO outputs to be read by the SUT.
-  //  gpio_set(0x1234abcd);
-  //  uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
-  //
-  //#ifdef USE_ILA
-  //    // Program PFSM
-  //    pfsm_program(buffer);
-  //
-  //    // Program Monitor PFSM (internal to ILA)
-  //    ila_monitor_program(buffer);
-  //
-  //    // Enable all ILA triggers
-  //    ila_enable_all_triggers();
-  //#endif
-  //
-  //  // Send byte stream via AXI stream
-  //  send_axistream();
-  //  
-  //#ifdef USE_ILA
-  //    // Disable all ILA triggers
-  //    ila_disable_all_triggers();
-  //    
-  //    // Print sampled ILA values
-  //    print_ila_samples();
-  //#endif
-  //
-  //  uart16550_puts("[Tester]: Initializing SUT via UART...\n");
+  uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
+
+  // Write data to the registers of the SUT to be read by it.
+  IOB_SOC_SUT_SET_REG1(64);
+  IOB_SOC_SUT_SET_REG2(1024);
+  uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
+            "SUT.\n\n");
+
+  // Write a test pattern to the GPIO outputs to be read by the SUT.
+  gpio_set(0x1234abcd);
+  uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
+
+#ifdef USE_ILA_PFSM
+    // Program PFSM
+    pfsm_program(buffer);
+
+    // Program Monitor PFSM (internal to ILA)
+    ila_monitor_program(buffer);
+
+    // Enable all ILA triggers
+    ila_enable_all_triggers();
+#endif
+
+  // Send byte stream via AXI stream
+  send_axistream();
+  
+#ifdef USE_ILA_PFSM
+    // Disable all ILA triggers
+    ila_disable_all_triggers();
+    
+    // Print sampled ILA values
+    print_ila_samples();
+#endif
+
+  uart16550_puts("[Tester]: Initializing SUT via UART...\n");
   // Init and switch to uart1 (connected to the SUT)
   uart16550_init(UART1_BASE, FREQ/(16*BAUD));
 
@@ -287,7 +287,7 @@ int main() {
   uart16550_putc('\n');
 #endif
 
-#ifdef USE_ILA
+#ifdef USE_ILA_PFSM
     // Allocate memory for ILA output data
     const uint32_t ila_n_samples = (1<<4); //Same as buffer size
     uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
@@ -306,6 +306,7 @@ int main() {
   uart16550_finish();
 }
 
+#ifdef USE_ILA_PFSM
 // Program independent PFSM peripheral of the Tester
 void pfsm_program(char *bitstreamBuffer){
   // init Programmable Finite State Machine
@@ -366,6 +367,7 @@ void print_ila_samples() {
 
   free((uint32_t *)samples);
 }
+#endif //USE_ILA_PFSM
 
 void send_axistream() {
   uint8_t i;

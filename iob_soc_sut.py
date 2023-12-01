@@ -704,17 +704,34 @@ class iob_soc_sut(iob_soc):
             append_str_config_build_mk(
                 """
 #Mac address of pc interface connected to ethernet peripheral (based on board name)
+$(if $(findstring sim,$(MAKECMDGOALS))$(SIMULATOR),$(eval BOARD=))
 ifeq ($(BOARD),AES-KU040-DB-G)
-RMAC_ADDR ?=4437e6a6893b
+RMAC_ADDR ?=989096c0632c
 endif
 ifeq ($(BOARD),CYCLONEV-GT-DK)
 RMAC_ADDR ?=309c231e624b
 endif
 RMAC_ADDR ?=000000000000
+export RMAC_ADDR
 PYTHON_ENV ?= /opt/pyeth3/bin/python
                 """,
                 cls.build_dir,
             )
+
+        # Allow quartus to use all processor cores
+        if cls.is_top_module:
+            file_path = cls.build_dir + "/hardware/fpga/quartus/build.tcl"
+            with open(file_path, "r") as file:
+                lines = file.readlines()
+            with open(file_path, "w") as file:
+                for idx, line in enumerate(lines):
+                    if "set_global_assignment" in line:
+                        lines.insert(
+                            idx,
+                            "set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL\n",
+                        )
+                        break
+                file.writelines(lines)
 
     @classmethod
     def _init_attributes(cls):

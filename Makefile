@@ -34,6 +34,10 @@ ifeq ($(RUN_LINUX),1)
 SETUP_ARGS += RUN_LINUX
 endif
 
+ifeq ($(NO_ILA),1)
+SETUP_ARGS += NO_ILA
+endif
+
 setup:
 	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
 
