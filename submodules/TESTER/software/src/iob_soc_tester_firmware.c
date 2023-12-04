@@ -6,11 +6,17 @@
 #include "iob-axistream-out.h"
 #include "iob-gpio.h"
 #include "iob-uart16550.h"
-#include "iob-ila.h"
+
+// System may not use ILA/PFSM for Quartus boards
+#if __has_include("ILA0.h")
 #include "ILA0.h" // ILA0 instance specific defines
+#include "iob-ila.h"
 #include "iob-pfsm.h"
+#define USE_ILA_PFSM
+#endif
+
 #include "iob-dma.h"
-#include "iob-cache.h"
+#include "iob-eth.h"
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -29,11 +35,12 @@ void send_axistream();
 void receive_axistream();
 void pfsm_program(char *);
 void ila_monitor_program(char *);
+void clear_cache();
 
 int main() {
   uint32_t file_size = 0;
   char c, buffer[5096], *sutStr;
-  int i = 0;
+  int i;
 #ifndef INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
 #endif
@@ -48,15 +55,19 @@ int main() {
   // init axistream
   axistream_in_init(AXISTREAMIN0_BASE);
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
-  // init integrated logic analyzer
-  ila_init(ILA0_BASE);
-  // Enable ILA circular buffer
-  // This allows for continuous sampling while the enable signal is active
-  ila_set_circular_buffer(1);
+
+#ifdef USE_ILA_PFSM
+    // init integrated logic analyzer
+    ila_init(ILA0_BASE);
+    // Enable ILA circular buffer
+    // This allows for continuous sampling while the enable signal is active
+    ila_set_circular_buffer(1);
+#endif
+
   // init dma
   dma_init(DMA0_BASE);
-  // init cache
-  cache_init(1<<E, MEM_ADDR_W);
+  // init eth
+  eth_init(ETH1_BASE, &clear_cache);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
@@ -70,22 +81,27 @@ int main() {
   gpio_set(0x1234abcd);
   uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 
-  // Program PFSM
-  pfsm_program(buffer);
-  // Program Monitor PFSM (internal to ILA)
-  ila_monitor_program(buffer);
+#ifdef USE_ILA_PFSM
+    // Program PFSM
+    pfsm_program(buffer);
 
-  // Enable all ILA triggers
-  ila_enable_all_triggers();
+    // Program Monitor PFSM (internal to ILA)
+    ila_monitor_program(buffer);
+
+    // Enable all ILA triggers
+    ila_enable_all_triggers();
+#endif
 
   // Send byte stream via AXI stream
   send_axistream();
   
-  // Disable all ILA triggers
-  ila_disable_all_triggers();
-  
-  // Print sampled ILA values
-  print_ila_samples();
+#ifdef USE_ILA_PFSM
+    // Disable all ILA triggers
+    ila_disable_all_triggers();
+    
+    // Print sampled ILA values
+    print_ila_samples();
+#endif
 
   uart16550_puts("[Tester]: Initializing SUT via UART...\n");
   // Init and switch to uart1 (connected to the SUT)
@@ -104,6 +120,7 @@ int main() {
 
   uart16550_base(UART0_BASE);
   uart16550_puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
+  
   uart16550_base(UART1_BASE);
 
 #ifndef INIT_MEM
@@ -186,6 +203,17 @@ int main() {
 #endif
 
   uart16550_base(UART0_BASE);
+  // Test sending data to SUT via ethernet
+  uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
+  for(i=0; i<64; i++) {
+    buffer[i] = i; 
+    printf("%d ", buffer[i]);
+  }
+  uart16550_putc('\n'); uart16550_putc('\n');
+  // Send a 'Sync' frame to tell SUT that ethernet is connected (frame with random data)
+  eth_send_frame(buffer,46);
+  // Send file
+  eth_send_file(buffer, 64);
   uart16550_puts("[Tester]: Reading SUT messages...\n");
   uart16550_base(UART1_BASE);
 
@@ -236,7 +264,7 @@ int main() {
   printf("[Tester]: Register 4: %d \n", IOB_SOC_SUT_GET_REG4());
 
   // Read pattern from GPIO inputs (was set by the SUT)
-  printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n", gpio_get());
+  printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n\n", gpio_get());
 
   // Read byte stream via AXI stream
   receive_axistream();
@@ -259,16 +287,18 @@ int main() {
   uart16550_putc('\n');
 #endif
 
-  // Allocate memory for ILA output data
-  const uint32_t ila_n_samples = (1<<4); //Same as buffer size
-  uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
+#ifdef USE_ILA_PFSM
+    // Allocate memory for ILA output data
+    const uint32_t ila_n_samples = (1<<4); //Same as buffer size
+    uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
 
-  // Write data to allocated memory
-  uint32_t latest_sample_index = ila_number_samples();
-  ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
+    // Write data to allocated memory
+    uint32_t latest_sample_index = ila_number_samples();
+    ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
 
-  // Send ila data to file via UART
-  uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
+    // Send ila data to file via UART
+    uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
+#endif
 
   uart16550_puts("\n[Tester]: Verification successful!\n\n");
 
@@ -276,6 +306,7 @@ int main() {
   uart16550_finish();
 }
 
+#ifdef USE_ILA_PFSM
 // Program independent PFSM peripheral of the Tester
 void pfsm_program(char *bitstreamBuffer){
   // init Programmable Finite State Machine
@@ -305,21 +336,38 @@ void ila_monitor_program(char *bitstreamBuffer){
 }
 
 void print_ila_samples() {
-  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
   uint32_t j, i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
   uint32_t latest_sample_index = ila_number_samples();
   const uint32_t ila_buffer_size = (1<<4);
-  // For every sample in the buffer (2^4 samples)
-  for(j=0; j<ila_buffer_size; j++){
-    i = latest_sample_index + j%ila_buffer_size;
-    fifo_value = ila_get_large_value(i,1)<<16 | ila_get_large_value(i,0)>>16;
-    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(ila_get_large_value(i,0)-initial_time), ila_get_large_value(i,1)>>16 & 0x1f, fifo_value, ila_get_large_value(i,1)>>21 & 0x1);
+
+  // Allocate memory for samples
+  // Each buffer sample has 2 * 32 bit words
+  volatile uint32_t *samples = (volatile uint32_t *)malloc((ila_buffer_size*2)*sizeof(uint32_t));
+
+  // Point ila cursor to the latest sample
+  ila_set_cursor(latest_sample_index,0);
+
+  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
+  dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+
+  clear_cache();
+
+  // TODO: Try adding delay to see if it is a problem of trying to read too fast from the fpga memory.
+
+  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
+  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  // For every sample in the buffer
+  for(i=0; i<ila_buffer_size*2; i+=2){
+    fifo_value = samples[i+1]<<16 | samples[i]>>16;
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
   }
   uart16550_putc('\n');
+
+  free((uint32_t *)samples);
 }
+#endif //USE_ILA_PFSM
 
 void send_axistream() {
   uint8_t i;
@@ -359,10 +407,7 @@ void receive_axistream() {
   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
   dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
 
-  // Flush system cache
-  cache_invalidate();
-  // Flush VexRiscv CPU internal cache
-  asm volatile(".word 0x500F" ::: "memory");
+  clear_cache();
 
   // Print byte stream received
   uart16550_puts("[Tester]: Received AXI stream bytes: ");
@@ -371,4 +416,9 @@ void receive_axistream() {
   uart16550_puts("\n\n");
 
   free((uint32_t *)byte_stream);
+}
+
+void clear_cache(){
+  // Flush VexRiscv CPU internal cache
+  asm volatile(".word 0x500F" ::: "memory");
 }

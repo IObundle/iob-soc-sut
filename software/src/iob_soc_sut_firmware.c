@@ -5,6 +5,8 @@
 #include "iob_soc_sut_conf.h"
 #include "iob-uart.h"
 #include "iob-gpio.h"
+#include "iob-cache.h"
+#include "iob-eth.h"
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
 #include "iob_str.h"
@@ -12,17 +14,44 @@
 #include "iob-axistream-out.h"
 
 void axistream_loopback();
+void clear_cache();
+
+// Send signal by uart to receive file by ethernet
+uint32_t uart_recvfile_ethernet(char *file_name) {
+
+  uart_puts(UART_PROGNAME);
+  uart_puts (": requesting to receive by ethernet file\n");
+
+  //send file receive by ethernet request
+  uart_putc (0x13);
+
+  //send file name (including end of string)
+  uart_puts(file_name); uart_putc(0);
+
+  // receive file size
+  uint32_t file_size = uart_getc();
+  file_size |= ((uint32_t)uart_getc()) << 8;
+  file_size |= ((uint32_t)uart_getc()) << 16;
+  file_size |= ((uint32_t)uart_getc()) << 24;
+
+  // send ACK before receiving file
+  uart_putc(ACK);
+
+  return file_size;
+}
 
 int main()
 {
   char pass_string[] = "Test passed!";
   char fail_string[] = "Test failed!";
+  int i;
+  char buffer[64];
+  char file_buffer[1024]; //DEBUG
+  int ethernet_connected = 0;
 
   //init uart
   uart_init(UART0_BASE,FREQ/BAUD);   
   printf_init(&uart_putc);
-  uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
-
   //init regfileif
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
   //init gpio
@@ -30,9 +59,39 @@ int main()
   //init axistream
   axistream_in_init(AXISTREAMIN0_BASE);   
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
+  // init cache
+  cache_init(1<<E, MEM_ADDR_W);
+  // init eth
+  eth_init(ETH0_BASE, &clear_cache);
+
+
+  //Test receive data from Tester via Ethernet
+  if(eth_rcv_frame(buffer,46,1000) == 0){ // Check if received a 'Sync' frame
+    ethernet_connected = 1;
+    eth_rcv_file(buffer, 64);
+  } else {
+    // DEBUG Test receive data from console via ethernet (no tester)
+    uint32_t file_size;
+    file_size = uart_recvfile_ethernet("Makefile");
+    eth_rcv_file(file_buffer,file_size);
+    for(i=0; i<file_size; i++)
+      uart_putc(file_buffer[i]);
+  }
+
+  //Delay to allow time for tester to print debug messages
+  for ( i = 0; i < 5000; i++)asm("nop");
+
+  uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 
   //Write to UART0 connected to the Tester.
   uart_puts("[SUT]: This message was sent from SUT!\n\n");
+
+  if(ethernet_connected){
+    uart_puts("[SUT]: Data received via ethernet:\n");
+    for(i=0; i<64; i++)
+      printf("%d ", buffer[i]);
+    uart_putc('\n'); uart_putc('\n');
+  }
   
   //Print contents of REGFILEIF registers 1 and 2
   uart_puts("[SUT]: Reading REGFILEIF contents:\n");
@@ -102,4 +161,9 @@ void axistream_loopback(){
     uart_puts("[SUT]: AXI stream input is empty. Skipping AXI stream tranfer.\n\n");
   }
 
+}
+
+void clear_cache(){
+  // Flush system cache
+  IOB_CACHE_SET_INVALIDATE(1);
 }

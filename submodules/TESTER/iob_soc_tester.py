@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 
 from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_soc_sut import iob_soc_sut
@@ -13,8 +14,12 @@ from iob_dma import iob_dma
 from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
 from mk_configuration import append_str_config_build_mk
-from verilog_tools import insert_verilog_in_module, remove_verilog_line_from_source
+from verilog_tools import insert_verilog_in_module, inplace_change
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
+
+# Select if should include ILA and PFSM peripherals.
+# Disable this to reduce the amount of FPGA resources used.
+USE_ILA_PFSM = False if "NO_ILA" in sys.argv else True
 
 
 class iob_soc_tester(iob_soc_opencryptolinux):
@@ -27,26 +32,28 @@ class iob_soc_tester(iob_soc_opencryptolinux):
     @classmethod
     def _create_submodules_list(cls):
         """Create submodules list with dependencies of this module"""
-        super()._create_submodules_list(
-            [
-                iob_uart16550,
-                iob_soc_sut,
-                iob_gpio,
-                iob_axistream_in,
-                iob_axistream_out,
+        submodules = [
+            iob_uart16550,
+            iob_soc_sut,
+            iob_gpio,
+            iob_axistream_in,
+            iob_axistream_out,
+            iob_dma,
+            iob_eth,
+            # Modules required for AXISTREAM
+            (iob_ram_2p_be, {"purpose": "simulation"}),
+            (iob_ram_2p_be, {"purpose": "fpga"}),
+        ]
+        if USE_ILA_PFSM:
+            submodules += [
                 iob_ila,
                 iob_pfsm,
-                iob_dma,
-                # iob_eth,
-                # Modules required for AXISTREAM
-                (iob_ram_2p_be, {"purpose": "simulation"}),
-                (iob_ram_2p_be, {"purpose": "fpga"}),
             ]
-        )
+        super()._create_submodules_list(submodules)
 
     # Method that runs the setup process of this class
     @classmethod
-    def _specific_setup(cls):
+    def _create_instances(cls):
         # Instantiate TESTER peripherals
         cls.peripherals.append(
             iob_uart16550("UART1", "UART interface for communication with SUT")
@@ -67,6 +74,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                         + next(i["val"] for i in cls.confs if i["name"] == "MEM_ADDR_W")
                         + "-1)"
                     ),
+                    "ETH0_MEM_ADDR_OFFSET": "`IOB_SOC_TESTER_SUT0_MEM_ADDR_OFFSET",
                 },
             )
         )
@@ -93,26 +101,27 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 parameters={"TDATA_W": "32"},
             )
         )
-        cls.ila0_instance = iob_ila(
-            "ILA0",
-            "Tester Integrated Logic Analyzer for SUT signals",
-            parameters={
-                "BUFFER_W": "4",
-                "SIGNAL_W": "38",
-                "TRIGGER_W": "1",
-                "CLK_COUNTER": "1",
-                "MONITOR": "1",
-                "MONITOR_STATE_W": "2",
-            },
-        )
-        cls.peripherals.append(cls.ila0_instance)
-        cls.peripherals.append(
-            iob_pfsm(
-                "PFSM0",
-                "PFSM interface",
-                parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+        if USE_ILA_PFSM:
+            cls.ila0_instance = iob_ila(
+                "ILA0",
+                "Tester Integrated Logic Analyzer for SUT signals",
+                parameters={
+                    "BUFFER_W": "4",
+                    "SIGNAL_W": "38",
+                    "TRIGGER_W": "1",
+                    "CLK_COUNTER": "1",
+                    "MONITOR": "1",
+                    "MONITOR_STATE_W": "2",
+                },
             )
-        )
+            cls.peripherals.append(cls.ila0_instance)
+            cls.peripherals.append(
+                iob_pfsm(
+                    "PFSM0",
+                    "PFSM interface",
+                    parameters={"STATE_W": "2", "INPUT_W": "1", "OUTPUT_W": "1"},
+                )
+            )
 
         cls.peripherals.append(
             iob_dma(
@@ -122,19 +131,41 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "AXI_ID_W": "AXI_ID_W",
                     "AXI_LEN_W": "AXI_LEN_W",
                     "AXI_ADDR_W": "AXI_ADDR_W",
-                    "N_INPUTS": "1",
+                    "N_INPUTS": "2" if USE_ILA_PFSM else "1",
                     "N_OUTPUTS": "1",
                 },
             )
         )
-        # cls.peripherals.append(iob_eth("ETH0", "Tester ethernet interface for console"))
-        # cls.peripherals.append(iob_eth("ETH1", "Tester ethernet interface for SUT"))
+        cls.peripherals.append(
+            iob_eth(
+                "ETH0",
+                "Tester ethernet interface for console",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                },
+            )
+        )
+        cls.peripherals.append(
+            iob_eth(
+                "ETH1",
+                "Tester ethernet interface for SUT",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                },
+            )
+        )
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
         # Run IOb-SoC setup
-        super()._specific_setup()
+        super()._create_instances()
 
     @classmethod
     def _generate_monitor_bitstream(cls):
@@ -229,40 +260,39 @@ class iob_soc_tester(iob_soc_opencryptolinux):
     def _generate_files(cls):
         super()._generate_files()
 
-        # Modify iob_soc_tester.v to include ILA probe wires
-        iob_ila.generate_system_wires(
-            cls.ila0_instance,
-            "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-            sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
-            trigger_list=[
-                "SUT0.AXISTREAMIN0.axis_tvalid_i"
-            ],  # List of signals to use as triggers
-            probe_list=[  # List of signals to probe
-                ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
-                ("SUT0.AXISTREAMIN0.data_fifo.w_level_o", 5),
-                ("PFSM0.output_ports", 1),
-            ],
-        )
+        # Don't use hierarchical references for Quartus boards
+        if os.getenv("BOARD") != "CYCLONEV-GT-DK" and USE_ILA_PFSM:
 
-        # Create a probe for input of (independent) PFSM
-        # This PFSM will be used as an example, reacting to values of tvalid_i.
-        # The output of this PFSM will be captured by the ILA.
-        insert_verilog_in_module(
-            "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i};",
-            cls.build_dir
-            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-        )
+            # Modify iob_soc_tester.v to include ILA probe wires
+            iob_ila.generate_system_wires(
+                cls.ila0_instance,
+                "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+                sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
+                trigger_list=[
+                    "SUT0.AXISTREAMIN0.axis_tvalid_i"
+                ],  # List of signals to use as triggers
+                probe_list=[  # List of signals to probe
+                    ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
+                    ("SUT0.AXISTREAMIN0.data_fifo.w_level_o", 5),
+                    ("PFSM0.output_ports", 1),
+                ],
+            )
 
-        # Remove UART0 interrupt connection to PLIC
-        remove_verilog_line_from_source(
-            "assign PLIC0_src",
-            cls.build_dir + "/hardware/src/iob_soc_tester.v",
-        )
+            # Create a probe for input of (independent) PFSM
+            # This PFSM will be used as an example, reacting to values of tvalid_i.
+            # The output of this PFSM will be captured by the ILA.
+            insert_verilog_in_module(
+                "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i};",
+                cls.build_dir
+                + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+            )
+
         # Connect UART0 and UART1 interrupt signals
-        insert_verilog_in_module(
-            "   assign PLIC0_src     = {{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o};\n",
+        inplace_change(
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+            ".plicInterrupts({{31{1'b0}}, uart_interrupt_o}),",
+            ".plicInterrupts({{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o}),",
         )
 
         # Connect General signals from iob-axis cores
@@ -285,13 +315,54 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
-        cls._generate_monitor_bitstream()
-        cls._generate_pfsm_bitstream()
+        # Connect ethernet clocks
+        insert_verilog_in_module(
+            """
+    assign ETH1_MTxClk = ETH0_MTxClk;
+    assign SUT0_ETH0_ETH0_MTxClk = ETH0_MTxClk;
+    assign ETH1_MRxClk = ETH0_MRxClk;
+    assign SUT0_ETH0_ETH0_MRxClk = ETH0_MRxClk;
+             """,
+            cls.build_dir
+            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
+        )
 
-        # Use Verilator and AES-KU040-DB-G by default.
+        if USE_ILA_PFSM:
+            cls._generate_monitor_bitstream()
+            cls._generate_pfsm_bitstream()
+
+        # Temporary fix for regfileif (will not be needed with python-gen)
         if cls.is_top_module:
+            insert_verilog_in_module(
+                """
+`include "iob_regfileif_inverted_swreg_def.vh"
+                """,
+                cls.build_dir
+                + "/hardware/simulation/src/iob_soc_tester_sim_wrapper.v",  # Name of the system file to generate the probe wires
+                after_line="iob_soc_tester_wrapper_pwires.vs",
+            )
+
+        if cls.is_top_module:
+            # Use Verilator and AES-KU040-DB-G by default.
             append_str_config_build_mk("SIMULATOR:=verilator\n", cls.build_dir)
             append_str_config_build_mk("BOARD:=AES-KU040-DB-G\n", cls.build_dir)
+            # Set ethernet MAC address
+            append_str_config_build_mk(
+                """
+#Mac address of pc interface connected to ethernet peripheral (based on board name)
+$(if $(findstring sim,$(MAKECMDGOALS))$(SIMULATOR),$(eval BOARD=))
+ifeq ($(BOARD),AES-KU040-DB-G)
+RMAC_ADDR ?=989096c0632c
+endif
+ifeq ($(BOARD),CYCLONEV-GT-DK)
+RMAC_ADDR ?=309c231e624b
+endif
+RMAC_ADDR ?=000000000000
+export RMAC_ADDR
+PYTHON_ENV ?= /opt/pyeth3/bin/python
+                """,
+                cls.build_dir,
+            )
 
     @classmethod
     def _setup_portmap(cls):
@@ -694,7 +765,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tvalid_i",
-                    "bits": [],
+                    "bits": [0],
                 },
             ),
             (
@@ -708,7 +779,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tready_o",
-                    "bits": [],
+                    "bits": [0],
                 },
             ),
             (
@@ -722,7 +793,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tdata_i",
-                    "bits": [],
+                    "bits": list(range(32)),
                 },
             ),
             (
@@ -816,123 +887,580 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 },
                 {"corename": "internal", "if_name": "GPIO1", "port": "", "bits": []},
             ),
-            # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
+            # ETHERNET 0
             (
                 {
-                    "corename": "ILA0",
-                    "if_name": "ila",
-                    "port": "signal",
+                    "corename": "ETH0",
+                    "if_name": "general",
+                    "port": "inta_o",
                     "bits": [],
                 },
                 {
                     "corename": "internal",
-                    "if_name": "ILA0",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # phy - connect to external interface
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
                     "port": "",
                     "bits": [],
                 },
             ),
             (
                 {
-                    "corename": "ILA0",
-                    "if_name": "ila",
-                    "port": "trigger",
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxD",
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
+                    "corename": "external",
+                    "if_name": "ETH0",
                     "port": "",
                     "bits": [],
                 },
             ),
             (
                 {
-                    "corename": "ILA0",
-                    "if_name": "ila",
-                    "port": "sampling_clk",
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxEn",
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
-            # ILA DMA
-            # Connect these signals to internal floating wires.
-            (
-                {
-                    "corename": "ILA0",
-                    "if_name": "dma",
-                    "port": "tvalid_o",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "ILA0",
+                    "corename": "external",
+                    "if_name": "ETH0",
                     "port": "",
                     "bits": [],
                 },
             ),
             (
                 {
-                    "corename": "ILA0",
-                    "if_name": "dma",
-                    "port": "tready_i",
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MTxErr",
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
+                    "corename": "external",
+                    "if_name": "ETH0",
                     "port": "",
                     "bits": [],
                 },
             ),
             (
                 {
-                    "corename": "ILA0",
-                    "if_name": "dma",
-                    "port": "tdata_o",
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxClk",
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
-                    "if_name": "ILA0",
-                    "port": "",
-                    "bits": [],
-                },
-            ),
-            # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
-            (
-                {
-                    "corename": "PFSM0",
-                    "if_name": "pfsm",
-                    "port": "input_ports",
-                    "bits": [],
-                },
-                {
-                    "corename": "internal",
-                    "if_name": "PFSM0",
+                    "corename": "external",
+                    "if_name": "ETH0",
                     "port": "",
                     "bits": [],
                 },
             ),
             (
                 {
-                    "corename": "PFSM0",
-                    "if_name": "pfsm",
-                    "port": "output_ports",
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxDv",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxD",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MRxErr",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MColl",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MCrS",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MDC",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "MDIO",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # ETHERNET 1
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "general",
+                    "port": "inta_o",
                     "bits": [],
                 },
                 {
                     "corename": "internal",
-                    "if_name": "PFSM0",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # phy - connect to SUT ETH0 interface
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MTxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MTxD",
+                    "bits": [],
+                },
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MRxD",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MTxEn",
+                    "bits": [],
+                },
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MRxDv",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MTxErr",
+                    "bits": [],
+                },
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MRxErr",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MRxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MRxDv",
+                    "bits": [],
+                },
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MTxEn",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MRxD",
+                    "bits": [],
+                },
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MTxD",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MRxErr",
+                    "bits": [],
+                },
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MTxErr",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MColl",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MCrS",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MDC",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "MDIO",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # Remaining SUT0 ETH0 signals
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MTxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MRxClk",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MColl",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MCrS",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MDC",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_MDIO",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
                     "port": "",
                     "bits": [],
                 },
             ),
         ]
+
+        if USE_ILA_PFSM:
+            cls.peripheral_portmap += [
+                # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "ila",
+                        "port": "signal",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "ILA0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "ila",
+                        "port": "trigger",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "ILA0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "ila",
+                        "port": "sampling_clk",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "ILA0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                # ILA DMA
+                # Connect these signals to internal floating wires.
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "dma",
+                        "port": "tvalid_o",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "DMA0",
+                        "if_name": "dma_input",
+                        "port": "tvalid_i",
+                        "bits": [1],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "dma",
+                        "port": "tready_i",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "DMA0",
+                        "if_name": "dma_input",
+                        "port": "tready_o",
+                        "bits": [1],
+                    },
+                ),
+                (
+                    {
+                        "corename": "ILA0",
+                        "if_name": "dma",
+                        "port": "tdata_o",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "DMA0",
+                        "if_name": "dma_input",
+                        "port": "tdata_i",
+                        "bits": list(range(32, 64)),
+                    },
+                ),
+                # PFSM IO --- Connect IOs of Programmable Finite State Machine to internal system signals
+                (
+                    {
+                        "corename": "PFSM0",
+                        "if_name": "pfsm",
+                        "port": "input_ports",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "PFSM0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "PFSM0",
+                        "if_name": "pfsm",
+                        "port": "output_ports",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "PFSM0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+            ]
 
     @classmethod
     def _setup_confs(cls):
@@ -947,6 +1475,14 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",
+                },
+                {
+                    "name": "USE_ETHERNET",
+                    "type": "M",
+                    "val": True,
+                    "min": "0",
+                    "max": "1",
+                    "descr": "Enable ethernet support.",
                 },
             ]
         )
