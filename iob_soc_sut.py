@@ -718,21 +718,6 @@ PYTHON_ENV ?= /opt/pyeth3/bin/python
                 cls.build_dir,
             )
 
-        # Allow quartus to use all processor cores
-        if cls.is_top_module:
-            file_path = cls.build_dir + "/hardware/fpga/quartus/build.tcl"
-            with open(file_path, "r") as file:
-                lines = file.readlines()
-            with open(file_path, "w") as file:
-                for idx, line in enumerate(lines):
-                    if "set_global_assignment" in line:
-                        lines.insert(
-                            idx,
-                            "set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL\n",
-                        )
-                        break
-                file.writelines(lines)
-
     @classmethod
     def _init_attributes(cls):
         super()._init_attributes()
