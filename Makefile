@@ -6,10 +6,10 @@ DISABLE_LINT:=1
 
 ifeq ($(TESTER),1)
 TOP_MODULE_NAME :=iob_soc_tester
-ifneq ($(USE_EXTMEM),1)
-$(warning WARNING: USE_EXTMEM must be set to support tester with iob-soc-opencryptolinux. Auto-adding USE_EXTMEM=1...)
-SETUP_ARGS += USE_EXTMEM
 endif
+ifneq ($(USE_EXTMEM),1)
+$(warning WARNING: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
+SETUP_ARGS += USE_EXTMEM
 endif
 
 LIB_DIR:=submodules/IOBSOC/submodules/LIB
