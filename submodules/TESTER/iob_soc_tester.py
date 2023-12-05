@@ -262,7 +262,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
 
         # Don't use hierarchical references for Quartus boards
         if os.getenv("BOARD") != "CYCLONEV-GT-DK" and USE_ILA_PFSM:
-
             # Modify iob_soc_tester.v to include ILA probe wires
             iob_ila.generate_system_wires(
                 cls.ila0_instance,
