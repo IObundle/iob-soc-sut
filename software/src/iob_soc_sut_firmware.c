@@ -46,7 +46,7 @@ int main()
   char fail_string[] = "Test failed!";
   int i;
   char buffer[64];
-  char file_buffer[1024]; //DEBUG
+  char file_buffer[256];
   int ethernet_connected = 0;
 
   //init uart
@@ -65,14 +65,14 @@ int main()
   eth_init(ETH0_BASE, &clear_cache);
 
 
-  //Test receive data from Tester via Ethernet
   if(eth_rcv_frame(buffer,46,1000) == 0){ // Check if received a 'Sync' frame
+    // Receive data from Tester via Ethernet
     ethernet_connected = 1;
     eth_rcv_file(buffer, 64);
   } else {
-    // DEBUG Test receive data from console via ethernet (no tester)
+    // Receive data from console via Ethernet
     uint32_t file_size;
-    file_size = uart_recvfile_ethernet("Makefile");
+    file_size = uart_recvfile_ethernet("../src/eth_example.txt");
     eth_rcv_file(file_buffer,file_size);
     for(i=0; i<file_size; i++)
       uart_putc(file_buffer[i]);
