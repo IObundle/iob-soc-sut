@@ -1,4 +1,5 @@
------------------------------------------
-Example text file transfered via ethernet
+----------------------------------------
+This is an example text file transferred 
+     from the console via ethernet.
               0123456789
------------------------------------------
+----------------------------------------
