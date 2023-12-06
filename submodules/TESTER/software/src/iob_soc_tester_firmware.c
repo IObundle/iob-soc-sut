@@ -24,6 +24,7 @@
 #include "printf.h"
 #include "stdlib.h"
 #include <stdio.h>
+#include <stdint.h>
 
 // Enable debug messages.
 #define DEBUG 0
@@ -36,6 +37,30 @@ void receive_axistream();
 void pfsm_program(char *);
 void ila_monitor_program(char *);
 void clear_cache();
+
+// Send signal by uart to receive file by ethernet
+uint32_t uart_recvfile_ethernet(char *file_name) {
+
+  uart16550_puts(UART_PROGNAME);
+  uart16550_puts (": requesting to receive by ethernet file\n");
+
+  //send file receive by ethernet request
+  uart16550_putc (0x13);
+
+  //send file name (including end of string)
+  uart16550_puts(file_name); uart16550_putc(0);
+
+  // receive file size
+  uint32_t file_size = uart16550_getc();
+  file_size |= ((uint32_t)uart16550_getc()) << 8;
+  file_size |= ((uint32_t)uart16550_getc()) << 16;
+  file_size |= ((uint32_t)uart16550_getc()) << 24;
+
+  // send ACK before receiving file
+  uart16550_putc(ACK);
+
+  return file_size;
+}
 
 int main() {
   uint32_t file_size = 0;
@@ -66,7 +91,18 @@ int main() {
 
   // init dma
   dma_init(DMA0_BASE);
-  // init eth
+  // init console eth
+  eth_init(ETH0_BASE, &clear_cache);
+
+#ifndef SIMULATION
+  // Receive data from console via Ethernet
+  file_size = uart_recvfile_ethernet("../src/eth_example.txt");
+  eth_rcv_file(buffer,file_size);
+  for(i=0; i<file_size; i++)
+    uart16550_putc(buffer[i]);
+#endif
+
+  // init SUT eth
   eth_init(ETH1_BASE, &clear_cache);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");

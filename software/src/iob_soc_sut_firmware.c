@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include "bsp.h"
 #include "iob_soc_sut_system.h"
 #include "iob_soc_sut_periphs.h"
@@ -70,12 +71,14 @@ int main()
     ethernet_connected = 1;
     eth_rcv_file(buffer, 64);
   } else {
+#ifndef SIMULATION
     // Receive data from console via Ethernet
     uint32_t file_size;
     file_size = uart_recvfile_ethernet("../src/eth_example.txt");
     eth_rcv_file(file_buffer,file_size);
     for(i=0; i<file_size; i++)
       uart_putc(file_buffer[i]);
+#endif
   }
 
   //Delay to allow time for tester to print debug messages

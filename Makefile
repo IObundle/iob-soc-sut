@@ -41,9 +41,12 @@ endif
 setup:
 	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
 
+sim-run:
+	make clean setup && make -C ../iob_soc_sut_V*/ sim-run
+
 sim-test:
-	make clean && make setup && make -C ../iob_soc_sut_V*/ sim-test
-	make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ sim-test
+	#make clean && make setup && make -C ../iob_soc_sut_V*/ sim-test
+	#make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ sim-test
 	make clean && make setup USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
 	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
 
@@ -61,12 +64,13 @@ tester-sim-test-icarus: build_dir_name
 	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
 fpga-run:
-	make clean setup INIT_MEM=$(INIT_MEM) USE_EXTMEM=$(USE_EXTMEM) RUN_LINUX=$(RUN_LINUX) TESTER=$(TESTER) && make -C ../$(CORE)_V*/ fpga-fw-build BOARD=$(BOARD)
-	make -C ../$(CORE)_V*/ fpga-run BOARD=$(BOARD)
+	make clean setup
+	make -C ../$(CORE)_V*/ fpga-fw-build
+	make -C ../$(CORE)_V*/ fpga-run
 
 fpga-test:
 	make clean setup fpga-run
-	make clean setup fpga-run INIT_MEM=0
+	#make clean setup fpga-run INIT_MEM=0
 	make clean setup fpga-run INIT_MEM=0 USE_EXTMEM=1
 
 tester-fpga-test: build_dir_name
