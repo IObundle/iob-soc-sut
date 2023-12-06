@@ -66,7 +66,19 @@ int main() {
 
   // init dma
   dma_init(DMA0_BASE);
-  // init eth
+  // init console eth
+  eth_init(ETH0_BASE, &clear_cache);
+
+#ifndef SIMULATION
+  // Receive data from console via Ethernet
+  uint32_t file_size;
+  file_size = uart_recvfile_ethernet("../src/eth_example.txt");
+  eth_rcv_file(buffer,file_size);
+  for(i=0; i<file_size; i++)
+    uart_putc(buffer[i]);
+#endif
+
+  // init SUT eth
   eth_init(ETH1_BASE, &clear_cache);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
