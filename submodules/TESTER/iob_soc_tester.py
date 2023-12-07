@@ -314,13 +314,18 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
-        # Connect ethernet clocks
         insert_verilog_in_module(
             """
+    // Connect ethernet clocks
     assign ETH1_MTxClk = ETH0_MTxClk;
     assign SUT0_ETH0_ETH0_MTxClk = ETH0_MTxClk;
     assign ETH1_MRxClk = ETH0_MRxClk;
     assign SUT0_ETH0_ETH0_MRxClk = ETH0_MRxClk;
+    // Connect unused inputs to ground
+    assign ETH1_MColl = 1'b0;
+    assign ETH1_MCrS = 1'b0;
+    assign SUT0_ETH0_ETH0_MColl = 1'b0;
+    assign SUT0_ETH0_ETH0_MCrS = 1'b0;
              """,
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
@@ -1070,6 +1075,20 @@ PYTHON_ENV ?= /opt/pyeth3/bin/python
                     "bits": [],
                 },
             ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "phy_rstn_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
             # ETHERNET 1
             (
                 {
@@ -1254,6 +1273,20 @@ PYTHON_ENV ?= /opt/pyeth3/bin/python
                     "bits": [],
                 },
             ),
+            (
+                {
+                    "corename": "ETH1",
+                    "if_name": "phy",
+                    "port": "phy_rstn_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ETH1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
             # Remaining SUT0 ETH0 signals
             (
                 {
@@ -1316,6 +1349,20 @@ PYTHON_ENV ?= /opt/pyeth3/bin/python
                     "corename": "SUT0",
                     "if_name": "ETH0",
                     "port": "ETH0_MDC",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "ETH0",
+                    "port": "ETH0_phy_rstn_o",
                     "bits": [],
                 },
                 {

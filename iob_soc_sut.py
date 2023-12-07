@@ -649,6 +649,20 @@ class iob_soc_sut(iob_soc):
                     "bits": [],
                 },
             ),
+            (
+                {
+                    "corename": "ETH0",
+                    "if_name": "phy",
+                    "port": "phy_rstn_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "ETH0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
         ]
 
         # Run IOb-SoC setup
