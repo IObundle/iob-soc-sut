@@ -65,8 +65,8 @@ int main()
   // init eth
   eth_init(ETH0_BASE, &clear_cache);
 
-
-  if(eth_rcv_frame(buffer,46,1000) == 0){ // Check if received a 'Sync' frame
+  // Check if received a 'Sync' frame from Tester
+  if(eth_rcv_frame(buffer,46,30*(FREQ/BAUD)) == 0){
     // Receive data from Tester via Ethernet
     ethernet_connected = 1;
     eth_rcv_file(buffer, 64);
@@ -82,7 +82,7 @@ int main()
   }
 
   //Delay to allow time for tester to print debug messages
-  for ( i = 0; i < 5000; i++)asm("nop");
+  for ( i = 0; i < (FREQ/BAUD)*128; i++)asm("nop");
 
   uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 
@@ -167,6 +167,8 @@ void axistream_loopback(){
 }
 
 void clear_cache(){
+  // Delay to ensure all data is written to memory
+  for ( unsigned int i = 0; i < 5; i++)asm volatile("nop");
   // Flush system cache
   IOB_CACHE_SET_INVALIDATE(1);
 }

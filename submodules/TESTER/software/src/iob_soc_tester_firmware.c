@@ -455,6 +455,8 @@ void receive_axistream() {
 }
 
 void clear_cache(){
+  // Delay to ensure all data is written to memory
+  for ( unsigned int i = 0; i < 5; i++)asm volatile("nop");
   // Flush VexRiscv CPU internal cache
   asm volatile(".word 0x500F" ::: "memory");
 }
