@@ -41,62 +41,35 @@ endif
 setup:
 	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
 
+pc-emul-run:
+	make clean setup && make -C ../iob_soc_sut_V*/ pc-emul-run
+
 sim-run:
 	make clean setup && make -C ../iob_soc_sut_V*/ sim-run
 
-sim-test:
-	#make clean && make setup && make -C ../iob_soc_sut_V*/ sim-test
-	#make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ sim-test
-	make clean && make setup USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
-
 tester-sim-test: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1. Ethernet also only supports USE_EXTMEM=1.
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	# Disabled test with INIT_MEM=0 because it takes too long for Tester based on Opencryptolinux
-	# make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-
-tester-sim-test-icarus: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1. Ethernet also only supports USE_EXTMEM=1.
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	# Ethernet only supports USE_EXTMEM=1.
+	make sim-run USE_EXTMEM=1 TESTER=1 | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
 fpga-run:
 	make clean setup
 	make -C ../$(CORE)_V*/ fpga-fw-build
 	make -C ../$(CORE)_V*/ fpga-run
 
-fpga-test:
-	make clean setup fpga-run
-	#make clean setup fpga-run INIT_MEM=0
-	make clean setup fpga-run INIT_MEM=0 USE_EXTMEM=1
-
 tester-fpga-test: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-
-tester-fpga-test-cyclone: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	# Disable test for now, as they have timing problems
-	# Also disable because ILA is not supported by Quartus
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+	# Ethernet only supports USE_EXTMEM=1.
+	make fpga-run INIT_MEM=0 USE_EXTMEM=1 TESTER=1 | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
 
 test-all:
-	make clean && make setup && make -C ../iob_soc_sut_V*/ pc-emul-test
-	#make sim-test SIMULATOR=icarus
-	make sim-test SIMULATOR=verilator
-	make fpga-test BOARD=CYCLONEV-GT-DK
-	make fpga-test BOARD=AES-KU040-DB-G
-	make clean && make setup && make -C ../iob_soc_sut_V*/ doc-test
+	make clean setup && make -C ../iob_soc_sut_V*/ pc-emul-test
+	#make sim-run SIMULATOR=icarus
+	make sim-run SIMULATOR=verilator
+	make fpga-run BOARD=CYCLONEV-GT-DK
+	make fpga-run BOARD=AES-KU040-DB-G
+	make clean setup && make -C ../iob_soc_sut_V*/ doc-test
 
-.PHONY: sim-test fpga-test test-all
-.PHONY: tester-sim-test tester-sim-test-icarus tester-fpga-test tester-fpga-test-cyclone
+.PHONY: pc-emul-run sim-run fpga-run
+.PHONY: tester-sim-test tester-fpga-test test-all
 
 build-sut-netlist:
 	make clean && make setup 
