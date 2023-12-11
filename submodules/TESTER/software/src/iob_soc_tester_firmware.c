@@ -98,6 +98,7 @@ int main() {
   // Receive data from console via Ethernet
   file_size = uart_recvfile_ethernet("../src/eth_example.txt");
   eth_rcv_file(buffer,file_size);
+  uart16550_puts("\n[Tester]: File received from console via ethernet:\n");
   for(i=0; i<file_size; i++)
     uart16550_putc(buffer[i]);
 #endif
@@ -250,7 +251,7 @@ int main() {
   eth_send_frame(buffer,46);
   // Send file
   eth_send_file(buffer, 64);
-  uart16550_puts("[Tester]: Reading SUT messages...\n");
+  uart16550_puts("\n[Tester]: Reading SUT messages...\n");
   uart16550_base(UART1_BASE);
 
   i = 0;
@@ -387,6 +388,7 @@ void print_ila_samples() {
 
   uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
   dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+  while(!dma_transfer_ready());
 
   clear_cache();
 
@@ -442,6 +444,7 @@ void receive_axistream() {
   // Transfer bytes from AXI stream input via DMA
   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
   dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
+  while(!dma_transfer_ready());
 
   clear_cache();
 
@@ -455,8 +458,6 @@ void receive_axistream() {
 }
 
 void clear_cache(){
-  // Delay to ensure all data is written to memory
-  for ( unsigned int i = 0; i < 5; i++)asm volatile("nop");
   // Flush VexRiscv CPU internal cache
   asm volatile(".word 0x500F" ::: "memory");
 }

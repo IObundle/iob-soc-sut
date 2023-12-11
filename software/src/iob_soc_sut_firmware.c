@@ -76,6 +76,7 @@ int main()
     uint32_t file_size;
     file_size = uart_recvfile_ethernet("../src/eth_example.txt");
     eth_rcv_file(file_buffer,file_size);
+    uart_puts("\n[SUT]: File received from console via ethernet:\n");
     for(i=0; i<file_size; i++)
       uart_putc(file_buffer[i]);
 #endif
