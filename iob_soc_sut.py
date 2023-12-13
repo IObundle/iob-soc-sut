@@ -673,6 +673,15 @@ class iob_soc_sut(iob_soc):
         super()._generate_files()
         # Remove iob_soc_sut_swreg_gen.v as it is not used
         os.remove(os.path.join(cls.build_dir, "hardware/src/iob_soc_sut_swreg_gen.v"))
+        # Connect unused peripheral inputs
+        insert_verilog_in_module(
+            """
+    assign AXISTREAMIN0_tready_i = 1'b0;
+    assign AXISTRREAMOUT0_tvalid_i = 1'b0;
+    assign AXISTRREAMOUT0_tdata_i = 1'b0;
+             """,
+            cls.build_dir + "/hardware/src/iob_soc_sut.v",
+        )
         # Update sim_wrapper connections
         if cls.is_top_module:
             insert_verilog_in_module(
@@ -727,7 +736,10 @@ RMAC_ADDR ?=309c231e624b
 endif
 RMAC_ADDR ?=000000000000
 export RMAC_ADDR
-PYTHON_ENV ?= /opt/pyeth3/bin/python
+#Set correct environment if running on IObundle machines
+ifneq ($(filter pudim-flan sericaia,$(shell hostname)),)
+IOB_CONSOLE_PYTHON_ENV ?= /opt/pyeth3/bin/python
+endif
                 """,
                 cls.build_dir,
             )
