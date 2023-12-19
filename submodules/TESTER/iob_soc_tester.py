@@ -70,10 +70,14 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     # SUT memory offset is equal to half the address width (MEM_ADDR_W-1)
                     # The first half of the memory is used for the Tester.
                     # The second half of the memory is used for the SUT.
-                    "MEM_ADDR_OFFSET": eval(
-                        "2**("
-                        + next(i["val"] for i in cls.confs if i["name"] == "MEM_ADDR_W")
-                        + "-1)"
+                    "MEM_ADDR_OFFSET": str(
+                        eval(
+                            "2**("
+                            + next(
+                                i["val"] for i in cls.confs if i["name"] == "MEM_ADDR_W"
+                            )
+                            + "-1)"
+                        )
                     ),
                     "ETH0_MEM_ADDR_OFFSET": "`IOB_SOC_TESTER_SUT0_MEM_ADDR_OFFSET",
                 },
@@ -349,8 +353,8 @@ class iob_soc_tester(iob_soc_opencryptolinux):
 
         if cls.is_top_module:
             # Use Verilator and AES-KU040-DB-G by default.
-            append_str_config_build_mk("SIMULATOR:=verilator\n", cls.build_dir)
-            append_str_config_build_mk("BOARD:=AES-KU040-DB-G\n", cls.build_dir)
+            append_str_config_build_mk("SIMULATOR ?=verilator\n", cls.build_dir)
+            append_str_config_build_mk("BOARD ?=AES-KU040-DB-G\n", cls.build_dir)
             # Set ethernet MAC address
             append_str_config_build_mk(
                 """
@@ -371,6 +375,19 @@ endif
                 """,
                 cls.build_dir,
             )
+
+        # Append uut_build.mk files to Tester's build files
+        for filepath in [
+            "software/sw_build.mk",
+            "hardware/simulation/sim_build.mk",
+            "hardware/fpga/fpga_build.mk",
+        ]:
+            with open(
+                os.path.join(cls.setup_dir, filepath.rsplit("/", 1)[0], "uut_build.mk")
+            ) as fp:
+                data2append = fp.read()
+            with open(os.path.join(cls.build_dir, filepath), "a") as fp:
+                fp.write(data2append)
 
     @classmethod
     def _setup_portmap(cls):

@@ -689,20 +689,20 @@ class iob_soc_sut(iob_soc):
 `include "iob_regfileif_inverted_swreg_def.vh"
 
    assign GPIO0_input_ports = `IOB_SOC_SUT_GPIO0_GPIO_W'h0;
-   assign AXISTREAMIN0_axis_clk_i = clk;
-   assign AXISTREAMIN0_axis_cke_i = cke;
-   assign AXISTREAMIN0_axis_arst_i = arst;
+   assign AXISTREAMIN0_axis_clk_i = clk_i;
+   assign AXISTREAMIN0_axis_cke_i = 1'b1;
+   assign AXISTREAMIN0_axis_arst_i = arst_i;
    assign AXISTREAMIN0_axis_tvalid_i = 1'b0;
    assign AXISTREAMIN0_axis_tdata_i = {`IOB_SOC_SUT_AXISTREAMIN0_TDATA_W{1'b0}};
    assign AXISTREAMIN0_axis_tlast_i = 1'b0;
 
-   assign AXISTREAMOUT0_axis_clk_i = clk;
-   assign AXISTREAMOUT0_axis_cke_i = cke;
-   assign AXISTREAMOUT0_axis_arst_i = arst;
+   assign AXISTREAMOUT0_axis_clk_i = clk_i;
+   assign AXISTREAMOUT0_axis_cke_i = 1'b1;
+   assign AXISTREAMOUT0_axis_arst_i = arst_i;
    assign AXISTREAMOUT0_axis_tready_i = 1'b0;
 
 
-   wire [1-1:0] iob_avalid_i = 1'b0;
+   wire [1-1:0] iob_valid_i = 1'b0;
    wire [`IOB_SOC_SUT_REGFILEIF0_ADDR_W-1:0] iob_addr_i = `IOB_SOC_SUT_REGFILEIF0_ADDR_W'h0;
    wire [`IOB_SOC_SUT_REGFILEIF0_DATA_W-1:0] iob_wdata_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W'h0;
    wire [(`IOB_SOC_SUT_REGFILEIF0_DATA_W/8)-1:0] iob_wstrb_i = `IOB_SOC_SUT_REGFILEIF0_DATA_W / 8'h0;
@@ -713,7 +713,7 @@ class iob_soc_sut(iob_soc):
             )
             insert_verilog_in_module(
                 """
-      .iob_avalid_i(iob_avalid_i),
+      .iob_valid_i(iob_valid_i),
       .iob_addr_i  (iob_addr_i),
       .iob_wdata_i (iob_wdata_i),
       .iob_wstrb_i (iob_wstrb_i),
