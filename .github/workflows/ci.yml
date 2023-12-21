@@ -69,9 +69,6 @@ jobs:
       # Init mem
       - name: init_mem
         run: nix-shell --run "make sim-run SIMULATOR=icarus"
-      # No init mem
-      - name: no_init_mem
-        run: nix-shell --run "make sim-run INIT_MEM=0 SIMULATOR=icarus"
 
   tester-icarus:
     runs-on: self-hosted
@@ -89,7 +86,7 @@ jobs:
       # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
       # Init mem
       - name: init_mem
-        run: nix-shell --run "make tester-sim-test SIMULATOR=icarus"
+        run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=icarus"
 
   tester-verilator:
     runs-on: self-hosted
@@ -106,10 +103,10 @@ jobs:
           submodules: 'recursive'
       # Init mem
       - name: init_mem
-        run: nix-shell --run "make tester-sim-test SIMULATOR=verilator"
+        run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=verilator"
       # No init mem
       - name: no_init_mem
-        run: nix-shell --run "make tester-sim-test INIT_MEM=0 SIMULATOR=verilator"
+        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 SIMULATOR=verilator"
   
   cyclonev:
     runs-on: self-hosted
@@ -125,25 +122,21 @@ jobs:
       - name: no_init_mem
         run: nix-shell --run "make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK"
 
-  # Disabled because Quartus Prime does not support hierarchical referencing (used by ILA for signal probing)
-  # https://www.intel.com/content/www/us/en/programmable/quartushelp/20.3/index.htm#msgs/msgs/evrfx2_veri_hierarchical_name_not_supported.htm
-  # https://community.intel.com/t5/Intel-Quartus-Prime-Software/Verilog-hierarchical-path-names-in-Quartus/m-p/103845
-  #
-  #tester-cyclonev:
-  #  runs-on: self-hosted
-  #  timeout-minutes: 60
-  #  # always run, except when previous job was cancelled
-  #  if: ${{ !cancelled() }}
-  #  # run after indicated job
-  #  needs: [ cyclonev ]
-  #
-  #  steps:
-  #    - uses: actions/checkout@v3
-  #      with:
-  #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
-  #        submodules: 'recursive'
-  #    - name: no_init_mem
-  #      run: nix-shell --run "make tester-fpga-test BOARD=CYCLONEV-GT-DK"
+  tester-cyclonev:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ cyclonev ]
+  
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: no_init_mem
+        run: nix-shell --run "make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK"
 
   #tester-netlist-cyclonev:
   #  runs-on: self-hosted
@@ -189,7 +182,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: no_init_mem
-        run: nix-shell --run "make tester-fpga-test BOARD=AES-KU040-DB-G"
+        run: nix-shell --run "make fpga-run TESTER=1 BOARD=AES-KU040-DB-G"
 
   #tester-netlist-aes-ku040:
   #  runs-on: self-hosted

@@ -47,10 +47,6 @@ pc-emul-run: build_dir_name
 sim-run: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ sim-run
 
-tester-sim-test: build_dir_name
-	# Ethernet only supports USE_EXTMEM=1.
-	make sim-run USE_EXTMEM=1 TESTER=1 | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-
 fpga-run: build_dir_name
 ifeq ($(USE_EXTMEM),1)
 	echo "WARNING: INIT_MEM must be set to zero run on the FPGA with USE_EXTMEM=1. Auto-setting INIT_MEM=0..."
@@ -61,10 +57,6 @@ endif
 	make -C $(BUILD_DIR)/ fpga-fw-build
 	make -C $(BUILD_DIR)/ fpga-run
 
-tester-fpga-test: build_dir_name
-	# Ethernet only supports USE_EXTMEM=1.
-	make fpga-run INIT_MEM=0 USE_EXTMEM=1 TESTER=1 | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-
 test-all: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ pc-emul-test
 	#make sim-run SIMULATOR=icarus
@@ -74,7 +66,6 @@ test-all: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ doc-test
 
 .PHONY: pc-emul-run sim-run fpga-run
-.PHONY: tester-sim-test tester-fpga-test test-all
 
 build-sut-netlist: build_dir_name
 	make clean && make setup 
