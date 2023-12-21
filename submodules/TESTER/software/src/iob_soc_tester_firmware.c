@@ -397,9 +397,13 @@ void print_ila_samples() {
   // Point ila cursor to the latest sample
   ila_set_cursor(latest_sample_index,0);
 
-  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
-  dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
-  while(!dma_transfer_ready());
+  //uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
+  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA (1 word at a time)...\n");
+  for(i=0; i<ila_buffer_size*2; i++){
+    // FIXME: Find out why DMA only transfers 1 word correctly in FPGA. Remove this loop once it is fixed.
+    dma_start_transfer((uint32_t *)samples+i, 1, 1, 1);
+    while(!dma_transfer_ready());
+  }
 
   clear_cache();
 
@@ -453,9 +457,13 @@ void receive_axistream() {
   volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
 
   // Transfer bytes from AXI stream input via DMA
-  uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
-  dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
-  while(!dma_transfer_ready());
+  //uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
+  uart16550_puts("[Tester]: Storing AXI words via DMA (1 word at a time)...\n");
+  // FIXME: Find out why DMA only transfers 1 word correctly in FPGA. Remove this loop once it is fixed.
+  for(i=0; i<n_received_words; i++){
+    dma_start_transfer((uint32_t *)byte_stream+i, 1, 1, 0);
+    while(!dma_transfer_ready());
+  }
 
   clear_cache();
 

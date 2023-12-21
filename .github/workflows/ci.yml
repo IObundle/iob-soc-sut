@@ -73,7 +73,6 @@ jobs:
       - name: no_init_mem
         run: nix-shell --run "make sim-run INIT_MEM=0 SIMULATOR=icarus"
 
-   Disabled because OpenCryptoLinux does not support Icarus
   tester-icarus:
     runs-on: self-hosted
     timeout-minutes: 90

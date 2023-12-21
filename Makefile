@@ -9,7 +9,7 @@ TOP_MODULE_NAME :=iob_soc_tester
 endif
 ifneq ($(USE_EXTMEM),1)
 $(warning WARNING: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
-SETUP_ARGS += USE_EXTMEM
+USE_EXTMEM:=1
 endif
 
 LIB_DIR:=submodules/IOBSOC/submodules/LIB
