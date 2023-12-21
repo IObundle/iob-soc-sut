@@ -33,7 +33,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: pc-emul-test
-        run: nix-shell --run "make clean setup && make -C ../iob_soc_sut_V* pc-emul-test"
+        run: nix-shell --run "make pc-emul-run"
 
   verilator:
     runs-on: self-hosted
@@ -120,7 +120,7 @@ jobs:
           submodules: 'recursive'
       # No init mem
       - name: no_init_mem
-        run: nix-shell --run "make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK"
+        run: make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK
 
   tester-cyclonev:
     runs-on: self-hosted
@@ -136,7 +136,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: no_init_mem
-        run: nix-shell --run "make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK"
+        run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
 
   #tester-netlist-cyclonev:
   #  runs-on: self-hosted
@@ -166,7 +166,7 @@ jobs:
           submodules: 'recursive'
       # No init mem
       - name: no_init_mem
-        run: nix-shell --run "make fpga-run INIT_MEM=0 BOARD=AES-KU040-DB-G"
+        run: make fpga-run INIT_MEM=0 BOARD=AES-KU040-DB-G
 
   tester-aes-ku040:
     runs-on: self-hosted
@@ -182,7 +182,7 @@ jobs:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
       - name: no_init_mem
-        run: nix-shell --run "make fpga-run TESTER=1 BOARD=AES-KU040-DB-G"
+        run: make fpga-run TESTER=1 BOARD=AES-KU040-DB-G
 
   #tester-netlist-aes-ku040:
   #  runs-on: self-hosted

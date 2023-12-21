@@ -50,11 +50,11 @@ sim-run: build_dir_name
 fpga-run: build_dir_name
 ifeq ($(USE_EXTMEM),1)
 	echo "WARNING: INIT_MEM must be set to zero run on the FPGA with USE_EXTMEM=1. Auto-setting INIT_MEM=0..."
-	make clean setup INIT_MEM=0
+	nix-shell --run "make clean setup INIT_MEM=0"
 else
-	make clean setup
+	nix-shell --run "make clean setup"
 endif
-	make -C $(BUILD_DIR)/ fpga-fw-build
+	nix-shell --run "make -C $(BUILD_DIR)/ fpga-fw-build"
 	make -C $(BUILD_DIR)/ fpga-run
 
 test-all: build_dir_name
