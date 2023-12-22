@@ -9,7 +9,7 @@ TOP_MODULE_NAME :=iob_soc_tester
 endif
 ifneq ($(USE_EXTMEM),1)
 $(warning WARNING: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
-SETUP_ARGS += USE_EXTMEM
+USE_EXTMEM:=1
 endif
 
 LIB_DIR:=submodules/IOBSOC/submodules/LIB
@@ -41,72 +41,41 @@ endif
 setup:
 	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
 
-sim-run:
-	make clean setup && make -C ../iob_soc_sut_V*/ sim-run
+pc-emul-run: build_dir_name
+	make clean setup && make -C $(BUILD_DIR)/ pc-emul-run
 
-sim-test:
-	#make clean && make setup && make -C ../iob_soc_sut_V*/ sim-test
-	#make clean && make setup INIT_MEM=0 && make -C ../iob_soc_sut_V*/ sim-test
-	make clean && make setup USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 && make -C ../iob_soc_sut_V*/ sim-test
+sim-run: build_dir_name
+	make clean setup && make -C $(BUILD_DIR)/ sim-run
 
-tester-sim-test: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1. Ethernet also only supports USE_EXTMEM=1.
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	# Disabled test with INIT_MEM=0 because it takes too long for Tester based on Opencryptolinux
-	# make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+fpga-run: build_dir_name
+ifeq ($(USE_EXTMEM),1)
+	echo "WARNING: INIT_MEM must be set to zero run on the FPGA with USE_EXTMEM=1. Auto-setting INIT_MEM=0..."
+	nix-shell --run "make clean setup INIT_MEM=0"
+else
+	nix-shell --run "make clean setup"
+endif
+	nix-shell --run "make -C $(BUILD_DIR)/ fpga-fw-build"
+	make -C $(BUILD_DIR)/ fpga-run
 
-tester-sim-test-icarus: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1. Ethernet also only supports USE_EXTMEM=1.
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=1 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) sim-run SIMULATOR=icarus | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
+test-all: build_dir_name
+	make clean setup && make -C $(BUILD_DIR)/ pc-emul-test
+	#make sim-run SIMULATOR=icarus
+	make sim-run SIMULATOR=verilator
+	make fpga-run BOARD=CYCLONEV-GT-DK
+	make fpga-run BOARD=AES-KU040-DB-G
+	make clean setup && make -C $(BUILD_DIR)/ doc-test
 
-fpga-run:
-	make clean setup
-	make -C ../$(CORE)_V*/ fpga-fw-build
-	make -C ../$(CORE)_V*/ fpga-run
+.PHONY: pc-emul-run sim-run fpga-run
 
-fpga-test:
-	make clean setup fpga-run
-	#make clean setup fpga-run INIT_MEM=0
-	make clean setup fpga-run INIT_MEM=0 USE_EXTMEM=1
-
-tester-fpga-test: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=$(BOARD) | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-
-tester-fpga-test-cyclone: build_dir_name
-	# IOb-SoC-Opencryptolinux only supports USE_EXTMEM=1
-	#make clean && make setup INIT_MEM=1 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	# Disable test for now, as they have timing problems
-	# Also disable because ILA is not supported by Quartus
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=0 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-	#make clean && make setup INIT_MEM=0 USE_EXTMEM=1 TESTER=1 && make -C $(BUILD_DIR) fpga-run BOARD=CYCLONEV-GT-DK | tee $(BUILD_DIR)/test.log && grep "Verification successful!" $(BUILD_DIR)/test.log > /dev/null
-
-test-all:
-	make clean && make setup && make -C ../iob_soc_sut_V*/ pc-emul-test
-	#make sim-test SIMULATOR=icarus
-	make sim-test SIMULATOR=verilator
-	make fpga-test BOARD=CYCLONEV-GT-DK
-	make fpga-test BOARD=AES-KU040-DB-G
-	make clean && make setup && make -C ../iob_soc_sut_V*/ doc-test
-
-.PHONY: sim-test fpga-test test-all
-.PHONY: tester-sim-test tester-sim-test-icarus tester-fpga-test tester-fpga-test-cyclone
-
-build-sut-netlist:
+build-sut-netlist: build_dir_name
 	make clean && make setup 
 	# Rename constraint files
-	#FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/quartus/CYCLONEV-GT-DK` &&\
+	#FPGA_DIR=`ls -d $(BUILD_DIR)/hardware/fpga/quartus/CYCLONEV-GT-DK` &&\
 	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
-	#FPGA_DIR=`ls -d ../iob_soc_sut_V*/hardware/fpga/vivado/AES-KU040-DB-G` &&\
+	#FPGA_DIR=`ls -d $(BUILD_DIR)/hardware/fpga/vivado/AES-KU040-DB-G` &&\
 	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
 	# Build netlist 
-	make -C ../iob_soc_sut_V*/ fpga-build BOARD=$(BOARD) IS_FPGA=0
+	make -C $(BUILD_DIR)/ fpga-build BOARD=$(BOARD) IS_FPGA=0
 
 tester-sut-netlist: build-sut-netlist
 	#Build tester without sut sources, but with netlist instead
@@ -131,12 +100,12 @@ tester-sut-netlist: build-sut-netlist
 .PHONY: build-sut-netlist test-sut-netlist
 
 # Target to create vcd file based on ila_data.bin generated by the ILA Tester peripheral
-ila-vcd:
+ila-vcd: build_dir_name
 	# Create VCD file from simulation ila data
-	if [ -f ../iob_soc_sut_V0.70/hardware/simulation/ila_data.bin ]; then \
-		./../iob_soc_sut_V0.70/./scripts/ilaDataToVCD.py ILA0 ../iob_soc_sut_V0.70/hardware/simulation/ila_data.bin ila_sim.vcd; fi
+	if [ -f $(BUILD_DIR)/hardware/simulation/ila_data.bin ]; then \
+		./$(BUILD_DIR)/./scripts/ilaDataToVCD.py ILA0 $(BUILD_DIR)/hardware/simulation/ila_data.bin ila_sim.vcd; fi
 	# Create VCD file from fpga ila data
-	if [ -f ../iob_soc_sut_V0.70/hardware/fpga/ila_data.bin ]; then \
-		./../iob_soc_sut_V0.70/./scripts/ilaDataToVCD.py ILA0 ../iob_soc_sut_V0.70/hardware/fpga/ila_data.bin ila_fpga.vcd; fi
+	if [ -f $(BUILD_DIR)/hardware/fpga/ila_data.bin ]; then \
+		./$(BUILD_DIR)/./scripts/ilaDataToVCD.py ILA0 $(BUILD_DIR)/hardware/fpga/ila_data.bin ila_fpga.vcd; fi
 	#gtkwave ./ila_sim.vcd
 .PHONY: ila-vcd

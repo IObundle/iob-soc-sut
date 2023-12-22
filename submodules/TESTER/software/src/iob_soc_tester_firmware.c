@@ -25,6 +25,7 @@
 #include "stdlib.h"
 #include <stdio.h>
 #include <stdint.h>
+#include "iob_str.h"
 
 // Enable debug messages.
 #define DEBUG 0
@@ -63,10 +64,12 @@ uint32_t uart_recvfile_ethernet(char *file_name) {
 }
 
 int main() {
+  char pass_string[] = "Test passed!";
+  char fail_string[] = "Test failed!";
   uint32_t file_size = 0;
   char c, buffer[5096], *sutStr;
   int i;
-#ifndef INIT_MEM
+#ifndef IOB_SOC_TESTER_INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
 #endif
 
@@ -80,6 +83,8 @@ int main() {
   // init axistream
   axistream_in_init(AXISTREAMIN0_BASE);
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
+  axistream_in_enable();
+  axistream_out_enable();
 
 #ifdef USE_ILA_PFSM
     // init integrated logic analyzer
@@ -94,10 +99,14 @@ int main() {
   // init console eth
   eth_init(ETH0_BASE, &clear_cache);
 
+  uart16550_puts("\n[Tester]: Waiting for ethernet PHY reset to finish...\n\n");
+  eth_wait_phy_rst();
+
 #ifndef SIMULATION
   // Receive data from console via Ethernet
   file_size = uart_recvfile_ethernet("../src/eth_example.txt");
   eth_rcv_file(buffer,file_size);
+  uart16550_puts("\n[Tester]: File received from console via ethernet:\n");
   for(i=0; i<file_size; i++)
     uart16550_putc(buffer[i]);
 #endif
@@ -128,17 +137,6 @@ int main() {
     ila_enable_all_triggers();
 #endif
 
-  // Send byte stream via AXI stream
-  send_axistream();
-  
-#ifdef USE_ILA_PFSM
-    // Disable all ILA triggers
-    ila_disable_all_triggers();
-    
-    // Print sampled ILA values
-    print_ila_samples();
-#endif
-
   uart16550_puts("[Tester]: Initializing SUT via UART...\n");
   // Init and switch to uart1 (connected to the SUT)
   uart16550_init(UART1_BASE, FREQ/(16*BAUD));
@@ -159,7 +157,7 @@ int main() {
   
   uart16550_base(UART1_BASE);
 
-#ifndef INIT_MEM
+#ifndef IOB_SOC_TESTER_INIT_MEM
   uart16550_base(UART0_BASE);
   uart16550_puts("[Tester]: SUT memory is not initalized. Waiting for firmware "
             "transfer request from SUT...\n");
@@ -239,6 +237,21 @@ int main() {
 #endif
 
   uart16550_base(UART0_BASE);
+
+  //Delay to allow time for sut to run bootloader and enable its axistream
+  for ( i = 0; i < (FREQ/BAUD)*256; i++)asm("nop");
+
+  // Send byte stream via AXI stream
+  send_axistream();
+  
+#ifdef USE_ILA_PFSM
+    // Disable all ILA triggers
+    ila_disable_all_triggers();
+    
+    // Print sampled ILA values
+    print_ila_samples();
+#endif
+
   // Test sending data to SUT via ethernet
   uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
   for(i=0; i<64; i++) {
@@ -246,11 +259,9 @@ int main() {
     printf("%d ", buffer[i]);
   }
   uart16550_putc('\n'); uart16550_putc('\n');
-  // Send a 'Sync' frame to tell SUT that ethernet is connected (frame with random data)
-  eth_send_frame(buffer,46);
   // Send file
   eth_send_file(buffer, 64);
-  uart16550_puts("[Tester]: Reading SUT messages...\n");
+  uart16550_puts("\n[Tester]: Reading SUT messages...\n");
   uart16550_base(UART1_BASE);
 
   i = 0;
@@ -305,7 +316,7 @@ int main() {
   // Read byte stream via AXI stream
   receive_axistream();
 
-#ifdef USE_EXTMEM
+#ifdef IOB_SOC_TESTER_USE_EXTMEM
   uart16550_puts("\n[Tester] Using shared external memory. Obtain SUT memory string "
             "pointer via SUT's register 5...\n");
   uart16550_puts("[Tester]: String pointer is: ");
@@ -313,7 +324,7 @@ int main() {
   uart16550_putc('\n');
   // Get address of string stored in SUT's memory
   // and invert the highest bit of MEM_ADDR_W to access the SUT's memory zone
-  sutStr = (char *)(IOB_SOC_SUT_GET_REG5() ^ (1 << (MEM_ADDR_W - 1)));
+  sutStr = (char *)(IOB_SOC_SUT_GET_REG5() ^ (1 << (IOB_SOC_TESTER_MEM_ADDR_W - 1)));
 
   // Print the string by accessing that address
   uart16550_puts("[Tester]: String read from SUT's memory via shared memory:\n");
@@ -337,6 +348,7 @@ int main() {
 #endif
 
   uart16550_puts("\n[Tester]: Verification successful!\n\n");
+  uart16550_sendfile("test.log", iob_strlen(pass_string), pass_string);
 
   // End UART0 connection
   uart16550_finish();
@@ -385,8 +397,13 @@ void print_ila_samples() {
   // Point ila cursor to the latest sample
   ila_set_cursor(latest_sample_index,0);
 
-  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
-  dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+  //uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
+  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA (1 word at a time)...\n");
+  for(i=0; i<ila_buffer_size*2; i++){
+    // FIXME: Find out why DMA only transfers 1 word correctly in FPGA. Remove this loop once it is fixed.
+    dma_start_transfer((uint32_t *)samples+i, 1, 1, 1);
+    while(!dma_transfer_ready());
+  }
 
   clear_cache();
 
@@ -440,8 +457,13 @@ void receive_axistream() {
   volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
 
   // Transfer bytes from AXI stream input via DMA
-  uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
-  dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
+  //uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
+  uart16550_puts("[Tester]: Storing AXI words via DMA (1 word at a time)...\n");
+  // FIXME: Find out why DMA only transfers 1 word correctly in FPGA. Remove this loop once it is fixed.
+  for(i=0; i<n_received_words; i++){
+    dma_start_transfer((uint32_t *)byte_stream+i, 1, 1, 0);
+    while(!dma_transfer_ready());
+  }
 
   clear_cache();
 
@@ -455,6 +477,8 @@ void receive_axistream() {
 }
 
 void clear_cache(){
+  // Delay to ensure all data is written to memory
+  for ( unsigned int i = 0; i < 10; i++)asm volatile("nop");
   // Flush VexRiscv CPU internal cache
   asm volatile(".word 0x500F" ::: "memory");
 }

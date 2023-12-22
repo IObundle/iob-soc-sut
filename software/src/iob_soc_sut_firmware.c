@@ -6,13 +6,16 @@
 #include "iob_soc_sut_conf.h"
 #include "iob-uart.h"
 #include "iob-gpio.h"
-#include "iob-cache.h"
+#include "iob_cache_swreg.h"
 #include "iob-eth.h"
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
 #include "iob_str.h"
 #include "iob-axistream-in.h"
 #include "iob-axistream-out.h"
+#if __has_include("iob_soc_tester_conf.h")
+#define USE_TESTER
+#endif
 
 void axistream_loopback();
 void clear_cache();
@@ -60,29 +63,34 @@ int main()
   //init axistream
   axistream_in_init(AXISTREAMIN0_BASE);   
   axistream_out_init(AXISTREAMOUT0_BASE, 4);
+  axistream_in_enable();
+  axistream_out_enable();
   // init cache
-  cache_init(1<<E, MEM_ADDR_W);
+  IOB_CACHE_INIT_BASEADDR((1 << IOB_SOC_SUT_E) + (1 << IOB_SOC_SUT_MEM_ADDR_W));
   // init eth
   eth_init(ETH0_BASE, &clear_cache);
 
+  // Wait for PHY reset to finish
+  eth_wait_phy_rst();
 
-  if(eth_rcv_frame(buffer,46,1000) == 0){ // Check if received a 'Sync' frame
-    // Receive data from Tester via Ethernet
-    ethernet_connected = 1;
-    eth_rcv_file(buffer, 64);
-  } else {
-#ifndef SIMULATION
-    // Receive data from console via Ethernet
-    uint32_t file_size;
-    file_size = uart_recvfile_ethernet("../src/eth_example.txt");
-    eth_rcv_file(file_buffer,file_size);
-    for(i=0; i<file_size; i++)
-      uart_putc(file_buffer[i]);
-#endif
-  }
+#ifdef USE_TESTER
+  // Receive data from Tester via Ethernet
+  ethernet_connected = 1;
+  eth_rcv_file(buffer, 64);
 
   //Delay to allow time for tester to print debug messages
-  for ( i = 0; i < 5000; i++)asm("nop");
+  for ( i = 0; i < (FREQ/BAUD)*128; i++)asm("nop");
+#else
+#ifndef SIMULATION
+  // Receive data from console via Ethernet
+  uint32_t file_size;
+  file_size = uart_recvfile_ethernet("../src/eth_example.txt");
+  eth_rcv_file(file_buffer,file_size);
+  uart_puts("\n[SUT]: File received from console via ethernet:\n");
+  for(i=0; i<file_size; i++)
+    uart_putc(file_buffer[i]);
+#endif
+#endif
 
   uart_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 
@@ -116,7 +124,7 @@ int main()
   // Read AXI stream input and relay data to AXI stream output
   axistream_loopback();
 
-#ifdef USE_EXTMEM
+#ifdef IOB_SOC_SUT_USE_EXTMEM
   char sutMemoryMessage[]="This message is stored in SUT's memory\n";
 
   uart_puts("\n[SUT]: Using external memory. Stored a string in memory at location: ");
@@ -127,7 +135,7 @@ int main()
   uart_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 #endif
 
-//#ifdef USE_EXTMEM
+//#ifdef IOB_SOC_SUT_USE_EXTMEM
 //  if(memory_access_failed)
 //      uart_sendfile("test.log", iob_strlen(fail_string), fail_string);
 //      uart_finish();
@@ -167,6 +175,8 @@ void axistream_loopback(){
 }
 
 void clear_cache(){
+  // Delay to ensure all data is written to memory
+  for ( unsigned int i = 0; i < 10; i++)asm volatile("nop");
   // Flush system cache
   IOB_CACHE_SET_INVALIDATE(1);
 }
