@@ -25,7 +25,7 @@ Before building the system, install the following tools:
 - Python3 >=3.10.6
 - Python3-Parse >=1.19.0
 
-Optional tools, depending on desired run strategy:
+Optional tools, depending on the desired run strategy:
 - Icarus Verilog >=10.3
 - Verilator >=5.002
 - gtkwave >=3.3.113
@@ -315,7 +315,7 @@ When creating a new Tester for a generic UUT, the modifications typically requir
 
 For reference, check out the `submodules/TESTER/iob_soc_tester.py` Python module.
 
-## Setup, build and run the Tester along with UUT
+## Setup, build, and run the Tester along with UUT
 
 With the UUT's minimum requirements fulfilled, the steps for setup, building, and running the Tester are similar to those of [IOb-SoC](https://github.com/IObundle/iob-soc).
 
