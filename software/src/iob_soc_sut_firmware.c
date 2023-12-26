@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include "bsp.h"
 #include "iob_soc_sut_system.h"
 #include "iob_soc_sut_periphs.h"
@@ -10,7 +11,6 @@
 #include "iob-eth.h"
 #include "printf.h"
 #include "iob_regfileif_inverted_swreg.h"
-#include "iob_str.h"
 #include "iob-axistream-in.h"
 #include "iob-axistream-out.h"
 #if __has_include("iob_soc_tester_conf.h")
@@ -137,10 +137,10 @@ int main()
 
 //#ifdef IOB_SOC_SUT_USE_EXTMEM
 //  if(memory_access_failed)
-//      uart_sendfile("test.log", iob_strlen(fail_string), fail_string);
+//      uart_sendfile("test.log", strlen(fail_string), fail_string);
 //      uart_finish();
 //#endif
-  uart_sendfile("test.log", iob_strlen(pass_string), pass_string);
+  uart_sendfile("test.log", strlen(pass_string), pass_string);
 
   uart_finish();
 }
