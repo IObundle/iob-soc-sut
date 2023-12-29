@@ -25,7 +25,7 @@
 #include "stdlib.h"
 #include <stdio.h>
 #include <stdint.h>
-#include "iob_str.h"
+#include <string.h>
 
 // Enable debug messages.
 #define DEBUG 0
@@ -348,7 +348,7 @@ int main() {
 #endif
 
   uart16550_puts("\n[Tester]: Verification successful!\n\n");
-  uart16550_sendfile("test.log", iob_strlen(pass_string), pass_string);
+  uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 
   // End UART0 connection
   uart16550_finish();

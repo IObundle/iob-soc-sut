@@ -26,7 +26,6 @@ IOB_SOC_SUT_FW_LFLAGS=-Wl,-Bstatic,-T,src/iob_soc_sut_firmware.lds,--strip-debug
 IOB_SOC_SUT_FW_SRC=src/iob_soc_sut_firmware.S
 IOB_SOC_SUT_FW_SRC+=src/iob_soc_sut_firmware.c
 IOB_SOC_SUT_FW_SRC+=src/printf.c
-IOB_SOC_SUT_FW_SRC+=src/iob_str.c
 # PERIPHERAL SOURCES
 IOB_SOC_SUT_FW_SRC+=$(wildcard src/iob-*.c)
 IOB_SOC_SUT_FW_SRC+=$(filter-out %_emul.c, $(wildcard src/*swreg*.c))
