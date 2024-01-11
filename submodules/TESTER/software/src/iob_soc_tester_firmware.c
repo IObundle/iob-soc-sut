@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "iob_eth_rmac.h"
+#define ETH_MAC_ADDR 0x01606e11020f
 
 // Enable debug messages.
 #define DEBUG 0
@@ -112,7 +114,7 @@ int main() {
 #endif
 
   // init SUT eth
-  eth_init(ETH1_BASE, &clear_cache);
+  eth_init_mac(ETH1_BASE, ETH_RMAC_ADDR, ETH_MAC_ADDR);
 
   uart16550_puts("\n\n[Tester]: Hello from tester!\n\n\n");
 
