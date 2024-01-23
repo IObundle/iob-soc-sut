@@ -54,8 +54,18 @@ ifeq ($(USE_EXTMEM),1)
 else
 	nix-shell --run "make clean setup"
 endif
-	nix-shell --run "make -C $(BUILD_DIR)/ fpga-fw-build"
-	make -C $(BUILD_DIR)/ fpga-run
+	make fpga-connect
+
+fpga-connect: build_dir_name
+	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
+	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
+
+test-linux-fpga-connect: build_dir_name
+	-rm $(BUILD_DIR)/hardware/fpga/test.log
+	-ln -s minicom_test1.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	make fpga-connect TESTER=1 RUN_LINUX=1
+
+.PHONY: pc-emul-run sim-run fpga-run fpga-connect test-linux-fpga-connect
 
 test-all: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ pc-emul-test
@@ -65,7 +75,7 @@ test-all: build_dir_name
 	make fpga-run BOARD=AES-KU040-DB-G
 	make clean setup && make -C $(BUILD_DIR)/ doc-test
 
-.PHONY: pc-emul-run sim-run fpga-run
+.PHONY: test-all
 
 build-sut-netlist: build_dir_name
 	make clean && make setup 

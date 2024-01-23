@@ -106,7 +106,7 @@ jobs:
         run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=verilator"
       # No init mem
       - name: no_init_mem
-        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 SIMULATOR=verilator"
+        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=1800 SIMULATOR=verilator"
   
   cyclonev:
     runs-on: self-hosted
@@ -135,8 +135,10 @@ jobs:
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      - name: no_init_mem
+      - name: test baremetal
         run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
+      - name: test linux
+        run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
 
   #tester-netlist-cyclonev:
   #  runs-on: self-hosted
@@ -181,8 +183,10 @@ jobs:
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
-      - name: no_init_mem
+      - name: test baremetal
         run: make fpga-run TESTER=1 BOARD=AES-KU040-DB-G
+      - name: test linux
+        run: make test-linux-fpga-connect BOARD=AES-KU040-DB-G
 
   #tester-netlist-aes-ku040:
   #  runs-on: self-hosted
