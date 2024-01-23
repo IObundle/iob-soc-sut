@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import glob
 
 from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_soc_sut import iob_soc_sut
@@ -376,6 +377,12 @@ endif
                 data2append = fp.read()
             with open(os.path.join(cls.build_dir, filepath), "a") as fp:
                 fp.write(data2append)
+
+        # Replace `MEM_ADDR_W` macro in *_firmware.S files by `SRAM_ADDR_W`
+        # This prevents the Tester+SUT from using entire shared memory, therefore preventing conflicts
+        firmware_list = glob.glob(cls.build_dir + "/software/src/*firmware.S")
+        for firmware in firmware_list:
+            inplace_change(firmware,"MEM_ADDR_W","SRAM_ADDR_W")
 
     @classmethod
     def _setup_portmap(cls):
