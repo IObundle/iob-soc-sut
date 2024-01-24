@@ -236,7 +236,7 @@ int main() {
   uart16550_puts("[Tester]: Finished receiving firmware readback.\n");
   uart16550_base(UART1_BASE);
 
-#endif
+#endif //IOB_SOC_TESTER_INIT_MEM
 
   uart16550_base(UART0_BASE);
 
@@ -403,8 +403,6 @@ void print_ila_samples() {
   dma_start_transfer((uint32_t *)samples+i, ila_buffer_size*2, 1, 1);
 
   clear_cache();
-
-  // TODO: Try adding delay to see if it is a problem of trying to read too fast from the fpga memory.
 
   uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
   uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
