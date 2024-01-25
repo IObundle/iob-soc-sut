@@ -1,21 +1,28 @@
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "iob-uart16550.h"
+
+static char device[100];
 
 //TX FUNCTIONS
 void uart16550_putc(char c) {
-    *((volatile uint8_t *)(base)) = c;
+  FILE *port_fp = fopen(device, "wb");
+  putc(c, port_fp);
+  fclose(port_fp);
 }
 
 //RX FUNCTIONS
 char uart16550_getc() {
-    uint8_t rvalue;
-    rvalue = *((volatile uint8_t *)(base));
-    return rvalue;
+  FILE *port_fp = fopen(device, "rb");
+  char c = getc(port_fp);
+  fclose(port_fp);
+  return c;
 }
 
 // Change UART base
-void uart16550_base(int base_address) {
-	base = base_address;
+void uart16550_base(char device_path[]) {
+    strcpy(device, device_path);
 }
 
 void uart16550_finish() {

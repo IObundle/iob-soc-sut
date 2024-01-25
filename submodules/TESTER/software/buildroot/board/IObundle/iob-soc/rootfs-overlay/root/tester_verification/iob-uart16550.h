@@ -18,7 +18,7 @@ static int base;
 //UART functions
 
 // Change UART base
-void uart16550_base(int base_address);
+void uart16550_base(char device_path[]);
 
 //Close transmission
 void uart16550_finish();

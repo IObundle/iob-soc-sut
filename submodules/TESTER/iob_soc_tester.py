@@ -382,7 +382,7 @@ endif
         # This prevents the Tester+SUT from using entire shared memory, therefore preventing conflicts
         firmware_list = glob.glob(cls.build_dir + "/software/src/*firmware.S")
         for firmware in firmware_list:
-            inplace_change(firmware,"MEM_ADDR_W","SRAM_ADDR_W")
+            inplace_change(firmware, "MEM_ADDR_W", "SRAM_ADDR_W")
 
     @classmethod
     def _setup_portmap(cls):
