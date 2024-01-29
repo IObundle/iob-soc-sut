@@ -43,7 +43,7 @@
         reg = <0x80000000 0x10000000>;
     };
     chosen {
-        bootargs = "rootwait console=hvc0 earlycon=sbi root=/dev/ram0 init=/sbin/init swiotlb=32";
+        bootargs = "rootwait console=hvc0 earlycon=sbi root=/dev/ram0 init=/sbin/init swiotlb=32 loglevel=8";
         linux,initrd-start = <0x81000000>;
         linux,initrd-end = <0x81800000>; // max 8MB ramdisk image
     };
@@ -52,23 +52,23 @@
         #size-cells = <1>;
         compatible = "iobundle,iob-soc", "simple-bus";
         ranges;
-        uart0: uart@/*UART0_ADDR_MACRO*/ {
-            compatible = "ns16550a";
-            reg = <0x/*UART0_ADDR_MACRO*/ 0x1000>;
-            clock-frequency = </*FREQ_MACRO*/>;
-            current-speed = </*BAUD_MACRO*/>;
-            //interrupt-parent = < &PLIC0 >;
-            interrupts = <1>;
-            reg-shift = <2>; // regs are spaced on 32 bit boundary
-            reg-io-width = <4>; // only 32-bit access are supported
-        };
+        //uart0: uart@/*UART0_ADDR_MACRO*/ {
+        //    compatible = "ns16550a";
+        //    reg = <0x/*UART0_ADDR_MACRO*/ 0x1000>;
+        //    clock-frequency = </*FREQ_MACRO*/>;
+        //    current-speed = </*BAUD_MACRO*/>;
+        ////    interrupt-parent = < &PLIC0 >;
+        ////    interrupts = <1>;
+        //    reg-shift = <2>; // regs are spaced on 32 bit boundary
+        //    reg-io-width = <4>; // only 32-bit access are supported
+        //};
         uart1: uart@/*UART1_ADDR_MACRO*/ {
             compatible = "ns16550a";
             reg = <0x/*UART1_ADDR_MACRO*/ 0x1000>;
             clock-frequency = </*FREQ_MACRO*/>;
             current-speed = </*BAUD_MACRO*/>;
-            //interrupt-parent = < &PLIC0 >;
-            interrupts = <2>;
+        //    interrupt-parent = < &PLIC0 >;
+        //    interrupts = <2>;
             reg-shift = <2>; // regs are spaced on 32 bit boundary
             reg-io-width = <4>; // only 32-bit access are supported
         };
@@ -87,9 +87,9 @@
         //    interrupt-controller;
         //    interrupts-extended = < &CPU0_intc 11
         //                            &CPU0_intc 9 >;
-        //    reg = <0x/*PLIC0_ADDR_MACRO*/ 0x04000000>;
+        //    reg = <0x/*PLIC0_ADDR_MACRO*/ 0x4000000>;
         //    riscv,max-priority = <7>;
-        //    riscv,ndev = <2>;
+        //    riscv,ndev = <32>;
         //};
     };
 };
