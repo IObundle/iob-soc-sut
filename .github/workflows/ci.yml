@@ -124,7 +124,7 @@ jobs:
 
   tester-cyclonev:
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 90
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job

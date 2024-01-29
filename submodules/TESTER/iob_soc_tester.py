@@ -284,8 +284,8 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         inplace_change(
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-            ".plicInterrupts({{31{1'b0}}, uart_interrupt_o}),",
-            ".plicInterrupts({{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o}),",
+            ".plicInterrupts({{30{1'b0}}, uart_interrupt_o, 1'b0}),",
+            ".plicInterrupts({{29{1'b0}}, UART1_interrupt_o, uart_interrupt_o, 1'b0}),",
         )
 
         # Connect General signals from iob-axis cores

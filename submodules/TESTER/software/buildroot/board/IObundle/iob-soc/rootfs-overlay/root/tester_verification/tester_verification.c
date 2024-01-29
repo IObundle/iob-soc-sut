@@ -53,9 +53,9 @@
 
 int main() {
   char pass_string[] = "Test passed!";
-  char fail_string[] = "Test failed!";
+  //char fail_string[] = "Test failed!";
   uint32_t file_size = 0;
-  char c, buffer[5096], *sutStr;
+  char c, buffer[5096];//, *sutStr;
   int i;
   char sut_firmware[SUT_FIRMWARE_SIZE];
   FILE *fptr;

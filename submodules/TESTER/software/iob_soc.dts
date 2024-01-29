@@ -68,7 +68,7 @@
             clock-frequency = </*FREQ_MACRO*/>;
             current-speed = </*BAUD_MACRO*/>;
             //interrupt-parent = < &PLIC0 >;
-            interrupts = <1>;
+            interrupts = <2>;
             reg-shift = <2>; // regs are spaced on 32 bit boundary
             reg-io-width = <4>; // only 32-bit access are supported
         };

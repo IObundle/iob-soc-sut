@@ -13,8 +13,6 @@
 #define FTX 7 //transmit file
 #define FRX 8 //receive file
 
-static int base;
-
 //UART functions
 
 // Change UART base

@@ -141,6 +141,7 @@ build-linux-buildroot:
 	make -C $(LINUX_OS_DIR) build-buildroot OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(TESTER_DIR) --relative-to=..`/software OS_BUILD_DIR=$(REL_OS2TESTER)/software/src
 
 build-linux-kernel:
+	-rm ../linux-5.15.98/arch/riscv/boot/Image
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-linux-kernel OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(TESTER_DIR) --relative-to=..`/software OS_BUILD_DIR=$(REL_OS2TESTER)/software/src'
 
 build-linux-files:
@@ -151,8 +152,17 @@ build-linux-files:
 
 .PHONY: build-linux-dts build-linux-opensbi build-linux-buildroot build-linux-kernel build-linux-files
 
+INCLUDE = -I.
+SRC = *.c
+FLAGS = -Wall -O2
+#FLAGS += -Werror
+FLAGS += -static
+FLAGS += -march=rv32imac
+FLAGS += -mabi=ilp32
+BIN = run_verification
+CC = riscv64-unknown-linux-gnu-gcc
 build-linux-tester-verification:
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'cd $(TESTER_DIR)/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/ && \
-	riscv64-unknown-linux-gnu-gcc -o run_verification -I. *.c'
+	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
 
 .PHONY: build-linux-tester-verification
