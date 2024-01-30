@@ -8,7 +8,7 @@ ifeq ($(TESTER),1)
 TOP_MODULE_NAME :=iob_soc_tester
 endif
 ifneq ($(USE_EXTMEM),1)
-$(warning WARNING: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
+$(info NOTE: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
 USE_EXTMEM:=1
 endif
 
@@ -54,8 +54,18 @@ ifeq ($(USE_EXTMEM),1)
 else
 	nix-shell --run "make clean setup"
 endif
-	nix-shell --run "make -C $(BUILD_DIR)/ fpga-fw-build"
-	make -C $(BUILD_DIR)/ fpga-run
+	make fpga-connect
+
+fpga-connect: build_dir_name
+	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
+	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
+
+test-linux-fpga-connect: build_dir_name
+	-rm $(BUILD_DIR)/hardware/fpga/test.log
+	-ln -s minicom_test1.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	make fpga-connect TESTER=1 RUN_LINUX=1
+
+.PHONY: pc-emul-run sim-run fpga-run fpga-connect test-linux-fpga-connect
 
 test-all: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ pc-emul-test
@@ -65,7 +75,7 @@ test-all: build_dir_name
 	make fpga-run BOARD=AES-KU040-DB-G
 	make clean setup && make -C $(BUILD_DIR)/ doc-test
 
-.PHONY: pc-emul-run sim-run fpga-run
+.PHONY: test-all
 
 build-sut-netlist: build_dir_name
 	make clean && make setup 
@@ -109,3 +119,50 @@ ila-vcd: build_dir_name
 		./$(BUILD_DIR)/./scripts/ilaDataToVCD.py ILA0 $(BUILD_DIR)/hardware/fpga/ila_data.bin ila_fpga.vcd; fi
 	#gtkwave ./ila_sim.vcd
 .PHONY: ila-vcd
+
+### Linux targets
+
+LINUX_OS_DIR ?= submodules/TESTER/submodules/OPENCRYPTOLINUX/submodules/OS
+TESTER_DIR ?= submodules/TESTER
+REL_OS2TESTER :=`realpath $(TESTER_DIR) --relative-to=$(LINUX_OS_DIR)`
+REL_OS2SUT :=`realpath $(CURDIR) --relative-to=$(LINUX_OS_DIR)`
+
+build-linux-dts:
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-dts MACROS_FILE=$(REL_OS2TESTER)/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/simulation OS_SOFTWARE_DIR=$(REL_OS2TESTER)/software'
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-dts MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G OS_SOFTWARE_DIR=$(REL_OS2TESTER)/software'
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-dts MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK OS_SOFTWARE_DIR=$(REL_OS2TESTER)/software'
+
+build-linux-opensbi:
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/simulation'
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G'
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK'
+
+build-linux-buildroot:
+	make -C $(LINUX_OS_DIR) build-buildroot OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(TESTER_DIR) --relative-to=..`/software OS_BUILD_DIR=$(REL_OS2TESTER)/software/src
+
+build-linux-kernel:
+	-rm ../linux-5.15.98/arch/riscv/boot/Image
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-linux-kernel OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(TESTER_DIR) --relative-to=..`/software OS_BUILD_DIR=$(REL_OS2TESTER)/software/src'
+
+build-linux-files:
+	make build-linux-dts
+	make build-linux-opensbi
+	make build-linux-buildroot
+	make build-linux-kernel
+
+.PHONY: build-linux-dts build-linux-opensbi build-linux-buildroot build-linux-kernel build-linux-files
+
+INCLUDE = -I.
+SRC = *.c
+FLAGS = -Wall -O2
+#FLAGS += -Werror
+FLAGS += -static
+FLAGS += -march=rv32imac
+FLAGS += -mabi=ilp32
+BIN = run_verification
+CC = riscv64-unknown-linux-gnu-gcc
+build-linux-tester-verification:
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'cd $(TESTER_DIR)/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/ && \
+	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
+
+.PHONY: build-linux-tester-verification

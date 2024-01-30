@@ -722,7 +722,7 @@ class iob_soc_sut(iob_soc):
                 + "/hardware/simulation/src/iob_soc_sut_sim_wrapper.v",  # Name of the system file to generate the probe wires
                 after_line="iob_soc_sut0",
             )
-        # DEBUG: Set ethernet MAC address
+        # Set ethernet MAC address
         if cls.is_top_module:
             append_str_config_build_mk(
                 """
