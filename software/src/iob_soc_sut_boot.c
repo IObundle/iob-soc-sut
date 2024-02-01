@@ -23,10 +23,6 @@ int main() {
   IOB_CACHE_INIT_BASEADDR((1 << IOB_SOC_SUT_E) + (1 << IOB_SOC_SUT_MEM_ADDR_W));
 #endif
 
-  //TODO: Delete this later. Used for debug linux read
-  while (1) 
-    uart_puts("IOb-Bootloader: Debug!\n");
-
   // connect with console
   do {
     if (IOB_UART_GET_TXREADY())

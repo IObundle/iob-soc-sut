@@ -166,12 +166,3 @@ build-linux-tester-verification:
 	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
 
 .PHONY: build-linux-tester-verification
-
-# Debug target to recompile kernel; copy rebuilt kernel image to build dir; Program and run fpga
-debug-kernel:
-	make build-linux-kernel
-	cp submodules/TESTER/software/src/Image ../iob_soc_sut_V0.70/software/src/Image
-	-rm ../iob_soc_sut_V0.70/hardware/fpga/Image
-	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=600'
-
-.PHONY: debug-kernel
