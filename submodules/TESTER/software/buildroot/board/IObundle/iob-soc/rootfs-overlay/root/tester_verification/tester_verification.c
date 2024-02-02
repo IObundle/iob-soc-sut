@@ -32,7 +32,7 @@
 //#define ETH_MAC_ADDR 0x01606e11020f
 //
 // Enable debug messages.
-#define DEBUG 0
+#define DEBUG 1
 
 #define SUT_FIRMWARE_SIZE 29000
 
@@ -42,7 +42,7 @@
 #undef IOB_SOC_TESTER_INIT_MEM
 
 // Serial port connected to SUT
-#define UART1_BASE "/dev/ttyS1"
+#define UART1_BASE "/dev/ttyS0"
 
 //void print_ila_samples();
 //void send_axistream();

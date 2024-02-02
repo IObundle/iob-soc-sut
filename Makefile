@@ -156,7 +156,7 @@ INCLUDE = -I.
 SRC = *.c
 FLAGS = -Wall -O2
 #FLAGS += -Werror
-FLAGS += -static
+#FLAGS += -static
 FLAGS += -march=rv32imac
 FLAGS += -mabi=ilp32
 BIN = run_verification
@@ -166,3 +166,13 @@ build-linux-tester-verification:
 	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
 
 .PHONY: build-linux-tester-verification
+
+#DEBUG
+debug-tester-verfication:
+	make build-linux-tester-verification
+	make build-linux-buildroot
+	cp submodules/TESTER/software/src/rootfs.cpio.gz ../iob_soc_sut_V0.70/software/src/rootfs.cpio.gz
+	-rm ../iob_soc_sut_V0.70/hardware/fpga/rootfs.cpio.gz 
+	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=600' 
+
+.PHONY: debug-tester-verfication

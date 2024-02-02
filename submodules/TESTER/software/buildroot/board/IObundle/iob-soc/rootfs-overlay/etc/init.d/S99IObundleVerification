@@ -1,5 +1,7 @@
 #!/bin/sh
+stty -F /dev/ttyS0 115200
+/root/tester_verification/run_verification
 # Script to verify linux functioning
-echo "Test passed!" > /tmp/test.log
+#echo "Test passed!" > /tmp/test.log
 # Send file via UART with Zmodem
-sz -e /tmp/test.log
+#sz -e /tmp/test.log
