@@ -137,7 +137,26 @@ build-linux-opensbi:
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G'
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK'
 
-build-linux-buildroot:
+MODULE_NAME = iob_timer
+MODULE_DRIVER_DIR = `realpath $(shell find . -type d -name '$(MODULE_NAME)' -print -quit)`/software/linux/drivers
+
+build-linux-drivers:
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-linux-drivers \
+		MODULE_DRIVER_DIR=$(MODULE_DRIVER_DIR) \
+		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. CALLING_DIR=`realpath $(CURDIR)` \
+		MODULE_NAME=$(MODULE_NAME) \
+		ROOTFS_OVERLAY_DIR=`realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
+		PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'
+
+clean-linux-drivers:
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) clean-linux-drivers \
+		MODULE_DRIVER_DIR=$(MODULE_DRIVER_DIR) \
+		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. CALLING_DIR=`realpath $(CURDIR)` \
+		MODULE_NAME=$(MODULE_NAME) \
+		ROOTFS_OVERLAY_DIR=`realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
+		PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'
+
+build-linux-buildroot: build-linux-drivers
 	make -C $(LINUX_OS_DIR) build-buildroot OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(TESTER_DIR) --relative-to=..`/software OS_BUILD_DIR=$(REL_OS2TESTER)/software/src
 
 build-linux-kernel:
