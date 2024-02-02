@@ -129,13 +129,13 @@ int main() {
   uart16550_base(UART1_BASE);
 
   // Wait for ENQ signal from SUT
-  while ((c = uart16550_getc()) != ENQ)
-    if (DEBUG) {
-      putchar(c);
-    };
-    
+  //while ((c = uart16550_getc()) != ENQ)
+  //  if (DEBUG) {
+  //    putchar(c);
+  //  };
+  //  
   // Send ack to sut
-  uart16550_putc(ACK);
+  uart16550_puts("\nTester ACK");
 
   puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
   

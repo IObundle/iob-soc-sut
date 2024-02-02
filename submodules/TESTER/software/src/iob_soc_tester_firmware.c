@@ -152,7 +152,7 @@ int main() {
     };
     
   // Send ack to sut
-  uart16550_putc(ACK);
+  uart16550_puts("\nTester ACK");
 
   uart16550_base(UART0_BASE);
   uart16550_puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");

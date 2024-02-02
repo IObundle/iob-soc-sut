@@ -7,6 +7,10 @@
 #include "iob_cache_swreg.h"
 #endif
 
+#if __has_include("iob_soc_tester_conf.h")
+#define USE_TESTER
+#endif
+
 // defined here (and not in periphs.h) because it is the only peripheral used
 // by the bootloader
 #define UART_BASE (IOB_SOC_SUT_UART0 << (31 - IOB_SOC_SUT_N_SLAVES_W))
@@ -30,6 +34,17 @@ int main() {
       uart_puts((char [3]){0xff, ENQ, 0x00});
   } while (!IOB_UART_GET_RXREADY());
 
+#ifdef USE_TESTER
+  // Receive a special ACK message from tester to prevent Linux from acking by mistake
+  char tester_ack[] = "Tester ACK";
+  for ( i = 0; i < 10; ) {
+    if (uart_getc() == tester_ack[i])
+      i++;
+    else
+      i = 0;
+  }
+#endif //USE_TESTER
+
   for ( i = 0; i < 5000; i++)asm("nop"); //Delay to allow time for tester to print debug messages
 
 
@@ -50,10 +65,12 @@ int main() {
   prog_start_addr = (char *)(1 << IOB_SOC_SUT_BOOTROM_ADDR_W);
 #endif
 
+#ifndef USE_TESTER
   while (uart_getc() != ACK) {
     uart_puts(PROGNAME);
     uart_puts(": Waiting for Console ACK.\n");
   }
+#endif //USE_TESTER
 
 #ifndef IOB_SOC_SUT_INIT_MEM
   for ( i = 0; i < 45000; i++)asm("nop"); //Delay to allow time for tester to print debug messages
