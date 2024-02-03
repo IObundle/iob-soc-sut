@@ -39,7 +39,13 @@ void send_axistream();
 void receive_axistream();
 void pfsm_program(char *);
 void ila_monitor_program(char *);
-void clear_cache();
+
+void clear_cache(){
+  // Delay to ensure all data is written to memory
+  for ( unsigned int i = 0; i < 10; i++)asm volatile("nop");
+  // Flush VexRiscv CPU internal cache
+  asm volatile(".word 0x500F" ::: "memory");
+}
 
 // Send signal by uart to receive file by ethernet
 uint32_t uart_recvfile_ethernet(char *file_name) {
@@ -318,7 +324,6 @@ int main() {
   // Read byte stream via AXI stream
   receive_axistream();
 
-#ifdef IOB_SOC_TESTER_USE_EXTMEM
   uart16550_puts("\n[Tester] Using shared external memory. Obtain SUT memory string "
             "pointer via SUT's register 5...\n");
   uart16550_puts("[Tester]: String pointer is: ");
@@ -334,7 +339,6 @@ int main() {
     uart16550_putc(sutStr[i]);
   }
   uart16550_putc('\n');
-#endif
 
 #ifdef USE_ILA_PFSM
     // Allocate memory for ILA output data
@@ -464,11 +468,4 @@ void receive_axistream() {
   uart16550_puts("\n\n");
 
   free((uint32_t *)byte_stream);
-}
-
-void clear_cache(){
-  // Delay to ensure all data is written to memory
-  for ( unsigned int i = 0; i < 10; i++)asm volatile("nop");
-  // Flush VexRiscv CPU internal cache
-  asm volatile(".word 0x500F" ::: "memory");
 }

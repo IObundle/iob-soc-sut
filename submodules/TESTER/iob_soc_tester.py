@@ -52,7 +52,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             ]
         super()._create_submodules_list(submodules)
 
-    # Method that runs the setup process of this class
     @classmethod
     def _create_instances(cls):
         # Instantiate TESTER peripherals
@@ -158,7 +157,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
-        # Run IOb-SoC setup
         super()._create_instances()
 
     @classmethod
@@ -308,16 +306,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
         )
 
-        # Connect CTS signals from UARTs to 1'b1
-        insert_verilog_in_module(
-            """
-    assign SUT_UART0_uart_cts_i = 1'b1;
-    assign UART1_cts_i = 1'b1;
-             """,
-            cls.build_dir
-            + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-        )
-
         insert_verilog_in_module(
             """
     // Connect ethernet clocks
@@ -410,16 +398,6 @@ endif
                 },
                 {"corename": "internal", "if_name": "UART1", "port": "", "bits": []},
             ),
-            # Connect CTS and RTS of UART1 to internal wires
-            # (Hardware flow control does not seem to work well with Tester under Linux)
-            (
-                {"corename": "UART1", "if_name": "rs232", "port": "rts_o", "bits": []},
-                {"corename": "internal", "if_name": "UART1", "port": "", "bits": []},
-            ),
-            (
-                {"corename": "UART1", "if_name": "rs232", "port": "cts_i", "bits": []},
-                {"corename": "internal", "if_name": "UART1", "port": "", "bits": []},
-            ),
             # Connect RX and TX of UART1 and SUT
             (
                 {
@@ -439,7 +417,7 @@ endif
                 },
                 {"corename": "UART1", "if_name": "rs232", "port": "rxd_i", "bits": []},
             ),
-            # Connect CTS and RTS of SUT to internal signals
+            # Connect CTS and RTS of UART1 and SUT
             (
                 {
                     "corename": "SUT0",
@@ -447,12 +425,7 @@ endif
                     "port": "uart_cts_i",
                     "bits": [],
                 },
-                {
-                    "corename": "internal",
-                    "if_name": "SUT_UART0",
-                    "port": "",
-                    "bits": [],
-                },
+                {"corename": "UART1", "if_name": "rs232", "port": "rts_o", "bits": []},
             ),
             (
                 {
@@ -461,12 +434,7 @@ endif
                     "port": "uart_rts_o",
                     "bits": [],
                 },
-                {
-                    "corename": "internal",
-                    "if_name": "SUT_UART0",
-                    "port": "",
-                    "bits": [],
-                },
+                {"corename": "UART1", "if_name": "rs232", "port": "cts_i", "bits": []},
             ),
             # SUT ETHERNET0
             ####({'corename':'SUT0', 'if_name':'ETHERNET0_ethernet', 'port':'', 'bits':[]},         {'corename':'', 'if_name':'', 'port':'', 'bits':[]}), #Map ETHERNET0 of Tester to external interface

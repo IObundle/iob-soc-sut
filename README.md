@@ -58,10 +58,10 @@ make setup [<control parameters>]
 
 `<control parameters>` are system configuration parameters passed in the
 command line, overriding those inherited from the system. Example control
-parameters are `INIT_MEM=0 USE_EXTMEM=1`. For example:
+parameters are `INIT_MEM=0`. For example:
 
 ```Bash
-make setup INIT_MEM=0 USE_EXTMEM=1
+make setup INIT_MEM=0
 ```
 
 The setup process will create a build directory that contains all the files required for building the system.
@@ -333,7 +333,7 @@ make setup TOP_MODULE_NAME=iob_soc_tester [<control parameters>]
 
 `<control parameters>` are system configuration parameters passed in the
 command line, overriding those in the `iob_soc_tester_setup.py` file. Example control
-parameters are `INIT_MEM=0 USE_EXTMEM=1`.
+parameters are `INIT_MEM=0`.
 
 To build and run the Tester in simulation, type:
 

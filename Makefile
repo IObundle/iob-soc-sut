@@ -7,12 +7,8 @@ DISABLE_LINT:=1
 ifeq ($(TESTER),1)
 TOP_MODULE_NAME :=iob_soc_tester
 endif
-ifneq ($(USE_EXTMEM),1)
-$(info NOTE: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
-USE_EXTMEM:=1
-endif
 
-LIB_DIR:=submodules/IOBSOC/submodules/LIB
+LIB_DIR:=submodules/OPENCRYPTOLINUX/submodules/IOBSOC/submodules/LIB
 include $(LIB_DIR)/setup.mk
 
 INIT_MEM ?= 1
@@ -20,10 +16,6 @@ RUN_LINUX ?= 0
 
 ifeq ($(INIT_MEM),1)
 SETUP_ARGS += INIT_MEM
-endif
-
-ifeq ($(USE_EXTMEM),1)
-SETUP_ARGS += USE_EXTMEM
 endif
 
 ifeq ($(TESTER_ONLY),1)
@@ -48,12 +40,7 @@ sim-run: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ sim-run
 
 fpga-run: build_dir_name
-ifeq ($(USE_EXTMEM),1)
-	echo "WARNING: INIT_MEM must be set to zero run on the FPGA with USE_EXTMEM=1. Auto-setting INIT_MEM=0..."
 	nix-shell --run "make clean setup INIT_MEM=0"
-else
-	nix-shell --run "make clean setup"
-endif
 	make fpga-connect
 
 fpga-connect: build_dir_name
