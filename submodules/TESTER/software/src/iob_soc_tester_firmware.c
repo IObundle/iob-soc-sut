@@ -71,6 +71,59 @@ uint32_t uart_recvfile_ethernet(char *file_name) {
   return file_size;
 }
 
+/*
+ * Receive a file transfer request from SUT;
+ * relay that request to the console;
+ * receive file contents from console; 
+ * and send them to the SUT.
+ *
+ * file_name_buffer: buffer to store file name
+ * file_content_buffer: buffer to store file content
+*/
+void relay_file_transfer_to_sut(char *file_name_buffer, char *file_content_buffer){
+  int i;
+  uint32_t file_size = 0;
+
+  uart16550_base(UART1_BASE);
+  // receive file transfer request from SUT
+  // Wait for FRX signal from SUT
+  while (uart16550_getc() != FRX)
+    ;
+  // Receive filename
+  for (i = 0; (file_name_buffer[i] = uart16550_getc()) != '\0'; i++);
+
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: Received file transfer request with filename: ");
+  uart16550_puts(file_name_buffer);
+  uart16550_putc('\n');
+  uart16550_puts("[Tester]: Sending transfer request to console...\n");
+
+  // Make request to host
+  file_size = uart16550_recvfile(file_name_buffer, file_content_buffer);
+
+  uart16550_puts(
+      "[Tester]: SUT file obtained. Transfering it to SUT via UART...\n");
+
+  uart16550_base(UART1_BASE);
+  // send file size
+  uart16550_putc((char)(file_size & 0x0ff));
+  uart16550_putc((char)((file_size & 0x0ff00) >> 8));
+  uart16550_putc((char)((file_size & 0x0ff0000) >> 16));
+  uart16550_putc((char)((file_size & 0x0ff000000) >> 24));
+  // Wait for ACK signal from SUT
+  while (uart16550_getc() != ACK);
+
+  if (DEBUG) {
+    uart16550_base(UART0_BASE);
+    uart16550_puts("[Tester] Got ack! Sending firmware to SUT...\n");
+    uart16550_base(UART1_BASE);
+  }
+
+  // send file contents to SUT
+  for (i = 0; i < file_size; i++)
+    uart16550_putc(file_content_buffer[i]);
+}
+
 int main() {
   char pass_string[] = "Test passed!";
   char fail_string[] = "Test failed!";
@@ -163,88 +216,24 @@ int main() {
   uart16550_base(UART0_BASE);
   uart16550_puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
   
-  uart16550_base(UART1_BASE);
-
 #ifndef IOB_SOC_TESTER_INIT_MEM
   uart16550_base(UART0_BASE);
-  uart16550_puts("[Tester]: SUT memory is not initalized. Waiting for firmware "
+  uart16550_puts("[Tester]: SUT memory is not initalized. Waiting config file "
             "transfer request from SUT...\n");
   uart16550_base(UART1_BASE);
 
-  // receive firmware request from SUT
-  // Wait for FRX signal from SUT
-  while (uart16550_getc() != FRX)
-    ;
-  // Receive filename
-  for (i = 0; (buffer[i] = uart16550_getc()) != '\0'; i++)
-    ;
-  // Switch back to UART0
-  uart16550_base(UART0_BASE);
-
-  uart16550_puts("[Tester]: Received firmware transfer request with filename: ");
-  uart16550_puts(buffer);
-  uart16550_putc('\n');
-  uart16550_puts("[Tester]: Sending transfer request to console...\n");
-
-  // Make request to host
-  file_size = uart16550_recvfile(buffer, sut_firmware);
-
-  uart16550_puts(
-      "[Tester]: SUT firmware obtained. Transfering it to SUT via UART...\n");
-
-  // Switch back to UART1
-  uart16550_base(UART1_BASE);
-
-  // send file size
-  uart16550_putc((char)(file_size & 0x0ff));
-  uart16550_putc((char)((file_size & 0x0ff00) >> 8));
-  uart16550_putc((char)((file_size & 0x0ff0000) >> 16));
-  uart16550_putc((char)((file_size & 0x0ff000000) >> 24));
-
-  // Wait for ACK signal from SUT
-  while (uart16550_getc() != ACK)
-    ;
-  if (DEBUG) {
-    uart16550_base(UART0_BASE);
-    uart16550_puts("[Tester] Got ack! Sending firmware to SUT...\n");
-    uart16550_base(UART1_BASE);
-  }
-
-  // send file contents
-  for (i = 0; i < file_size; i++)
-    uart16550_putc(sut_firmware[i]);
-
-  // Ignore firmware sent back
-  uart16550_base(UART0_BASE);
-  uart16550_puts("[Tester]: SUT firmware transfered. Ignoring firmware readback "
-            "sent by SUT...\n");
-  uart16550_base(UART1_BASE);
-
-  // Wait for FTX signal from SUT
-  while (uart16550_getc() != FTX)
-    ;
-  // Receive filename
-  for (i = 0; (buffer[i] = uart16550_getc()) != '\0'; i++)
-    ;
-
-  // receive file size
-  file_size = uart16550_getc();
-  file_size |= ((uint32_t)uart16550_getc()) << 8;
-  file_size |= ((uint32_t)uart16550_getc()) << 16;
-  file_size |= ((uint32_t)uart16550_getc()) << 24;
-
-  // ignore file contents received
-  for (i = 0; i < file_size; i++) {
-    uart16550_getc();
-  }
+  relay_file_transfer_to_sut(buffer, sut_firmware);
 
   uart16550_base(UART0_BASE);
-  uart16550_puts("[Tester]: Finished receiving firmware readback.\n");
+  uart16550_puts("[Tester]: Waiting for firmware transfer request from SUT...\n");
   uart16550_base(UART1_BASE);
+
+  relay_file_transfer_to_sut(buffer, sut_firmware);
+
+  uart16550_base(UART0_BASE);
+  uart16550_puts("[Tester]: SUT firmware transfered.");
 
 #endif //IOB_SOC_TESTER_INIT_MEM
-
-  uart16550_base(UART0_BASE);
 
   //Delay to allow time for sut to run bootloader and enable its axistream
   for ( i = 0; i < (FREQ/BAUD)*256; i++)asm("nop");

@@ -59,7 +59,7 @@ int main()
   int ethernet_connected = 0;
 
   //init uart
-  uart16550_init(UART0_BASE,FREQ/(16 *BAUD));   
+  uart16550_init(UART0_BASE, FREQ/(16*BAUD));
   printf_init(&uart16550_putc);
   //init regfileif
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);

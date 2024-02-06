@@ -31,10 +31,15 @@ IOB_SOC_SUT_BOOT_SRC+=src/iob_soc_sut_boot.S
 IOB_SOC_SUT_BOOT_SRC+=src/iob_soc_sut_boot.c
 IOB_SOC_SUT_BOOT_SRC+=$(filter-out %_emul.c, $(wildcard src/iob*uart*.c))
 IOB_SOC_SUT_BOOT_SRC+=$(filter-out %_emul.c, $(wildcard src/iob*cache*.c))
+IOB_SOC_SUT_BOOT_SRC+=$(filter-out %_emul.c, $(wildcard src/iob*eth*.c))
+IOB_SOC_SUT_BOOT_SRC+=src/printf.c
 
-build_iob_soc_sut_software:
+build_iob_soc_sut_software: check_if_run_linux_sut
 	make iob_soc_sut_firmware.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_FW_LFLAGS) -Wl,-Map,iob_soc_sut_firmware.map" SRC="$(IOB_SOC_SUT_FW_SRC)" TEMPLATE_LDS="src/iob_soc_sut_firmware.lds"
 	make iob_soc_sut_boot.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_BOOT_LFLAGS) -Wl,-Map,iob_soc_sut_boot.map" SRC="$(IOB_SOC_SUT_BOOT_SRC)" TEMPLATE_LDS="src/iob_soc_sut_boot.lds"
 
+# Never run linux on SUT
+check_if_run_linux_sut:
+	python3 $(ROOT_DIR)/scripts/check_if_run_linux.py $(ROOT_DIR) iob_soc_sut 0
 
-.PHONE: build_iob_soc_sut_software
+.PHONE: build_iob_soc_sut_software check_if_run_linux_sut
