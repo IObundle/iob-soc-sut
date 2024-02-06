@@ -143,38 +143,33 @@ MODULE_LINUX_DIR = `realpath $(shell find . -type d -name '$(MODULE_NAME)' -prin
 build-linux-drivers:
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-linux-drivers \
 		MODULE_DRIVER_DIR=$(MODULE_LINUX_DIR)/drivers \
-		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. CALLING_DIR=`realpath $(CURDIR)` \
+		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. \
+		CALLING_DIR=`realpath $(CURDIR)` \
 		MODULE_NAME=$(MODULE_NAME) \
-		ROOTFS_OVERLAY_DIR=`realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
+		ROOTFS_OVERLAY_DIR=`realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
 		PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'
 
 clean-linux-drivers:
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) clean-linux-drivers \
 		MODULE_DRIVER_DIR=$(MODULE_LINUX_DIR)/drivers \
-		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. CALLING_DIR=`realpath $(CURDIR)` \
+		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. \
+		CALLING_DIR=`realpath $(CURDIR)` \
 		MODULE_NAME=$(MODULE_NAME) \
-		ROOTFS_OVERLAY_DIR=`realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
+		ROOTFS_OVERLAY_DIR=`realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
 		PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'
 
-build-linux-buildroot: build-linux-drivers build-driver-user-program
-	make -C $(LINUX_OS_DIR) build-buildroot OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(TESTER_DIR) --relative-to=..`/software OS_BUILD_DIR=$(REL_OS2TESTER)/software/src
+COMBINED_BUILDROOT_DIR=..
+combine-buildroot:
+	rm -rf $(COMBINED_BUILDROOT_DIR)/buildroot
+	cp -r $(LINUX_OS_DIR)/software/buildroot $(COMBINED_BUILDROOT_DIR)/
+	cp -r $(TESTER_DIR)/software/buildroot $(COMBINED_BUILDROOT_DIR)/
 
-build-driver-user-program:
-	# Compile user program
-	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(MODULE_LINUX_DIR)/user all'
-	# Copy user program to rootfs-overlay
-	cp -r $(MODULE_LINUX_DIR)/user `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/user
+build-linux-buildroot: combine-buildroot build-linux-drivers build-linux-tester-verification
+	make -C $(LINUX_OS_DIR) build-buildroot OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(COMBINED_BUILDROOT_DIR) --relative-to=..` OS_BUILD_DIR=$(REL_OS2TESTER)/software/src
 
 build-driver-headers:
 	# Generate linux driver header
-	./$(LIB_DIR)/scripts/bootstrap.py $(MODULE_NAME) -f gen_linux_driver_header -o `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
-
-clean-driver-headers:
-	rm -rf `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
-
-clean-driver-user-program:
-	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(MODULE_LINUX_DIR)/user clean'
-	rm -rf `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/user
+	./$(LIB_DIR)/scripts/bootstrap.py $(MODULE_NAME) -f gen_linux_driver_header -o `realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
 
 build-linux-kernel:
 	-rm ../linux-5.15.98/arch/riscv/boot/Image
@@ -198,7 +193,7 @@ FLAGS += -mabi=ilp32
 BIN = run_verification
 CC = riscv64-unknown-linux-gnu-gcc
 build-linux-tester-verification: build-driver-headers
-	nix-shell $(LINUX_OS_DIR)/default.nix --run 'cd $(TESTER_DIR)/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/ && \
+	nix-shell $(LINUX_OS_DIR)/default.nix --run 'cd $(COMBINED_BUILDROOT_DIR)/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/ && \
 	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
 
 .PHONY: build-linux-tester-verification
