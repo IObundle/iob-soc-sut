@@ -165,6 +165,13 @@ build-driver-user-program:
 	# Copy user program to rootfs-overlay
 	cp -r $(MODULE_LINUX_DIR)/user `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/user
 
+build-driver-headers:
+	# Generate linux driver header
+	./$(LIB_DIR)/scripts/bootstrap.py $(MODULE_NAME) -f gen_linux_driver_header -o `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
+
+clean-driver-headers:
+	rm -rf `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
+
 clean-driver-user-program:
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(MODULE_LINUX_DIR)/user clean'
 	rm -rf `realpath $(TESTER_DIR)`/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/user
@@ -190,7 +197,7 @@ FLAGS += -march=rv32imac
 FLAGS += -mabi=ilp32
 BIN = run_verification
 CC = riscv64-unknown-linux-gnu-gcc
-build-linux-tester-verification:
+build-linux-tester-verification: build-driver-headers
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'cd $(TESTER_DIR)/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/ && \
 	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
 
