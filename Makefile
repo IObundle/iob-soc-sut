@@ -109,7 +109,7 @@ ila-vcd: build_dir_name
 
 ### Linux targets
 
-LINUX_OS_DIR ?= submodules/TESTER/submodules/OPENCRYPTOLINUX/submodules/OS
+LINUX_OS_DIR ?= submodules/OPENCRYPTOLINUX/submodules/OS
 TESTER_DIR ?= submodules/TESTER
 REL_OS2TESTER :=`realpath $(TESTER_DIR) --relative-to=$(LINUX_OS_DIR)`
 REL_OS2SUT :=`realpath $(CURDIR) --relative-to=$(LINUX_OS_DIR)`

@@ -218,7 +218,7 @@ int main() {
   
 #ifndef IOB_SOC_TESTER_INIT_MEM
   uart16550_base(UART0_BASE);
-  uart16550_puts("[Tester]: SUT memory is not initalized. Waiting config file "
+  uart16550_puts("[Tester]: SUT memory is not initalized. Waiting for config file "
             "transfer request from SUT...\n");
   uart16550_base(UART1_BASE);
 
