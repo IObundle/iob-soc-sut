@@ -79,8 +79,8 @@ void relay_file_transfer_to_sut(char *small_buffer, char *file_content_buffer){
 
   // Make request to host
   //file_size = uart16550_recvfile(small_buffer, file_content_buffer);
-  sprintf(small_buffer+1000, "rz -e %s", small_buffer);
-  i = system(small_buffer+1000);
+  puts(small_buffer);
+  i = system("rz");
   if (i != 0) puts("[Tester]: File transfer via rz failed!\n");
   fptr = fopen(small_buffer, "r");
   file_size = fread(file_content_buffer, 1, SUT_FIRMWARE_SIZE, fptr);

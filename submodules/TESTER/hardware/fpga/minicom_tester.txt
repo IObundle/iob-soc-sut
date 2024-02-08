@@ -1,0 +1,28 @@
+# Script for "runscript" program of minicom, to test linux functionality
+
+
+
+print "\n[minicom] Waiting for file transfers..."
+
+wait4ft:
+expect {
+    "B00000000000000" goto receive
+    "B0100000023be50" goto send
+    "buildroot login:" goto done
+}
+
+send:
+print "\n[minicom] Got file send request"
+! filename=`tail -n2 minicom_out.log | head -n1`; sz filename
+goto wait4ft
+
+receive:
+print "\n[minicom] Got file receive request"
+! rz
+goto wait4ft
+
+done:
+print "\n[minicom] Done"
+
+# Exit minicom
+#! kill `cut -f4 -d' ' /proc/$PPID/stat`

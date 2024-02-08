@@ -1,0 +1,5 @@
+# Run default tester minicom script
+call minicom_tester.txt
+
+# Exit minicom
+! kill `cut -f4 -d' ' /proc/$PPID/stat`

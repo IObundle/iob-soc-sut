@@ -44,12 +44,13 @@ fpga-run: build_dir_name
 	make fpga-connect
 
 fpga-connect: build_dir_name
+	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
 	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
 	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
 
 test-linux-fpga-connect: build_dir_name
 	-rm $(BUILD_DIR)/hardware/fpga/test.log
-	-ln -s minicom_test1.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	-ln -fs minicom_tester_test.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
 	make fpga-connect TESTER=1 RUN_LINUX=1
 
 .PHONY: pc-emul-run sim-run fpga-run fpga-connect test-linux-fpga-connect
