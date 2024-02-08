@@ -67,8 +67,7 @@ void relay_file_transfer_to_sut(char *small_buffer, char *file_content_buffer){
 
   // receive file transfer request from SUT
   // Wait for FRX signal from SUT
-  while (uart16550_getc() != FRX)
-    ;
+  while (uart16550_getc() != FRX);
   // Receive filename
   for (i = 0; (small_buffer[i] = uart16550_getc()) != '\0'; i++);
 

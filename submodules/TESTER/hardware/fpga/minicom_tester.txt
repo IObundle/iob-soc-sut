@@ -1,4 +1,9 @@
 # Script for "runscript" program of minicom, to test linux functionality
+#
+# Notes:
+# - When executing scripts with `! <command>`, the stdin and stdout of
+#   the command are redirected to the modem. The stderr of command is
+#   redirected to the minicom screen.
 
 print "\n[minicom] Waiting for file transfers..."
 
