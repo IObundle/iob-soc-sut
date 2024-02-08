@@ -5,6 +5,11 @@
 #   the command are redirected to the modem. The stderr of command is
 #   redirected to the minicom screen.
 
+# Set 5min timeout
+# runscript has 2min timeout by default:
+# check `timeout` in: https://linux.die.net/man/1/runscript
+timeout 300
+
 print "\n[minicom] Waiting for file transfers..."
 
 wait4ft:
@@ -12,6 +17,7 @@ expect {
     "B00000000000000" goto receive
     "B0100000023be50" goto send
     "buildroot login:" goto done
+    timeout 300
 }
 
 send:
