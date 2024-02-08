@@ -9,12 +9,12 @@
 static int serial_port;
 
 //TX FUNCTIONS
-inline void uart16550_putc(char c) {
+void uart16550_putc(char c) {
   write(serial_port, &c, 1);
 }
 
 //RX FUNCTIONS
-inline char uart16550_getc() {
+char uart16550_getc() {
   char c;
   read(serial_port, &c, 1);
   return c;
