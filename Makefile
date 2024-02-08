@@ -143,7 +143,7 @@ build-linux-files:
 INCLUDE = -I.
 SRC = *.c
 FLAGS = -Wall -O2
-#FLAGS += -Werror
+FLAGS += -Werror
 #FLAGS += -static
 FLAGS += -march=rv32imac
 FLAGS += -mabi=ilp32
@@ -161,6 +161,7 @@ debug-tester-verfication:
 	make build-linux-buildroot
 	cp submodules/TESTER/software/src/rootfs.cpio.gz ../iob_soc_sut_V0.70/software/src/rootfs.cpio.gz
 	-rm ../iob_soc_sut_V0.70/hardware/fpga/rootfs.cpio.gz 
-	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=600' 
+	cp submodules/TESTER/hardware/fpga/minicom_tester.py ../iob_soc_sut_V0.70/hardware/fpga/minicom_tester.txt
+	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=400' 
 
 .PHONY: debug-tester-verfication
