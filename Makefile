@@ -157,11 +157,12 @@ build-linux-tester-verification:
 
 #DEBUG
 debug-tester-verfication:
+	-rm ../iob_soc_sut_V0.70/hardware/fpga/test.log
 	make build-linux-tester-verification
 	make build-linux-buildroot
 	cp submodules/TESTER/software/src/rootfs.cpio.gz ../iob_soc_sut_V0.70/software/src/rootfs.cpio.gz
 	-rm ../iob_soc_sut_V0.70/hardware/fpga/rootfs.cpio.gz 
-	cp submodules/TESTER/hardware/fpga/minicom_tester.py ../iob_soc_sut_V0.70/hardware/fpga/minicom_tester.txt
-	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=400' 
+	cp submodules/TESTER/hardware/fpga/minicom_tester.txt ../iob_soc_sut_V0.70/hardware/fpga/minicom_tester.txt
+	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=200' 
 
 .PHONY: debug-tester-verfication
