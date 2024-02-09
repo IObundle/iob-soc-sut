@@ -55,6 +55,9 @@ int uart16550_recvfile(char* file_name, char *mem) {
   //send file receive request
   uart16550_putc (FRX);
 
+  //clear input buffer
+  //while(uart16550_rxready()) uart16550_getc();
+
   //send file name
   uart16550_sendstr(file_name);
 
