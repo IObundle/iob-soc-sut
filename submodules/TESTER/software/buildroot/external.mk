@@ -1,1 +1,0 @@
-../../submodules/OPENCRYPTOLINUX/submodules/OS/software/buildroot/external.mk
