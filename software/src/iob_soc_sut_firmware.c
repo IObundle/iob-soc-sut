@@ -76,14 +76,40 @@ int main()
   // Wait for PHY reset to finish
   eth_wait_phy_rst();
 
-#ifdef USE_TESTER
-  // Receive data from Tester via Ethernet
-  ethernet_connected = 1;
-  eth_rcv_file(buffer, 64);
+  uart16550_puts("SUT DEBUG\n");
 
-  //Delay to allow time for tester to print debug messages
-  for ( i = 0; i < (FREQ/BAUD)*128; i++)asm("nop");
-#else
+#ifdef USE_TESTER
+  // Receive a special string message from tester to tell if its running linux
+  char tester_run_type[] = "TESTER_RUN_";
+  for ( i = 0; i < 11; ) {
+    if (uart16550_getc() == tester_run_type[i])
+      i++;
+    else
+      i = 0;
+  }
+  char tester_run_type2[] = "LINUX";
+  int tester_run_linux = 1;
+  for ( i = 0; i < 5; ) {
+    if (uart16550_getc() == tester_run_type2[i]) {
+      i++;
+    } else {
+      tester_run_linux = 0;
+      break;
+    }
+  }
+
+  if (tester_run_linux) { //Ethernet does not work on Linux yet
+    uart16550_puts("[SUT]: Running on Linux\n");
+    // Receive data from Tester via Ethernet
+    ethernet_connected = 1;
+    eth_rcv_file(buffer, 64);
+
+    //Delay to allow time for tester to print debug messages
+    for ( i = 0; i < (FREQ/BAUD)*128; i++)asm("nop");
+  } else {
+    uart16550_puts("[SUT]: Running on bare metal\n");
+  }
+#else //USE_TESTER
 #ifndef SIMULATION
   // Receive data from console via Ethernet
   uint32_t file_size;
@@ -92,8 +118,8 @@ int main()
   uart16550_puts("\n[SUT]: File received from console via ethernet:\n");
   for(i=0; i<file_size; i++)
     uart16550_putc(file_buffer[i]);
-#endif
-#endif
+#endif //SIMULATION
+#endif //USE_TESTER
 
   uart16550_puts("\n\n\n[SUT]: Hello world!\n\n\n");
 

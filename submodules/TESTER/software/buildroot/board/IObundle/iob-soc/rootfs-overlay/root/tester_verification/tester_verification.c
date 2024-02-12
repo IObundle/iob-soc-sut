@@ -32,7 +32,7 @@
 //#define ETH_MAC_ADDR 0x01606e11020f
 //
 // Enable debug messages.
-#define DEBUG 0
+#define DEBUG 1
 
 #define SUT_FIRMWARE_SIZE 29000
 
@@ -223,6 +223,8 @@ int main() {
 //      print_ila_samples();
 //  #endif
 //  
+  // Tell SUT that the Tester is running linux
+  uart16550_puts("TESTER_RUN_LINUX\n");
 //    // Test sending data to SUT via ethernet
 //    uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
 //    for(i=0; i<64; i++) {

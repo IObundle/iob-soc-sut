@@ -249,6 +249,9 @@ int main() {
     print_ila_samples();
 #endif
 
+  // Tell SUT that the Tester is running baremetal
+  uart16550_puts("TESTER_RUN_BAREMETAL\n");
+
   // Test sending data to SUT via ethernet
   uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
   for(i=0; i<64; i++) {
