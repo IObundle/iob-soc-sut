@@ -86,7 +86,7 @@ void relay_file_transfer_to_sut(char *small_buffer, char *file_content_buffer){
   fclose(fptr);
 
   puts(
-      "[Tester]: SUT file obtained. Transfering it to SUT via UART...\n");
+      "\n[Tester]: SUT file obtained. Transfering it to SUT via UART...\n");
 
   // send file size
   uart16550_putc((char)(file_size & 0x0ff));

@@ -1,5 +1,5 @@
 #!/bin/sh
-stty -F /dev/ttyS0 115200 raw
+stty -F /dev/ttyS0 115200 raw -echo -echoe -echok
 /root/tester_verification/run_verification
 # Script to verify linux functioning
 #echo "Test passed!" > /tmp/test.log
