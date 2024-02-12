@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import glob
 
 from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_soc_sut import iob_soc_sut
@@ -283,8 +284,8 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         inplace_change(
             cls.build_dir
             + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
-            ".plicInterrupts({{31{1'b0}}, uart_interrupt_o}),",
-            ".plicInterrupts({{30{1'b0}}, UART1_interrupt_o, uart_interrupt_o}),",
+            ".plicInterrupts({{30{1'b0}}, uart_interrupt_o, 1'b0}),",
+            ".plicInterrupts({{29{1'b0}}, UART1_interrupt_o, uart_interrupt_o, 1'b0}),",
         )
 
         # Connect General signals from iob-axis cores
@@ -363,6 +364,20 @@ endif
                 """,
                 cls.build_dir,
             )
+            # Targets to copy ila_data.bin from remote machines
+            append_str_config_build_mk(
+                """
+
+# Targets to copy ila_data.bin from remote machines
+copy_remote_fpga_ila_data:
+	scp $(BOARD_USER)@$(BOARD_SERVER):$(REMOTE_FPGA_DIR)/ila_data.bin . 2> /dev/null | true
+copy_remote_simulation_ila_data:
+	scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 2> /dev/null | true
+.PHONY: copy_remote_fpga_ila_data copy_remote_simulation_ila_data
+
+                """,
+                cls.build_dir,
+            )
 
         # Append uut_build.mk files to Tester's build files
         for filepath in [
@@ -376,6 +391,12 @@ endif
                 data2append = fp.read()
             with open(os.path.join(cls.build_dir, filepath), "a") as fp:
                 fp.write(data2append)
+
+        # Replace `MEM_ADDR_W` macro in *_firmware.S files by `SRAM_ADDR_W`
+        # This prevents the Tester+SUT from using entire shared memory, therefore preventing conflicts
+        firmware_list = glob.glob(cls.build_dir + "/software/src/*firmware.S")
+        for firmware in firmware_list:
+            inplace_change(firmware, "MEM_ADDR_W", "SRAM_ADDR_W")
 
     @classmethod
     def _setup_portmap(cls):
