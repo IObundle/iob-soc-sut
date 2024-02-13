@@ -169,7 +169,7 @@ build-linux-buildroot: combine-buildroot build-linux-drivers build-linux-tester-
 
 build-driver-headers:
 	# Generate linux driver header
-	./$(LIB_DIR)/scripts/bootstrap.py $(MODULE_NAME) -f gen_linux_driver_header -o `realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
+	./$(LIB_DIR)/scripts/bootstrap.py $(MODULE_NAME) -f gen_linux_driver_headers -o `realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
 
 build-linux-kernel:
 	-rm ../linux-5.15.98/arch/riscv/boot/Image
