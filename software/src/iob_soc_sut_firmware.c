@@ -76,8 +76,6 @@ int main()
   // Wait for PHY reset to finish
   eth_wait_phy_rst();
 
-  uart16550_puts("SUT DEBUG\n");
-
 #ifdef USE_TESTER
   // Receive a special string message from tester to tell if its running linux
   char tester_run_type[] = "TESTER_RUN_";
@@ -98,8 +96,8 @@ int main()
     }
   }
 
-  if (tester_run_linux) { //Ethernet does not work on Linux yet
-    uart16550_puts("[SUT]: Running on Linux\n");
+  if (!tester_run_linux) { //Ethernet does not work on Linux yet
+    uart16550_puts("[SUT]: Tester running on bare metal\n");
     // Receive data from Tester via Ethernet
     ethernet_connected = 1;
     eth_rcv_file(buffer, 64);
@@ -107,7 +105,7 @@ int main()
     //Delay to allow time for tester to print debug messages
     for ( i = 0; i < (FREQ/BAUD)*128; i++)asm("nop");
   } else {
-    uart16550_puts("[SUT]: Running on bare metal\n");
+    uart16550_puts("[SUT]: Tester running on Linux\n");
   }
 #else //USE_TESTER
 #ifndef SIMULATION

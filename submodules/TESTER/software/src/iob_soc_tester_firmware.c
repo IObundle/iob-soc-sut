@@ -32,7 +32,7 @@
 // Enable debug messages.
 #define DEBUG 0
 
-#define SUT_FIRMWARE_SIZE 29000
+#define SUT_FIRMWARE_SIZE 38000
 
 void print_ila_samples();
 void send_axistream();

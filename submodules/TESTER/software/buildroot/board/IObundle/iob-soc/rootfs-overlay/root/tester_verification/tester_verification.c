@@ -32,9 +32,9 @@
 //#define ETH_MAC_ADDR 0x01606e11020f
 //
 // Enable debug messages.
-#define DEBUG 1
+#define DEBUG 0
 
-#define SUT_FIRMWARE_SIZE 29000
+#define SUT_FIRMWARE_SIZE 38000
 
 // We should ideally receive the INIT_MEM information from the PC
 // However, since most of the time we run linux on the FPGA,
