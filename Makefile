@@ -182,8 +182,8 @@ build-linux-kernel:
 build-linux-files:
 	make build-linux-dts
 	make build-linux-opensbi
-	make build-linux-buildroot
 	make build-linux-kernel
+	make build-linux-buildroot
 
 .PHONY: build-linux-dts build-linux-opensbi build-linux-buildroot build-linux-kernel build-linux-files
 
