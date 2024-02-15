@@ -250,7 +250,9 @@ int main() {
 #endif
 
   // Tell SUT that the Tester is running baremetal
+  uart16550_base(UART1_BASE);
   uart16550_puts("TESTER_RUN_BAREMETAL\n");
+  uart16550_base(UART0_BASE);
 
   // Test sending data to SUT via ethernet
   uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");

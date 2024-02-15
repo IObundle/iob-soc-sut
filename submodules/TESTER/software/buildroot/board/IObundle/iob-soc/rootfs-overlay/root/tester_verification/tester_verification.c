@@ -8,7 +8,8 @@
 //#include "iob-axistream-out.h"
 //#include "iob-gpio.h"
 #include "iob-uart16550.h"
-//
+#include "iob-timer-user.h"
+
 //// System may not use ILA/PFSM for Quartus boards
 //#if __has_include("ILA0.h")
 //#include "ILA0.h" // ILA0 instance specific defines
@@ -312,6 +313,12 @@ int main() {
 //      uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
 //  #endif
 //  
+  // Test iob-timer with drivers
+  if (iob_timer_test() == -1){
+      puts("[Tester]: iob-timer test failed!\n");
+      return -1;
+  }
+
   puts("\n[Tester]: Verification successful!\n\n");
   sprintf(buffer+1000, "echo '%s' > test.log; sz -e test.log", pass_string);
   i = system(buffer+1000);

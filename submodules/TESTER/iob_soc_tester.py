@@ -362,6 +362,20 @@ endif
                 """,
                 cls.build_dir,
             )
+            # Targets to copy ila_data.bin from remote machines
+            append_str_config_build_mk(
+                """
+
+# Targets to copy ila_data.bin from remote machines
+copy_remote_fpga_ila_data:
+	scp $(BOARD_USER)@$(BOARD_SERVER):$(REMOTE_FPGA_DIR)/ila_data.bin . 2> /dev/null | true
+copy_remote_simulation_ila_data:
+	scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 2> /dev/null | true
+.PHONY: copy_remote_fpga_ila_data copy_remote_simulation_ila_data
+
+                """,
+                cls.build_dir,
+            )
 
         # Append uut_build.mk files to Tester's build files
         for filepath in [
