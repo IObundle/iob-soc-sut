@@ -747,7 +747,11 @@ endif
     @classmethod
     def _init_attributes(cls):
         super()._init_attributes()
-        cls.regs = sut_regs
+        cls._setup_regs()
+
+    @classmethod
+    def _setup_regs(cls):
+        cls.regs += sut_regs
 
     @classmethod
     def _setup_confs(cls):
