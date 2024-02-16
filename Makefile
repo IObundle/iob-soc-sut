@@ -33,9 +33,6 @@ endif
 setup:
 	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
 
-pc-emul-run: build_dir_name
-	make clean setup && make -C $(BUILD_DIR)/ pc-emul-run
-
 sim-run: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ sim-run
 
@@ -53,10 +50,9 @@ test-linux-fpga-connect: build_dir_name
 	-ln -fs minicom_tester_test.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
 	make fpga-connect TESTER=1 RUN_LINUX=1
 
-.PHONY: pc-emul-run sim-run fpga-run fpga-connect test-linux-fpga-connect
+.PHONY: sim-run fpga-run fpga-connect test-linux-fpga-connect
 
 test-all: build_dir_name
-	make clean setup && make -C $(BUILD_DIR)/ pc-emul-test
 	#make sim-run SIMULATOR=icarus
 	make sim-run SIMULATOR=verilator
 	make fpga-run BOARD=CYCLONEV-GT-DK
