@@ -532,7 +532,6 @@ endif
     @classmethod
     def _init_attributes(cls):
         super()._init_attributes()
-        cls._setup_regs()
 
     @classmethod
     def _setup_regs(cls):
