@@ -19,9 +19,6 @@
 [submodule "submodules/TESTER/submodules/DMA"]
 	path = submodules/TESTER/submodules/DMA
 	url = git@github.com:IObundle/iob-dma.git
-[submodule "submodules/IOBSOC"]
-	path = submodules/IOBSOC
-	url = git@github.com:IObundle/iob-soc.git
 [submodule "submodules/OPENCRYPTOLINUX"]
 	path = submodules/OPENCRYPTOLINUX
 	url = git@github.com:IObundle/iob-soc-opencryptolinux.git
