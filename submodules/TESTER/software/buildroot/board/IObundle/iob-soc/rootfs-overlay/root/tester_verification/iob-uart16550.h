@@ -15,8 +15,8 @@
 
 //UART functions
 
-// Change UART base
-void uart16550_base(char device_path[]);
+// Init UART
+void uart16550_init(char device_path[]);
 
 //Close transmission
 void uart16550_finish();

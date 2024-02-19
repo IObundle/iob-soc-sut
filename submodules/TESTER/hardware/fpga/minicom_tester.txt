@@ -1,0 +1,37 @@
+# Script for "runscript" program of minicom, to test linux functionality
+#
+# Notes:
+# - When executing scripts with `! <command>`, the stdin and stdout of
+#   the command are redirected to the modem. The stderr of command is
+#   redirected to the minicom screen.
+
+# Set 5min timeout
+# runscript has 2min timeout by default:
+# check `timeout` in: https://linux.die.net/man/1/runscript
+timeout 300
+
+print "\n[minicom] Waiting for file transfers..."
+
+wait4ft:
+expect {
+    "B00000000000000" goto receive
+    "B0100000023be50" goto send
+    "buildroot login:" goto done
+    timeout 300
+}
+
+send:
+print "\n[minicom] Got file send request"
+! filename=`tail -n3 minicom_out.log | head -n1`; sz $filename
+goto wait4ft
+
+receive:
+print "\n[minicom] Got file receive request"
+! rz
+goto wait4ft
+
+done:
+print "\n[minicom] Done"
+
+# Exit minicom
+#! kill `cut -f4 -d' ' /proc/$PPID/stat`

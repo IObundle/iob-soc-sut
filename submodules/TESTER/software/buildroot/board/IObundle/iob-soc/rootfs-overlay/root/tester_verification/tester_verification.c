@@ -9,7 +9,7 @@
 //#include "iob-gpio.h"
 #include "iob-uart16550.h"
 #include "iob-timer-user.h"
-//
+
 //// System may not use ILA/PFSM for Quartus boards
 //#if __has_include("ILA0.h")
 //#include "ILA0.h" // ILA0 instance specific defines
@@ -35,7 +35,7 @@
 // Enable debug messages.
 #define DEBUG 0
 
-#define SUT_FIRMWARE_SIZE 29000
+#define SUT_FIRMWARE_SIZE 38000
 
 // We should ideally receive the INIT_MEM information from the PC
 // However, since most of the time we run linux on the FPGA,
@@ -43,7 +43,7 @@
 #undef IOB_SOC_TESTER_INIT_MEM
 
 // Serial port connected to SUT
-#define UART1_BASE "/dev/ttyS1"
+#define UART1_BASE "/dev/ttyS0"
 
 //void print_ila_samples();
 //void send_axistream();
@@ -52,14 +52,69 @@
 //void ila_monitor_program(char *);
 //void clear_cache();
 
+/*
+ * Receive a file transfer request from SUT;
+ * relay that request to the console;
+ * receive file contents from console; 
+ * and send them to the SUT.
+ *
+ * small_buffer: buffer to store strings
+ * file_content_buffer: buffer to store file content
+*/
+void relay_file_transfer_to_sut(char *small_buffer, char *file_content_buffer){
+  int i;
+  uint32_t file_size = 0;
+  FILE *fptr;
+
+  // receive file transfer request from SUT
+  // Wait for FRX signal from SUT
+  while (uart16550_getc() != FRX);
+  // Receive filename
+  for (i = 0; (small_buffer[i] = uart16550_getc()) != '\0'; i++);
+
+  puts("[Tester]: Received file transfer request with filename: ");
+  puts(small_buffer);
+  putchar('\n');
+  puts("[Tester]: Sending transfer request to console...\n");
+
+  // Make request to host
+  //file_size = uart16550_recvfile(small_buffer, file_content_buffer);
+  puts(small_buffer);
+  i = system("rz");
+  if (i != 0) puts("[Tester]: File transfer via rz failed!\n");
+  fptr = fopen(small_buffer, "r");
+  file_size = fread(file_content_buffer, 1, SUT_FIRMWARE_SIZE, fptr);
+  fclose(fptr);
+
+  puts(
+      "\n[Tester]: SUT file obtained. Transfering it to SUT via UART...\n");
+
+  // send file size
+  uart16550_putc((char)(file_size & 0x0ff));
+  uart16550_putc((char)((file_size & 0x0ff00) >> 8));
+  uart16550_putc((char)((file_size & 0x0ff0000) >> 16));
+  uart16550_putc((char)((file_size & 0x0ff000000) >> 24));
+  // Wait for ACK signal from SUT
+  while (uart16550_getc() != ACK);
+
+  if (DEBUG) {
+    puts("[Tester] Got ack! Sending firmware to SUT...\n");
+  }
+
+  // send file contents to SUT
+  for (i = 0; i < file_size; i++)
+    uart16550_putc(file_content_buffer[i]);
+}
+
 int main() {
   char pass_string[] = "Test passed!";
   //char fail_string[] = "Test failed!";
   uint32_t file_size = 0;
   char c, buffer[5096];//, *sutStr;
   int i;
+#ifndef IOB_SOC_TESTER_INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
-  FILE *fptr;
+#endif
 
 //    // Init uart0
 //    uart16550_init(UART0_BASE, FREQ/(16*BAUD));
@@ -125,91 +180,33 @@ int main() {
 //      ila_enable_all_triggers();
 //  #endif
 //  
-//   puts("[Tester]: Initializing SUT via UART...\n");
-//   // Init to uart1 (connected to the SUT)
-//   uart16550_base(UART1_BASE);
-//
-//   // Wait for ENQ signal from SUT
-//   while ((c = uart16550_getc()) != ENQ)
-//     if (DEBUG) {
-//       putchar(c);
-//     };
-//     
-//   // Send ack to sut
-//   uart16550_putc(ACK);
-//
-//   puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
-//   
-// #ifndef IOB_SOC_TESTER_INIT_MEM
-//   puts("[Tester]: SUT memory is not initalized. Waiting for firmware "
-//             "transfer request from SUT...\n");
-//
-//   // receive firmware request from SUT
-//   // Wait for FRX signal from SUT
-//   while (uart16550_getc() != FRX)
-//     ;
-//   // Receive filename
-//   for (i = 0; (buffer[i] = uart16550_getc()) != '\0'; i++)
-//     ;
-//
-//   puts("[Tester]: Received firmware transfer request with filename: ");
-//   puts(buffer);
-//   putchar('\n');
-//   puts("[Tester]: Sending transfer request to console...\n");
-//
-//   // Make request to host
-//   //file_size = uart16550_recvfile(buffer, sut_firmware);
-//   sprintf(buffer+1000, "rz %s", buffer);
-//   i = system(buffer+1000);
-//   if (i != 0) puts("[Tester]: File transfer via rz failed!\n");
-//   fptr = fopen(buffer, "r");
-//   file_size = fread(sut_firmware, 1, SUT_FIRMWARE_SIZE, fptr);
-//   fclose(fptr);
-//
-//   puts(
-//       "[Tester]: SUT firmware obtained. Transfering it to SUT via UART...\n");
-//
-//   // send file size to sut
-//   uart16550_putc((char)(file_size & 0x0ff));
-//   uart16550_putc((char)((file_size & 0x0ff00) >> 8));
-//   uart16550_putc((char)((file_size & 0x0ff0000) >> 16));
-//   uart16550_putc((char)((file_size & 0x0ff000000) >> 24));
-//
-//   // Wait for ACK signal from SUT
-//   while (uart16550_getc() != ACK)
-//     ;
-//   if (DEBUG) {
-//     puts("[Tester] Got ack! Sending firmware to SUT...\n");
-//   }
-//
-//   // send file contents
-//   for (i = 0; i < file_size; i++)
-//     uart16550_putc(sut_firmware[i]);
-//
-//   puts("[Tester]: SUT firmware transfered. Ignoring firmware readback "
-//             "sent by SUT...\n");
-//
-//   // Wait for FTX signal from SUT
-//   while (uart16550_getc() != FTX)
-//     ;
-//   // Receive filename
-//   for (i = 0; (buffer[i] = uart16550_getc()) != '\0'; i++)
-//     ;
-//
-//   // receive file size
-//   file_size = uart16550_getc();
-//   file_size |= ((uint32_t)uart16550_getc()) << 8;
-//   file_size |= ((uint32_t)uart16550_getc()) << 16;
-//   file_size |= ((uint32_t)uart16550_getc()) << 24;
-//
-//   // ignore file contents received
-//   for (i = 0; i < file_size; i++) {
-//     uart16550_getc();
-//   }
-//
-//   puts("[Tester]: Finished receiving firmware readback.\n");
-//
-// #endif //ifndef IOB_SOC_TESTER_INIT_MEM
+  puts("[Tester]: Initializing SUT via UART...\n");
+  // Init to uart1 (connected to the SUT)
+  uart16550_init(UART1_BASE);
+
+  // Wait for ENQ signal from SUT
+  //while ((c = uart16550_getc()) != ENQ)
+  //  if (DEBUG)
+  //    putchar(c);
+    
+  // Send ack to sut
+  uart16550_puts("\nTester ACK");
+
+  puts("[Tester]: Received SUT UART enquiry and sent acknowledge.\n");
+  
+#ifndef IOB_SOC_TESTER_INIT_MEM
+  puts("[Tester]: SUT memory is not initalized. Waiting for config file "
+            "transfer request from SUT...\n");
+
+  relay_file_transfer_to_sut(buffer, sut_firmware);
+
+  puts("[Tester]: Waiting for firmware transfer request from SUT...\n");
+
+  relay_file_transfer_to_sut(buffer, sut_firmware);
+
+  puts("[Tester]: SUT firmware transfered.");
+
+#endif //ifndef IOB_SOC_TESTER_INIT_MEM
   
 //    uart16550_base(UART0_BASE);
 //  
@@ -227,6 +224,8 @@ int main() {
 //      print_ila_samples();
 //  #endif
 //  
+  // Tell SUT that the Tester is running linux
+  uart16550_puts("TESTER_RUN_LINUX\n");
 //    // Test sending data to SUT via ethernet
 //    uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
 //    for(i=0; i<64; i++) {
@@ -236,43 +235,43 @@ int main() {
 //    uart16550_putc('\n'); uart16550_putc('\n');
 //    // Send file
 //    eth_send_file(buffer, 64);
-  // puts("\n[Tester]: Reading SUT messages...\n");
-  //
-  // i = 0;
-  // // Read and store messages sent from SUT
-  // // Up until it sends the test.log file
-  // while ((c = uart16550_getc()) != FTX) {
-  //   buffer[i] = c;
-  //   if (DEBUG) {
-  //     putchar(c);
-  //   }
-  //   i++;
-  // }
-  // buffer[i] = EOT;
-  //
-  // // Receive filename (test.log)
-  // for (i = 0; uart16550_getc() != '\0'; i++)
-  //   ;
-  //
-  // // receive file size (test.log)
-  // file_size = uart16550_getc();
-  // file_size |= ((uint32_t)uart16550_getc()) << 8;
-  // file_size |= ((uint32_t)uart16550_getc()) << 16;
-  // file_size |= ((uint32_t)uart16550_getc()) << 24;
-  //
-  // // ignore file contents received (test.log)
-  // for (i = 0; i < file_size; i++)
-  //   uart16550_getc();
-  //
-  // // End UART1 connection with SUT
-  // uart16550_finish();
+  puts("\n[Tester]: Reading SUT messages...\n");
 
-  // // Send messages previously stored from SUT
-  // puts("[Tester]: #### Messages received from SUT: ####\n\n");
-  // for (i = 0; buffer[i] != EOT; i++) {
-  //   putchar(buffer[i]);
-  // }
-  // puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
+  i = 0;
+  // Read and store messages sent from SUT
+  // Up until it sends the test.log file
+  while ((c = uart16550_getc()) != FTX) {
+    buffer[i] = c;
+    if (DEBUG) {
+      putchar(c);
+    }
+    i++;
+  }
+  buffer[i] = EOT;
+
+  // Receive filename (test.log)
+  for (i = 0; uart16550_getc() != '\0'; i++)
+    ;
+
+  // receive file size (test.log)
+  file_size = uart16550_getc();
+  file_size |= ((uint32_t)uart16550_getc()) << 8;
+  file_size |= ((uint32_t)uart16550_getc()) << 16;
+  file_size |= ((uint32_t)uart16550_getc()) << 24;
+
+  // ignore file contents received (test.log)
+  for (i = 0; i < file_size; i++)
+    uart16550_getc();
+
+  // End UART1 connection with SUT
+  uart16550_finish();
+
+  // Send messages previously stored from SUT
+  puts("[Tester]: #### Messages received from SUT: ####\n\n");
+  for (i = 0; buffer[i] != EOT; i++) {
+    putchar(buffer[i]);
+  }
+  puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 //  
 //    // Read data from the SUT's registers
 //    uart16550_puts("[Tester]: Reading SUT's register contents:\n");
@@ -285,7 +284,6 @@ int main() {
 //    // Read byte stream via AXI stream
 //    receive_axistream();
 //  
-//  #ifdef IOB_SOC_TESTER_USE_EXTMEM
 //    uart16550_puts("\n[Tester] Using shared external memory. Obtain SUT memory string "
 //              "pointer via SUT's register 5...\n");
 //    uart16550_puts("[Tester]: String pointer is: ");
@@ -301,7 +299,6 @@ int main() {
 //      uart16550_putc(sutStr[i]);
 //    }
 //    uart16550_putc('\n');
-//  #endif
 //  
 //  #ifdef USE_ILA_PFSM
 //      // Allocate memory for ILA output data
@@ -316,7 +313,6 @@ int main() {
 //      uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
 //  #endif
 //  
-
   // Test iob-timer with drivers
   if (iob_timer_test() == -1){
       puts("[Tester]: iob-timer test failed!\n");

@@ -4,9 +4,6 @@
 [submodule "submodules/ETHERNET"]
 	path = submodules/ETHERNET
 	url = git@github.com:IObundle/iob-eth.git
-[submodule "submodules/IOBSOC"]
-	path = submodules/IOBSOC
-	url = git@github.com:IObundle/iob-soc.git
 [submodule "submodules/GPIO"]
 	path = submodules/GPIO
 	url = git@github.com:IObundle/iob-gpio.git
@@ -19,9 +16,12 @@
 [submodule "submodules/PFSM"]
 	path = submodules/TESTER/submodules/PFSM
 	url = git@github.com:IObundle/iob-pfsm.git
-[submodule "submodules/TESTER/submodules/OPENCRYPTOLINUX"]
-	path = submodules/TESTER/submodules/OPENCRYPTOLINUX
-	url = git@github.com:IObundle/iob-soc-opencryptolinux.git
 [submodule "submodules/TESTER/submodules/DMA"]
 	path = submodules/TESTER/submodules/DMA
 	url = git@github.com:IObundle/iob-dma.git
+[submodule "submodules/IOBSOC"]
+	path = submodules/IOBSOC
+	url = git@github.com:IObundle/iob-soc.git
+[submodule "submodules/OPENCRYPTOLINUX"]
+	path = submodules/OPENCRYPTOLINUX
+	url = git@github.com:IObundle/iob-soc-opencryptolinux.git

@@ -1,6 +1,6 @@
 # IOb-SoC-SUT
 
-IOb-SoC-SUT is a generic RISC-V SoC, based on [IOb-SoC](https://github.com/IObundle/iob-soc), used for verification by the [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project.
+IOb-SoC-SUT is a generic RISC-V SoC, based on [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux), used for verification by the [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project.
 This repository contains an example System Under Test (SUT) and a Tester to verify it. The SUT is used to demonstrate the Tester's abilities for verification purposes.
 
 The SUT runs on bare metal and has UART, GPIO, AXI4-Stream, and IOb-native interfaces.
@@ -9,7 +9,7 @@ The SUT runs on bare metal and has UART, GPIO, AXI4-Stream, and IOb-native inter
 
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project aims to develop a System-on-Chip (SoC) used mainly to verify cryptographic systems that improve internet security but can also be used on any SoC. It is synergetic with several other NGI Assure-funded open-source projects - notably [OpenCryptoHW](https://nlnet.nl/project/OpenCryptoHW) (Coarse-Grained Reconfigurable Array cryptographic hardware) and [OpenCryptoLinux](https://nlnet.nl/project/OpenCryptoLinux). The proposed SoC will support test instruments as peripherals and use OpenCryptoHW as the System Under Test (SUT), hopefully opening the way for open-source test instrumentation operated under Linux.
 
-The Tester SoC is also based on [IOb-SoC](https://github.com/IObundle/iob-soc) and its configuration is stored in the `submodules/TESTER` directory.
+The Tester SoC is also based on [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux) and its configuration is stored in the `submodules/TESTER` directory.
 
 The Tester system is compatible with any Unit Under Tester (UUT) as it does not impose any hardware constraints.
 Nonetheless, the UUT's repository must follow the [set of minimum requirements](#uuts-repository-minimum-requirements) presented below.
@@ -45,7 +45,7 @@ available except for Vivado and Quartus.
 
 ## Setup the SUT
 
-This system's setup, build, and run steps are similar to the ones used in [IOb-SoC](https://github.com/IObundle/iob-soc).
+This system's setup, build, and run steps are similar to the ones used in [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux).
 Check the `README.md` file of that repository for more details on the process of setup, building, and running the system without the Tester.
 
 The SUT's main configuration, stored in `iob_soc_sut.py`, sets the UART, GPIO, REGFILEIF, AXISTREAM, and ETHERNET peripherals. In total, the SUT has one UART, one GPIO, one ETHERNET, one AXISTREAMIN, one AXISTREAMOUT, and one IOb-native (provided by the REGFILEIF peripheral) interface.
@@ -57,11 +57,11 @@ make setup [<control parameters>]
 ```
 
 `<control parameters>` are system configuration parameters passed in the
-command line, overriding those inherited from the IOb-SoC system. Example control
-parameters are `INIT_MEM=0 USE_EXTMEM=1`. For example:
+command line, overriding those inherited from the system. Example control
+parameters are `INIT_MEM=0`. For example:
 
 ```Bash
-make setup INIT_MEM=0 USE_EXTMEM=1
+make setup INIT_MEM=0
 ```
 
 The setup process will create a build directory that contains all the files required for building the system.
@@ -259,12 +259,12 @@ The `name` attribute should contain a string equal to the name of the UUT's Veri
 
 ### confs
 
-The `confs` attribute should be a list with a similar structure to the one in the `iob_soc.py` file of the [IOb-SoC](https://github.com/IObundle/iob-soc) system.
+The `confs` attribute should be a list with a similar structure to the one in the `iob_soc_opencryptolinux.py` file of the [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux) system.
 This list informs the Tester of the parameters available for the UUT's Verilog top module.
 
 ### ios
 
-The `ios` attribute should be a list with a similar structure to the one in the `iob_soc.py` file of the [IOb-SoC](https://github.com/IObundle/iob-soc) system.
+The `ios` attribute should be a list with a similar structure to the one in the `iob_soc_opencryptolinux.py` file of the [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux) system.
 This list informs the Tester of the IOs in the UUT's Verilog top module.
 
 ### instance(...)
@@ -272,36 +272,36 @@ This list informs the Tester of the IOs in the UUT's Verilog top module.
 The `instance(...)` method should be similar to the one defined in the `iob_module` class.
 This method returns an `iob_verilog_instance` class that informs the Tester of details related to the Verilog instance.
 
-## Clone the IOb-SoC's repository
+## Clone the IOb-SoC-OpenCryptoLinux's repository
 
-Since the Tester is based on the IOb-SoC system, it needs the contents from its repository to be set up correctly.
+Since the Tester is based on the IOb-SoC-OpenCryptoLinux system, it needs the contents from its repository to be set up correctly.
 
-If the UUT's repository is git based, then we suggest adding the IOb-SoC's repository as a git submodule.
+If the UUT's repository is git based, then we suggest adding the IOb-SoC-OpenCryptoLinux's repository as a git submodule.
 
-To add the IOb-SoC's repository as a git submodule inside the `submodules/` folder, from the UUT's repository, run:
+To add the IOb-SoC-OpenCryptoLinux's repository as a git submodule inside the `submodules/` folder, from the UUT's repository, run:
 
 ```Bash
-git submodule add git@github.com:IObundle/iob-soc.git submodules/IOBSOC
+git submodule add git@github.com:IObundle/iob-soc-opencryptolinux.git submodules/IOBSOC
 git submodule update --init --recursive
 ```
 
-Otherwise, clone the IOb-SoC's repository to a location of your choosing with the following command:
+Otherwise, clone the IOb-SoC-OpenCryptoLinux's repository to a location of your choosing with the following command:
 
 ```Bash
-git clone --recursive git@github.com:IObundle/iob-soc.git
+git clone --recursive git@github.com:IObundle/iob-soc-opencryptolinux.git
 ```
 
 ## Configure the Tester
 
-The Tester's setup, build and run steps are similar to the ones used in [IOb-SoC](https://github.com/IObundle/iob-soc).
+The Tester's setup, build and run steps are similar to the ones used in [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux).
 Check the `README.md` file of that repository for more details on the process of setup, building, and running IOb-SoC-based systems.
 
 The Tester's configuration is stored in the `iob_soc_tester.py` Python module.
 The user should create this file according to the UUT's project requirements.
-This file must define the `iob_soc_tester` class for the Tester that is a subclass of the `iob_soc` class, available in the [`iob_soc.py`](https://github.com/IObundle/iob-soc/blob/python-setup/iob_soc.py).
-Therefore the attributes and methods of the IOb-SoC system are inherited by the Tester.
+This file must define the `iob_soc_tester` class for the Tester that is a subclass of the `iob_soc_opencryptolinux` class, available in the [`iob_soc_opencryptolinux.py`](https://github.com/IObundle/iob-soc-opencryptolinux/blob/master/iob_soc_opencryptolinux.py).
+Therefore the attributes and methods of the IOb-SoC-OpenCryptoLinux system are inherited by the Tester.
 
-The Tester-specific configuration in the `iob_soc_tester` class can modify any attributes or methods inherited from the IOb-SoC system, according to its needs for verification of the UUT.
+The Tester-specific configuration in the `iob_soc_tester` class can modify any attributes or methods inherited from the IOb-SoC-OpenCryptoLinux system, according to its needs for verification of the UUT.
 
 When creating a new Tester for a generic UUT, the modifications typically required for the `iob_soc_tester.py` python module are:
 
@@ -311,13 +311,13 @@ When creating a new Tester for a generic UUT, the modifications typically requir
     3. Run the `instance()` method of that peripheral to set up the peripheral's Verilog instances (Method inherited from the iob_module class).
     4. Add an entry to the `peripheral_portmap` list for each IO of the peripheral instance. Each entry defines where to connect the peripheral IO ports. Each entry may map a single bit, selected bits, an entire port, or an entire interface.
 2. Add the UUT as a peripheral of the Tester using the steps from 1.
-3. Optionally, modify the inherited IOb-SoC attributes or methods according to the project. For example, update the default memory size using the `_setup_confs()` method inherited from IOb-SoC.
+3. Optionally, modify the inherited IOb-SoC-OpenCryptoLinux attributes or methods according to the project. For example, update the default memory size using the `_setup_confs()` method inherited from IOb-SoC-OpenCryptoLinux.
 
 For reference, check out the `submodules/TESTER/iob_soc_tester.py` Python module.
 
 ## Setup, build, and run the Tester along with UUT
 
-With the UUT's minimum requirements fulfilled, the steps for setup, building, and running the Tester are similar to those of [IOb-SoC](https://github.com/IObundle/iob-soc).
+With the UUT's minimum requirements fulfilled, the steps for setup, building, and running the Tester are similar to those of [IOb-SoC-OpenCryptoLinux](https://github.com/IObundle/iob-soc-opencryptolinux).
 
 First, create a Makefile that includes the `setup.mk` makefile segment from [IOb-Lib](https://github.com/IObundle/iob-lib).
 
@@ -333,7 +333,7 @@ make setup TOP_MODULE_NAME=iob_soc_tester [<control parameters>]
 
 `<control parameters>` are system configuration parameters passed in the
 command line, overriding those in the `iob_soc_tester_setup.py` file. Example control
-parameters are `INIT_MEM=0 USE_EXTMEM=1`.
+parameters are `INIT_MEM=0`.
 
 To build and run the Tester in simulation, type:
 

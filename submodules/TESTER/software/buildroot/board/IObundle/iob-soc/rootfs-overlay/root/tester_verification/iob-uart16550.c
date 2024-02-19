@@ -1,32 +1,36 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "iob-uart16550.h"
 
-static char device[100];
+static int serial_port;
 
 //TX FUNCTIONS
 void uart16550_putc(char c) {
-  FILE *port_fp = fopen(device, "wb");
-  putc(c, port_fp);
-  fclose(port_fp);
+  write(serial_port, &c, 1);
 }
 
 //RX FUNCTIONS
 char uart16550_getc() {
-  FILE *port_fp = fopen(device, "rb");
-  char c = getc(port_fp);
-  fclose(port_fp);
+  char c;
+  read(serial_port, &c, 1);
   return c;
 }
 
 // Change UART base
-void uart16550_base(char device_path[]) {
-    strcpy(device, device_path);
+void uart16550_init(char device_path[]) {
+  serial_port = open(device_path, O_RDWR);
+  if (serial_port < 0) {
+    printf("Error %i from open: %s\n", errno, strerror(errno));
+}
 }
 
 void uart16550_finish() {
   uart16550_putc(EOT);
+  close(serial_port);
 }
 
 //Print string, excluding end of string (0)
@@ -50,6 +54,9 @@ int uart16550_recvfile(char* file_name, char *mem) {
 
   //send file receive request
   uart16550_putc (FRX);
+
+  //clear input buffer
+  //while(uart16550_rxready()) uart16550_getc();
 
   //send file name
   uart16550_sendstr(file_name);

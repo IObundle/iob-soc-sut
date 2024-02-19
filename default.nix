@@ -1,1 +1,1 @@
-submodules/IOBSOC/submodules/LIB/scripts/default.nix
+submodules/OPENCRYPTOLINUX/submodules/IOBSOC/submodules/LIB/scripts/default.nix

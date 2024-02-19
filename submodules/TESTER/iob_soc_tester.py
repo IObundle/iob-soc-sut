@@ -52,7 +52,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             ]
         super()._create_submodules_list(submodules)
 
-    # Method that runs the setup process of this class
     @classmethod
     def _create_instances(cls):
         # Instantiate TESTER peripherals
@@ -158,7 +157,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
-        # Run IOb-SoC setup
         super()._create_instances()
 
     @classmethod
@@ -414,7 +412,7 @@ copy_remote_simulation_ila_data:
                 },
                 {"corename": "internal", "if_name": "UART1", "port": "", "bits": []},
             ),
-            # RS232
+            # Connect RX and TX of UART1 and SUT
             (
                 {
                     "corename": "SUT0",
@@ -433,6 +431,7 @@ copy_remote_simulation_ila_data:
                 },
                 {"corename": "UART1", "if_name": "rs232", "port": "rxd_i", "bits": []},
             ),
+            # Connect CTS and RTS of UART1 and SUT
             (
                 {
                     "corename": "SUT0",
