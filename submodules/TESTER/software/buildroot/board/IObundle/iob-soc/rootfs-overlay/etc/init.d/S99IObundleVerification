@@ -1,11 +1,10 @@
 #!/bin/sh
 
-# # Script to verify linux functioning
-# echo "Test passed!" > /tmp/test.log
-# # Send file via UART with Zmodem
-# sz -e /tmp/test.log
-
 # Load Linux Kernel Modules
 insmod /drivers/iob_timer.ko
+
+# Set correct settings for uart port connected to SUT
+stty -F /dev/ttyS0 115200 raw -echo -echoe -echok
+
 # Run verification program
 /root/tester_verification/run_verification

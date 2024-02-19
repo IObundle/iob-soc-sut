@@ -7,12 +7,8 @@ DISABLE_LINT:=1
 ifeq ($(TESTER),1)
 TOP_MODULE_NAME :=iob_soc_tester
 endif
-ifneq ($(USE_EXTMEM),1)
-$(info NOTE: USE_EXTMEM must be set to support iob-soc-opencryptolinux and ethernet with DMA. Auto-adding USE_EXTMEM=1...)
-USE_EXTMEM:=1
-endif
 
-LIB_DIR:=submodules/IOBSOC/submodules/LIB
+LIB_DIR:=submodules/OPENCRYPTOLINUX/submodules/IOBSOC/submodules/LIB
 include $(LIB_DIR)/setup.mk
 
 INIT_MEM ?= 1
@@ -20,10 +16,6 @@ RUN_LINUX ?= 0
 
 ifeq ($(INIT_MEM),1)
 SETUP_ARGS += INIT_MEM
-endif
-
-ifeq ($(USE_EXTMEM),1)
-SETUP_ARGS += USE_EXTMEM
 endif
 
 ifeq ($(TESTER_ONLY),1)
@@ -41,34 +33,26 @@ endif
 setup:
 	make build-setup SETUP_ARGS="$(SETUP_ARGS)"
 
-pc-emul-run: build_dir_name
-	make clean setup && make -C $(BUILD_DIR)/ pc-emul-run
-
 sim-run: build_dir_name
 	make clean setup && make -C $(BUILD_DIR)/ sim-run
 
 fpga-run: build_dir_name
-ifeq ($(USE_EXTMEM),1)
-	echo "WARNING: INIT_MEM must be set to zero run on the FPGA with USE_EXTMEM=1. Auto-setting INIT_MEM=0..."
 	nix-shell --run "make clean setup INIT_MEM=0"
-else
-	nix-shell --run "make clean setup"
-endif
 	make fpga-connect
 
 fpga-connect: build_dir_name
+	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
 	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
 	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
 
 test-linux-fpga-connect: build_dir_name
 	-rm $(BUILD_DIR)/hardware/fpga/test.log
-	-ln -s minicom_test1.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	-ln -fs minicom_tester_test.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
 	make fpga-connect TESTER=1 RUN_LINUX=1
 
-.PHONY: pc-emul-run sim-run fpga-run fpga-connect test-linux-fpga-connect
+.PHONY: sim-run fpga-run fpga-connect test-linux-fpga-connect
 
 test-all: build_dir_name
-	make clean setup && make -C $(BUILD_DIR)/ pc-emul-test
 	#make sim-run SIMULATOR=icarus
 	make sim-run SIMULATOR=verilator
 	make fpga-run BOARD=CYCLONEV-GT-DK
@@ -126,7 +110,7 @@ ila-vcd: build_dir_name
 
 ### Linux targets
 
-LINUX_OS_DIR ?= submodules/TESTER/submodules/OPENCRYPTOLINUX/submodules/OS
+LINUX_OS_DIR ?= submodules/OPENCRYPTOLINUX/submodules/OS
 TESTER_DIR ?= submodules/TESTER
 REL_OS2TESTER :=`realpath $(TESTER_DIR) --relative-to=$(LINUX_OS_DIR)`
 REL_OS2SUT :=`realpath $(CURDIR) --relative-to=$(LINUX_OS_DIR)`
@@ -190,8 +174,8 @@ build-linux-files:
 INCLUDE = -I.
 SRC = *.c
 FLAGS = -Wall -O2
-#FLAGS += -Werror
-FLAGS += -static
+FLAGS += -Werror
+#FLAGS += -static
 FLAGS += -march=rv32imac
 FLAGS += -mabi=ilp32
 BIN = run_verification
@@ -201,3 +185,15 @@ build-linux-tester-verification: build-driver-headers
 	$(CC) $(FLAGS) $(INCLUDE) -o $(BIN) $(SRC)'
 
 .PHONY: build-linux-tester-verification
+
+#DEBUG
+debug-tester-verfication:
+	-rm ../iob_soc_sut_V0.70/hardware/fpga/test.log
+	make build-linux-tester-verification
+	make build-linux-buildroot
+	cp submodules/TESTER/software/src/rootfs.cpio.gz ../iob_soc_sut_V0.70/software/src/rootfs.cpio.gz
+	-rm ../iob_soc_sut_V0.70/hardware/fpga/rootfs.cpio.gz 
+	cp submodules/TESTER/hardware/fpga/minicom_tester.txt ../iob_soc_sut_V0.70/hardware/fpga/minicom_tester.txt
+	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=200' 
+
+.PHONY: debug-tester-verfication

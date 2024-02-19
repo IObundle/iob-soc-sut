@@ -32,6 +32,7 @@
             i-tlb-size = <0x20>;
             tlb-split;
             CPU0_intc: interrupt-controller {
+                #address-cells = <0>;
                 #interrupt-cells = <1>;
                 interrupt-controller;
                 compatible = "riscv,cpu-intc";
@@ -40,7 +41,7 @@
     };
     memory@80000000 {
         device_type = "memory";
-        reg = <0x80000000 0x10000000>;
+        reg = <0x80000000 0x02000000>; // Tester only has 25 bits availabe (half of the external memory)
     };
     chosen {
         bootargs = "rootwait console=hvc0 earlycon=sbi root=/dev/ram0 init=/sbin/init swiotlb=32 loglevel=8";
@@ -52,6 +53,7 @@
         #size-cells = <1>;
         compatible = "iobundle,iob-soc", "simple-bus";
         ranges;
+        // Don't launch driver of UART0 because it's already used by OpenSBI
         //uart0: uart@/*UART0_ADDR_MACRO*/ {
         //    compatible = "ns16550a";
         //    reg = <0x/*UART0_ADDR_MACRO*/ 0x1000>;
@@ -59,8 +61,8 @@
         //    current-speed = </*BAUD_MACRO*/>;
         ////    interrupt-parent = < &PLIC0 >;
         ////    interrupts = <1>;
-        //    reg-shift = <2>; // regs are spaced on 32 bit boundary
-        //    reg-io-width = <4>; // only 32-bit access are supported
+        ////    reg-shift = <2>; // regs are spaced on 32 bit boundary
+        ////    reg-io-width = <4>; // only 32-bit access are supported
         //};
         uart1: uart@/*UART1_ADDR_MACRO*/ {
             compatible = "ns16550a";
@@ -69,10 +71,11 @@
             current-speed = </*BAUD_MACRO*/>;
         //    interrupt-parent = < &PLIC0 >;
         //    interrupts = <2>;
-            reg-shift = <2>; // regs are spaced on 32 bit boundary
-            reg-io-width = <4>; // only 32-bit access are supported
+        //    reg-shift = <2>; // regs are spaced on 32 bit boundary
+        //    reg-io-width = <4>; // only 32-bit access are supported
         };
 
+        // Do we need CLINT0 here? OpenSBI already uses it.
         CLINT0: clint@/*CLINT0_ADDR_MACRO*/ {
             compatible = "riscv,clint0";
             interrupts-extended = < &CPU0_intc 3
@@ -86,15 +89,18 @@
             reg = <0x/*TIMER0_ADDR_MACRO*/ 0x100>;
         };
 
+        // Do we need PLIC0 here? OpenSBI already uses it.
         //PLIC0: plic@/*PLIC0_ADDR_MACRO*/ {
+        //    #address-cells = <0>;
         //    #interrupt-cells = <1>;
         //    compatible = "riscv,plic0";
         //    interrupt-controller;
         //    interrupts-extended = < &CPU0_intc 11
         //                            &CPU0_intc 9 >;
         //    reg = <0x/*PLIC0_ADDR_MACRO*/ 0x4000000>;
+        //    reg-names = "control";
         //    riscv,max-priority = <7>;
-        //    riscv,ndev = <32>;
+        //    riscv,ndev = <31>;
         //};
     };
 };

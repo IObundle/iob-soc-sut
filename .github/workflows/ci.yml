@@ -21,25 +21,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  pc-emul:
-    runs-on: self-hosted
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: pc-emul-test
-        run: nix-shell --run "make pc-emul-run"
-
   verilator:
     runs-on: self-hosted
     timeout-minutes: 30
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
-    needs: [ pc-emul ]
   
     steps:
       - uses: actions/checkout@v3
@@ -58,7 +45,6 @@ jobs:
     timeout-minutes: 90
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
-    needs: [ pc-emul ]
   
     steps:
       - uses: actions/checkout@v3
