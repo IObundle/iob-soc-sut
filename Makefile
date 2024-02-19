@@ -40,15 +40,20 @@ fpga-run: build_dir_name
 	nix-shell --run "make clean setup INIT_MEM=0"
 	make fpga-connect
 
-fpga-connect: build_dir_name
-	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+# allow `test-linux-fpga-connect` and `fpga-connect` to symlink different
+# minicom scripts
+fpga-connect-internal: build_dir_name
 	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
 	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
+
+fpga-connect: build_dir_name
+	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	make fpga-connect-internal BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)
 
 test-linux-fpga-connect: build_dir_name
 	-rm $(BUILD_DIR)/hardware/fpga/test.log
 	-ln -fs minicom_tester_test.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
-	make fpga-connect TESTER=1 RUN_LINUX=1
+	make fpga-connect-internal TESTER=1 RUN_LINUX=1
 
 .PHONY: sim-run fpga-run fpga-connect test-linux-fpga-connect
 
