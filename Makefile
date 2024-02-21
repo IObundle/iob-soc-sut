@@ -52,7 +52,7 @@ fpga-connect: build_dir_name
 
 test-linux-fpga-connect: build_dir_name
 	-rm $(BUILD_DIR)/hardware/fpga/test.log
-	-ln -fs minicom_tester_test.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
 	make fpga-connect-internal TESTER=1 RUN_LINUX=1
 
 .PHONY: sim-run fpga-run fpga-connect test-linux-fpga-connect
