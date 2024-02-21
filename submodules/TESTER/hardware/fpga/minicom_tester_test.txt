@@ -1,4 +1,6 @@
 # Run default tester minicom script
+
+print "\n\n\n[MINICOM DEBUG] Start minicom_tester_test"
 call minicom_tester.txt
 
 # Exit minicom
