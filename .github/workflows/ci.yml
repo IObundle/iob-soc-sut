@@ -164,6 +164,8 @@ jobs:
         run: |
           echo "CI: $CI"
           echo "GITHUB_ACTION: $GITHUB_ACTION"
+      - name: test variable in makefile
+        run: make -f env.make
 
   # tester-aes-ku040:
   #   runs-on: self-hosted
