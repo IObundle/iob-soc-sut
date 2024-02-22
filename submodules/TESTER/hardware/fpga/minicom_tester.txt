@@ -22,7 +22,7 @@ expect {
 
 send:
 print "\n[minicom] Got file send request"
-! sync; filename=`grep -B1 B0100000023be50 minicom_out.log 2> /dev/null | tail -n 2 | head -n1`; echo "filename = $filename"; cat minicom_out.log; sz $filename
+! filename=`tail -n2 minicom_out.log | head -n1`; sz $filename
 goto wait4ft
 
 receive:
