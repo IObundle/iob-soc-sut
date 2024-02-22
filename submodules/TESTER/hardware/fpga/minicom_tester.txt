@@ -22,7 +22,7 @@ expect {
 
 send:
 print "\n[minicom] Got file send request"
-! filename=`tail -n2 minicom_out.log | head -n1`; sz $filename
+! filename=`tail -n3 minicom_out.log | head -n1`; echo $filename 1>&2; sz $filename
 goto wait4ft
 
 receive:
