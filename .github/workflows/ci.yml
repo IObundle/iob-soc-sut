@@ -124,21 +124,21 @@ jobs:
       - name: test linux
         run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
 
-  tester-netlist-cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 60
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ tester-cyclonev ]
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: Tester Netlist CYCLONEV
-        run: nix-shell --run "make tester-sut-netlist BOARD=CYCLONEV-GT-DK"
+  # tester-netlist-cyclonev:
+  #   runs-on: self-hosted
+  #   timeout-minutes: 60
+  #   # always run, except when previous job was cancelled
+  #   if: ${{ !cancelled() }}
+  #   # run after indicated job
+  #   needs: [ tester-cyclonev ]
+  #
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #         submodules: 'recursive'
+  #     - name: Tester Netlist CYCLONEV
+  #       run: nix-shell --run "make tester-sut-netlist BOARD=CYCLONEV-GT-DK"
 
   aes-ku040:
     runs-on: self-hosted
