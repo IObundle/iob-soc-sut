@@ -40,15 +40,20 @@ fpga-run: build_dir_name
 	nix-shell --run "make clean setup INIT_MEM=0"
 	make fpga-connect
 
-fpga-connect: build_dir_name
-	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+# allow `test-linux-fpga-connect` and `fpga-connect` to symlink different
+# minicom scripts
+fpga-connect-internal: build_dir_name
 	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
 	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
+
+fpga-connect: build_dir_name
+	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
+	make fpga-connect-internal BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)
 
 test-linux-fpga-connect: build_dir_name
 	-rm $(BUILD_DIR)/hardware/fpga/test.log
 	-ln -fs minicom_tester_test.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
-	make fpga-connect TESTER=1 RUN_LINUX=1
+	make fpga-connect-internal TESTER=1 RUN_LINUX=1
 
 .PHONY: sim-run fpga-run fpga-connect test-linux-fpga-connect
 
@@ -125,26 +130,34 @@ build-linux-opensbi:
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/vivado/AES-KU040-DB-G'
 	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-opensbi MACROS_FILE=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=$(REL_OS2TESTER)/hardware/fpga/quartus/CYCLONEV-GT-DK'
 
-MODULE_NAME = iob_timer
-MODULE_LINUX_DIR = `realpath $(shell find . -type d -name '$(MODULE_NAME)' -print -quit)`/software/linux
+MODULE_NAMES = iob_timer
+MODULE_NAMES += iob_soc_sut
 
 build-linux-drivers:
-	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-linux-drivers \
-		MODULE_DRIVER_DIR=$(MODULE_LINUX_DIR)/drivers \
-		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. \
-		CALLING_DIR=`realpath $(CURDIR)` \
-		MODULE_NAME=$(MODULE_NAME) \
-		ROOTFS_OVERLAY_DIR=`realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
-		PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'
+	@$(foreach module,$(MODULE_NAMES), \
+		printf "\n\n\nMaking $(module)\n\n\n"; \
+		$(eval MODULE_LINUX_DIR=$(shell realpath $(shell find . -type f -name '$(module).py' -printf '%h' -quit))/software/linux) \
+		nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) build-linux-drivers \
+			MODULE_DRIVER_DIR=$(MODULE_LINUX_DIR)/drivers \
+			OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. \
+			CALLING_DIR=`realpath $(CURDIR)` \
+			MODULE_NAME=$(module) \
+			ROOTFS_OVERLAY_DIR=`realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
+			PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'; \
+	)
+
 
 clean-linux-drivers:
-	nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) clean-linux-drivers \
-		MODULE_DRIVER_DIR=$(MODULE_LINUX_DIR)/drivers \
-		OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. \
-		CALLING_DIR=`realpath $(CURDIR)` \
-		MODULE_NAME=$(MODULE_NAME) \
-		ROOTFS_OVERLAY_DIR=`realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
-		PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'
+	@$(foreach module,$(MODULE_NAMES), \
+		$(eval MODULE_LINUX_DIR=$(shell realpath $(shell find . -type f -name '$(module).py' -printf '%h' -quit))/software/linux) \
+		nix-shell $(LINUX_OS_DIR)/default.nix --run 'make -C $(LINUX_OS_DIR) clean-linux-drivers \
+			MODULE_DRIVER_DIR=$(MODULE_LINUX_DIR)/drivers \
+			OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. \
+			CALLING_DIR=`realpath $(CURDIR)` \
+			MODULE_NAME=$(module) \
+			ROOTFS_OVERLAY_DIR=`realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/ \
+			PYTHON_DIR=`realpath $(LIB_DIR)`/scripts'; \
+	)
 
 COMBINED_BUILDROOT_DIR=..
 combine-buildroot:
@@ -156,8 +169,9 @@ build-linux-buildroot: combine-buildroot build-linux-drivers build-linux-tester-
 	make -C $(LINUX_OS_DIR) build-buildroot OS_SUBMODULES_DIR=$(REL_OS2SUT)/.. OS_SOFTWARE_DIR=../`realpath $(COMBINED_BUILDROOT_DIR) --relative-to=..` OS_BUILD_DIR=$(REL_OS2TESTER)/software/src
 
 build-driver-headers:
-	# Generate linux driver header
-	./$(LINUX_OS_DIR)/scripts/drivers.py $(MODULE_NAME) -o `realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/
+	@$(foreach module,$(MODULE_NAMES), \
+		./$(LINUX_OS_DIR)/scripts/drivers.py $(module) -o `realpath $(COMBINED_BUILDROOT_DIR)`/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/; \
+	)
 
 build-linux-kernel:
 	-rm ../linux-5.15.98/arch/riscv/boot/Image
@@ -166,8 +180,8 @@ build-linux-kernel:
 build-linux-files:
 	make build-linux-dts
 	make build-linux-opensbi
-	make build-linux-buildroot
 	make build-linux-kernel
+	make build-linux-buildroot
 
 .PHONY: build-linux-dts build-linux-opensbi build-linux-buildroot build-linux-kernel build-linux-files
 

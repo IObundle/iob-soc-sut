@@ -14,8 +14,8 @@ from iob_pfsm import iob_pfsm
 from iob_dma import iob_dma
 from iob_eth import iob_eth
 from iob_ram_2p_be import iob_ram_2p_be
-from mk_configuration import append_str_config_build_mk
-from verilog_tools import insert_verilog_in_module, inplace_change
+from config_gen import append_str_config_build_mk
+from verilog_gen import insert_verilog_in_module, inplace_change
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
 
 # Select if should include ILA and PFSM peripherals.

@@ -2,7 +2,7 @@
 import os
 import copy
 
-import build_srcs
+import copy_srcs
 
 from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_regfileif import iob_regfileif
@@ -10,8 +10,8 @@ from iob_gpio import iob_gpio
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
 from iob_ram_2p_be import iob_ram_2p_be
-from verilog_tools import insert_verilog_in_module
-from mk_configuration import append_str_config_build_mk
+from verilog_gen import insert_verilog_in_module
+from config_gen import append_str_config_build_mk
 
 sut_regs = [
     {
@@ -99,7 +99,7 @@ class iob_soc_sut(iob_soc_opencryptolinux):
                 "Register file interface",
                 parameters={
                     "SYSTEM_VERSION": "16'h"
-                    + build_srcs.version_str_to_digits(cls.version)
+                    + copy_srcs.version_str_to_digits(cls.version)
                 },
             )
         )
@@ -532,7 +532,10 @@ endif
     @classmethod
     def _init_attributes(cls):
         super()._init_attributes()
-        cls.regs = sut_regs
+
+    @classmethod
+    def _setup_regs(cls):
+        cls.regs += sut_regs
 
     @classmethod
     def _setup_confs(cls):

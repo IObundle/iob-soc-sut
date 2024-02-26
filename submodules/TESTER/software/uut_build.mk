@@ -3,6 +3,7 @@ GET_IOB_SOC_SUT_CONF_MACRO = $(call GET_MACRO,IOB_SOC_SUT_$(1),../src/iob_soc_su
 
 iob_soc_sut_boot.hex: ../../software/iob_soc_sut_boot.bin
 	../../scripts/makehex.py $< $(call GET_IOB_SOC_SUT_CONF_MACRO,BOOTROM_ADDR_W) > $@
+	../../scripts/hex_split.py iob_soc_sut_boot .
 
 iob_soc_sut_firmware.hex: iob_soc_sut_firmware.bin
 	../../scripts/makehex.py $< $(call GET_IOB_SOC_SUT_CONF_MACRO,MEM_ADDR_W) > $@

@@ -9,6 +9,7 @@
 //#include "iob-gpio.h"
 #include "iob-uart16550.h"
 #include "iob-timer-user.h"
+#include "iob-soc-sut-user.h"
 
 //// System may not use ILA/PFSM for Quartus boards
 //#if __has_include("ILA0.h")
@@ -159,11 +160,11 @@ int main() {
 //  
   puts("\n\n[Tester]: Hello from tester!\n\n\n");
 //  
-//    // Write data to the registers of the SUT to be read by it.
-//    IOB_SOC_SUT_SET_REG1(64);
-//    IOB_SOC_SUT_SET_REG2(1024);
-//    uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
-//              "SUT.\n\n");
+  // Write data to the registers of the SUT to be read by it.
+  iob_soc_sut_set_reg(1, 64);
+  iob_soc_sut_set_reg(2, 1024);
+  uart16550_puts("[Tester]: Stored values 64 and 1024 in registers 1 and 2 of the "
+             "SUT.\n\n");
 //  
 //    // Write a test pattern to the GPIO outputs to be read by the SUT.
 //    gpio_set(0x1234abcd);
@@ -272,12 +273,15 @@ int main() {
     putchar(buffer[i]);
   }
   puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
-//  
-//    // Read data from the SUT's registers
-//    uart16550_puts("[Tester]: Reading SUT's register contents:\n");
-//    printf("[Tester]: Register 3: %d \n", IOB_SOC_SUT_GET_REG3());
-//    printf("[Tester]: Register 4: %d \n", IOB_SOC_SUT_GET_REG4());
-//  
+ 
+  // Read data from the SUT's registers
+  uart16550_puts("[Tester]: Reading SUT's register contents:\n");
+  uint32_t sut_reg = 0;
+  iob_soc_sut_get_reg(3, &sut_reg);
+  printf("[Tester]: Register 3: %d \n", sut_reg);
+  iob_soc_sut_get_reg(4, &sut_reg);
+  printf("[Tester]: Register 4: %d \n", sut_reg);
+ 
 //    // Read pattern from GPIO inputs (was set by the SUT)
 //    printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n\n", gpio_get());
 //  
