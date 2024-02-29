@@ -94,6 +94,11 @@
             reg = <0x/*SUT0_ADDR_MACRO*/ 0x100>;
         };
 
+        GPIO0: gpio@/*GPIO0_ADDR_MACRO*/ {
+            compatible = "iobundle,gpio0";
+            reg = <0x/*GPIO0_ADDR_MACRO*/ 0x100>;
+        };
+
         // Do we need PLIC0 here? OpenSBI already uses it.
         //PLIC0: plic@/*PLIC0_ADDR_MACRO*/ {
         //    #address-cells = <0>;
