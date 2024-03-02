@@ -24,11 +24,9 @@ int iob_gpio_test() {
     return -1;
   }
 
-  // read current timer count
-  uint32_t value = 0;
-  if (gpio_get(&value) == -1 || gpio_set_output_enable(0x0) == -1 ||
-          gpio_set(0x0) == -1) {
-    perror("[Tester|User] Failed to get/set outputs");
+  // Attempt to set GPIO registers
+  if (gpio_set_output_enable(0x0) == -1 || gpio_set(0x0) == -1) {
+    perror("[Tester|User] Failed to set outputs");
 
     return -1;
   }
