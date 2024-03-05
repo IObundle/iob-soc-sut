@@ -44,7 +44,7 @@ fpga-run: build_dir_name
 # minicom scripts
 fpga-connect-internal: build_dir_name
 	nix-shell --run 'make -C $(BUILD_DIR)/ fpga-fw-build BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)'
-	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX) 
+	make -C $(BUILD_DIR)/ fpga-run BOARD=$(BOARD) RUN_LINUX=$(RUN_LINUX)
 
 fpga-connect: build_dir_name
 	-ln -fs minicom_tester.txt $(BUILD_DIR)/hardware/fpga/minicom_linux_script.txt
@@ -67,13 +67,13 @@ test-all: build_dir_name
 .PHONY: test-all
 
 build-sut-netlist: build_dir_name
-	make clean && make setup 
+	make clean && make setup
 	# Rename constraint files
 	#FPGA_DIR=`ls -d $(BUILD_DIR)/hardware/fpga/quartus/CYCLONEV-GT-DK` &&\
 	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
 	#FPGA_DIR=`ls -d $(BUILD_DIR)/hardware/fpga/vivado/AES-KU040-DB-G` &&\
 	#mv $$FPGA_DIR/iob_soc_sut_fpga_wrapper_dev.sdc $$FPGA_DIR/iob_soc_sut_dev.sdc
-	# Build netlist 
+	# Build netlist
 	make -C $(BUILD_DIR)/ fpga-build BOARD=$(BOARD) IS_FPGA=0
 
 tester-sut-netlist: build-sut-netlist
@@ -85,7 +85,7 @@ tester-sut-netlist: build-sut-netlist
 	if [ -f ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_stub.v ]; then cp ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_stub.v ../iob_soc_tester_$$TESTER_VER/hardware/src/; fi &&\
 	echo -e "\nIP+=iob_soc_sut.v" >> ../iob_soc_tester_$$TESTER_VER/hardware/fpga/fpga_build.mk &&\
 	cp software/firmware/iob_soc_tester_firmware.c ../iob_soc_tester_$$TESTER_VER/software/firmware
-	# Copy and modify iob_soc_sut_params.vh (needed for stub) and modify *_stub.v to insert the SUT parameters 
+	# Copy and modify iob_soc_sut_params.vh (needed for stub) and modify *_stub.v to insert the SUT parameters
 	TESTER_VER=`cat submodules/TESTER/iob_soc_tester_setup.py | grep version= | cut -d"'" -f2` &&\
 	if [ -f ../iob_soc_sut_V*/hardware/fpga/iob_soc_sut_stub.v ]; then\
 		cp ../iob_soc_sut_V0.70/hardware/src/iob_soc_sut_params.vh ../iob_soc_tester_$$TESTER_VER/hardware/src/;\
@@ -132,6 +132,7 @@ build-linux-opensbi:
 
 MODULE_NAMES = iob_timer
 MODULE_NAMES += iob_soc_sut
+MODULE_NAMES += iob_gpio
 
 build-linux-drivers:
 	@$(foreach module,$(MODULE_NAMES), \
@@ -206,8 +207,8 @@ debug-tester-verfication:
 	make build-linux-tester-verification
 	make build-linux-buildroot
 	cp submodules/TESTER/software/src/rootfs.cpio.gz ../iob_soc_sut_V0.70/software/src/rootfs.cpio.gz
-	-rm ../iob_soc_sut_V0.70/hardware/fpga/rootfs.cpio.gz 
+	-rm ../iob_soc_sut_V0.70/hardware/fpga/rootfs.cpio.gz
 	cp submodules/TESTER/hardware/fpga/minicom_tester.txt ../iob_soc_sut_V0.70/hardware/fpga/minicom_tester.txt
-	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=200' 
+	nix-shell --run 'source ~/iobundleServerVars.sh; make fpga-connect TESTER=1 RUN_LINUX=1 GRAB_TIMEOUT=200'
 
 .PHONY: debug-tester-verfication
