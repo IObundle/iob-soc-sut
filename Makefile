@@ -133,6 +133,8 @@ build-linux-opensbi:
 MODULE_NAMES = iob_timer
 MODULE_NAMES += iob_soc_sut
 MODULE_NAMES += iob_gpio
+MODULE_NAMES += iob_pfsm
+MODULE_NAMES += iob_ila
 
 build-linux-drivers:
 	@$(foreach module,$(MODULE_NAMES), \

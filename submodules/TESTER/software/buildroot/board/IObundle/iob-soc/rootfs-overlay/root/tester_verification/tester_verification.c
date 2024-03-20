@@ -12,12 +12,10 @@
 #include "iob-soc-sut-user.h"
 
 //// System may not use ILA/PFSM for Quartus boards
-//#if __has_include("ILA0.h")
-//#include "ILA0.h" // ILA0 instance specific defines
-//#include "iob-ila.h"
-//#include "iob-pfsm.h"
-//#define USE_ILA_PFSM
-//#endif
+// how to fix this for linux program?
+#include "iob-pfsm-user.h"
+#define USE_ILA_PFSM
+
 //
 //#include "iob-dma.h"
 //#include "iob-eth.h"
@@ -38,6 +36,8 @@
 
 #define SUT_FIRMWARE_SIZE 38000
 
+#define BUFFER_SIZE 5096
+
 // We should ideally receive the INIT_MEM information from the PC
 // However, since most of the time we run linux on the FPGA,
 // the INIT_MEM will be 0, therefore we hardcode it for now.
@@ -49,9 +49,33 @@
 //void print_ila_samples();
 //void send_axistream();
 //void receive_axistream();
-//void pfsm_program(char *);
+void pfsm_program(char *, uint32_t);
 //void ila_monitor_program(char *);
 //void clear_cache();
+
+
+/*
+ * Request file via rz protocol:
+ *  - fname: file name
+ *  - buffer: byte array to read file contents into
+ *  - fsize: size of file to read.
+ * return: size of file read.
+ */
+uint32_t rz_request_file(char *fname, char *buffer, uint32_t fsize){
+  FILE *fp = NULL;
+  uint32_t file_size = 0;
+  int i = 0;
+
+  // Make request to host
+  puts(fname);
+  i = system("rz");
+  if (i != 0) puts("[Tester]: File transfer via rz failed!\n");
+  fp = fopen(fname, "r");
+  file_size = fread(buffer, 1, fsize, fp);
+  fclose(fp);
+
+  return file_size;
+}
 
 /*
  * Receive a file transfer request from SUT;
@@ -111,7 +135,7 @@ int main() {
   char pass_string[] = "Test passed!";
   //char fail_string[] = "Test failed!";
   uint32_t file_size = 0;
-  char c, buffer[5096];//, *sutStr;
+  char c, buffer[BUFFER_SIZE];//, *sutStr;
   int i;
 #ifndef IOB_SOC_TESTER_INIT_MEM
   char sut_firmware[SUT_FIRMWARE_SIZE];
@@ -168,16 +192,16 @@ int main() {
     gpio_set(0x1234abcd);
     puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
 //
-//  #ifdef USE_ILA_PFSM
-//      // Program PFSM
-//      pfsm_program(buffer);
-//
-//      // Program Monitor PFSM (internal to ILA)
-//      ila_monitor_program(buffer);
-//
-//      // Enable all ILA triggers
-//      ila_enable_all_triggers();
-//  #endif
+ #ifdef USE_ILA_PFSM
+     // Program PFSM
+     pfsm_program(buffer, BUFFER_SIZE);
+
+     // // Program Monitor PFSM (internal to ILA)
+     // ila_monitor_program(buffer);
+     //
+     // // Enable all ILA triggers
+     // ila_enable_all_triggers();
+ #endif
 //
   puts("[Tester]: Initializing SUT via UART...\n");
   // Init to uart1 (connected to the SUT)
@@ -333,20 +357,22 @@ int main() {
   if (i != 0) puts("[Tester]: File transfer of test.log via sz failed!\n");
 }
 
-// #ifdef USE_ILA_PFSM
-// // Program independent PFSM peripheral of the Tester
-// void pfsm_program(char *bitstreamBuffer){
-//   // init Programmable Finite State Machine
-//   pfsm_init(PFSM0_BASE, 2, 1, 1);
-//   uint32_t file_size = 0;
-//   // Receive pfsm bitstream
-//   file_size = uart16550_recvfile("pfsm.bit", bitstreamBuffer);
-//   // Program PFSM
-//   uart16550_puts("[Tester]: Programming PFSM...\n");
-//   printf("[Tester]: Programmed PFSM with %d bytes.\n\n",
-//          pfsm_bitstream_program(bitstreamBuffer)
-//          );
-// }
+#ifdef USE_ILA_PFSM
+// Program independent PFSM peripheral of the Tester
+void pfsm_program(char *bitstreamBuffer, uint32_t read_size){
+  // init Programmable Finite State Machine
+  pfsm_init( 2, 1, 1);
+  uint32_t file_size = 0;
+  // Receive pfsm bitstream
+  // file_size = uart16550_recvfile("pfsm.bit", bitstreamBuffer);
+  file_size = rz_request_file("pfsm.bit", bitstreamBuffer, read_size);
+
+  // Program PFSM
+  printf("[Tester]: Programming PFSM...with %d bytes\n", file_size);
+  printf("[Tester]: Programmed PFSM with %d bytes.\n\n",
+         pfsm_bitstream_program(bitstreamBuffer)
+         );
+}
 //
 // // Program Monitor PFSM internal to ILA.
 // void ila_monitor_program(char *bitstreamBuffer){
@@ -392,7 +418,7 @@ int main() {
 //
 //   free((uint32_t *)samples);
 // }
-// #endif //USE_ILA_PFSM
+#endif //USE_ILA_PFSM
 //
 // void send_axistream() {
 //   uint8_t i;
