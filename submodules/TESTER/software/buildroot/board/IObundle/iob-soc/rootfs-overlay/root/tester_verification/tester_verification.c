@@ -14,6 +14,7 @@
 //// System may not use ILA/PFSM for Quartus boards
 // how to fix this for linux program?
 #include "iob-pfsm-user.h"
+#include "iob-ila-user.h"
 #define USE_ILA_PFSM
 
 //
@@ -46,11 +47,16 @@
 // Serial port connected to SUT
 #define UART1_BASE "/dev/ttyS0"
 
-//void print_ila_samples();
+// DEVICE MINOR FOR PFSM DRIVER DEVICES
+// check logs after running: ./insmod iob_pfsm.ko
+#define PFSM_MINOR 0
+#define MONITOR_MINOR 1
+
+void print_ila_samples();
 //void send_axistream();
 //void receive_axistream();
 void pfsm_program(char *, uint32_t);
-//void ila_monitor_program(char *);
+void ila_monitor_program(char *, uint32_t);
 //void clear_cache();
 
 
@@ -152,13 +158,13 @@ int main() {
 //    axistream_in_enable();
 //    axistream_out_enable();
 //
-//  #ifdef USE_ILA_PFSM
-//      // init integrated logic analyzer
-//      ila_init(ILA0_BASE);
-//      // Enable ILA circular buffer
-//      // This allows for continuous sampling while the enable signal is active
-//      ila_set_circular_buffer(1);
-//  #endif
+ #ifdef USE_ILA_PFSM
+     // init integrated logic analyzer
+     // ila_init(ILA0_BASE);
+     // Enable ILA circular buffer
+     // This allows for continuous sampling while the enable signal is active
+     ila_set_circular_buffer(1);
+ #endif
 //
 //    // init dma
 //    dma_init(DMA0_BASE);
@@ -197,10 +203,10 @@ int main() {
      pfsm_program(buffer, BUFFER_SIZE);
 
      // // Program Monitor PFSM (internal to ILA)
-     // ila_monitor_program(buffer);
-     //
-     // // Enable all ILA triggers
-     // ila_enable_all_triggers();
+     ila_monitor_program(buffer, BUFFER_SIZE);
+
+     // Enable all ILA triggers
+     ila_enable_all_triggers();
  #endif
 //
   puts("[Tester]: Initializing SUT via UART...\n");
@@ -238,15 +244,15 @@ int main() {
 //
 //    // Send byte stream via AXI stream
 //    send_axistream();
-//
-//  #ifdef USE_ILA_PFSM
-//      // Disable all ILA triggers
-//      ila_disable_all_triggers();
-//
-//      // Print sampled ILA values
-//      print_ila_samples();
-//  #endif
-//
+
+ #ifdef USE_ILA_PFSM
+     // Disable all ILA triggers
+     ila_disable_all_triggers();
+
+     // Print sampled ILA values
+     print_ila_samples();
+ #endif
+
   // Tell SUT that the Tester is running linux
   uart16550_puts("TESTER_RUN_LINUX\n");
 //    // Test sending data to SUT via ethernet
@@ -325,19 +331,19 @@ int main() {
 //      uart16550_putc(sutStr[i]);
 //    }
 //    uart16550_putc('\n');
-//
-//  #ifdef USE_ILA_PFSM
-//      // Allocate memory for ILA output data
-//      const uint32_t ila_n_samples = (1<<4); //Same as buffer size
-//      uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
-//
-//      // Write data to allocated memory
-//      uint32_t latest_sample_index = ila_number_samples();
-//      ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
-//
-//      // Send ila data to file via UART
-//      uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
-//  #endif
+
+ #ifdef USE_ILA_PFSM
+     // Allocate memory for ILA output data
+     const uint32_t ila_n_samples = (1<<4); //Same as buffer size
+     uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
+
+     // Write data to allocated memory
+     uint32_t latest_sample_index = ila_number_samples();
+     ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
+
+     // Send ila data to file via UART
+     uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
+ #endif
 //
   // Test iob-timer with drivers
   if (iob_timer_test() == -1){
@@ -361,7 +367,7 @@ int main() {
 // Program independent PFSM peripheral of the Tester
 void pfsm_program(char *bitstreamBuffer, uint32_t read_size){
   // init Programmable Finite State Machine
-  pfsm_init( 2, 1, 1);
+  pfsm_init(2, 1, 1, PFSM_MINOR);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
   // file_size = uart16550_recvfile("pfsm.bit", bitstreamBuffer);
@@ -373,51 +379,52 @@ void pfsm_program(char *bitstreamBuffer, uint32_t read_size){
          pfsm_bitstream_program(bitstreamBuffer)
          );
 }
-//
-// // Program Monitor PFSM internal to ILA.
-// void ila_monitor_program(char *bitstreamBuffer){
-//   // init ILA Monitor (PFSM)
-//   pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 2, 1, 1);
-//   uint32_t file_size = 0;
-//   // Receive pfsm bitstream
-//   file_size = uart16550_recvfile("monitor_pfsm.bit", bitstreamBuffer);
-//   // Program PFSM
-//   uart16550_puts("[Tester]: Programming Monitor PFSM...\n");
-//   printf("[Tester]: Programmed Monitor PFSM with %d bytes.\n\n",
-//          pfsm_bitstream_program(bitstreamBuffer)
-//          );
-// }
-//
-// void print_ila_samples() {
-//   // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
-//   uint32_t j, i, fifo_value;
-//   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
-//   uint32_t latest_sample_index = ila_number_samples();
-//   const uint32_t ila_buffer_size = (1<<4);
-//
-//   // Allocate memory for samples
-//   // Each buffer sample has 2 * 32 bit words
-//   volatile uint32_t *samples = (volatile uint32_t *)malloc((ila_buffer_size*2)*sizeof(uint32_t));
-//
-//   // Point ila cursor to the latest sample
-//   ila_set_cursor(latest_sample_index,0);
-//
-//   uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
-//   dma_start_transfer((uint32_t *)samples+i, ila_buffer_size*2, 1, 1);
-//
-//   clear_cache();
-//
-//   uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-//   uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
-//   // For every sample in the buffer
-//   for(i=0; i<ila_buffer_size*2; i+=2){
-//     fifo_value = samples[i+1]<<16 | samples[i]>>16;
-//     printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
-//   }
-//   uart16550_putc('\n');
-//
-//   free((uint32_t *)samples);
-// }
+
+// Program Monitor PFSM internal to ILA.
+void ila_monitor_program(char *bitstreamBuffer, uint32_t read_size){
+  // init ILA Monitor (PFSM)
+  pfsm_init(2, 1, 1, MONITOR_MINOR);
+  uint32_t file_size = 0;
+  // Receive pfsm bitstream
+  // file_size = uart16550_recvfile("monitor_pfsm.bit", bitstreamBuffer);
+  file_size = rz_request_file("monitor_pfsm.bit", bitstreamBuffer, read_size);
+  // Program PFSM
+  printf("[Tester]: Programming MONITOR...with %d bytes\n", file_size);
+  printf("[Tester]: Programmed Monitor PFSM with %d bytes.\n\n",
+         pfsm_bitstream_program(bitstreamBuffer)
+         );
+}
+
+void print_ila_samples() {
+  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
+  uint32_t i=0, fifo_value;
+  uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
+  uint32_t latest_sample_index = ila_number_samples();
+  const uint32_t ila_buffer_size = (1<<4);
+
+  // Allocate memory for samples
+  // Each buffer sample has 2 * 32 bit words
+  volatile uint32_t *samples = (volatile uint32_t *)malloc((ila_buffer_size*2)*sizeof(uint32_t));
+
+  // Point ila cursor to the latest sample
+  ila_set_cursor(latest_sample_index,0);
+
+  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
+  // dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+
+  // clear_cache(); // linux command: sync; echo 3 > /proc/sys/vm/drop_caches
+
+  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
+  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  // For every sample in the buffer
+  for(i=0; i<ila_buffer_size*2; i+=2){
+    fifo_value = samples[i+1]<<16 | samples[i]>>16;
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
+  }
+  uart16550_putc('\n');
+
+  free((uint32_t *)samples);
+}
 #endif //USE_ILA_PFSM
 //
 // void send_axistream() {
