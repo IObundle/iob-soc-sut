@@ -15,6 +15,7 @@
 // how to fix this for linux program?
 #include "iob-pfsm-user.h"
 #include "iob-ila-user.h"
+#include "iob-dma-user.h"
 #define USE_ILA_PFSM
 
 //
@@ -409,13 +410,13 @@ void print_ila_samples() {
   // Point ila cursor to the latest sample
   ila_set_cursor(latest_sample_index,0);
 
-  uart16550_puts("[Tester]: Storing ILA samples into memory via DMA...\n");
-  // dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+  printf("[Tester]: Storing ILA samples into memory via DMA...\n");
+  dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
 
   // clear_cache(); // linux command: sync; echo 3 > /proc/sys/vm/drop_caches
 
-  uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  printf("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
+  printf("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // For every sample in the buffer
   for(i=0; i<ila_buffer_size*2; i+=2){
     fifo_value = samples[i+1]<<16 | samples[i]>>16;

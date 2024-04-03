@@ -114,6 +114,11 @@
             reg = <0x/*/*ILA0_ADDR_MACRO*/+0x40000*/ 0x40000>;
         };
 
+        DMA0: dma@/*DMA0_ADDR_MACRO*/ {
+            compatible = "iobundle,dma0";
+            reg = <0x/*DMA0_ADDR_MACRO*/ 0x10>;
+        };
+
 
         // Do we need PLIC0 here? OpenSBI already uses it.
         //PLIC0: plic@/*PLIC0_ADDR_MACRO*/ {

@@ -135,6 +135,7 @@ MODULE_NAMES += iob_soc_sut
 MODULE_NAMES += iob_gpio
 MODULE_NAMES += iob_pfsm
 MODULE_NAMES += iob_ila
+MODULE_NAMES += iob_dma
 
 build-linux-drivers:
 	@$(foreach module,$(MODULE_NAMES), \
