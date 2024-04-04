@@ -239,8 +239,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMIN0",
-                    "if_name": "dma",
-                    "port": "tvalid_o",
+                    "if_name": "sys_axis",
+                    "port": "sys_tvalid_o",
                     "bits": [],
                 },
                 {
@@ -253,8 +253,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMIN0",
-                    "if_name": "dma",
-                    "port": "tready_i",
+                    "if_name": "sys_axis",
+                    "port": "sys_tready_i",
                     "bits": [],
                 },
                 {
@@ -267,8 +267,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMIN0",
-                    "if_name": "dma",
-                    "port": "tdata_o",
+                    "if_name": "sys_axis",
+                    "port": "sys_tdata_o",
                     "bits": [],
                 },
                 {
@@ -281,8 +281,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMIN0",
-                    "if_name": "interrupt",
-                    "port": "fifo_threshold_o",
+                    "if_name": "general",
+                    "port": "interrupt_o",
                     "bits": [],
                 },
                 {
@@ -396,8 +396,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMOUT0",
-                    "if_name": "dma",
-                    "port": "tvalid_i",
+                    "if_name": "sys_axis",
+                    "port": "sys_tvalid_i",
                     "bits": [],
                 },
                 {
@@ -410,8 +410,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMOUT0",
-                    "if_name": "dma",
-                    "port": "tready_o",
+                    "if_name": "sys_axis",
+                    "port": "sys_tready_o",
                     "bits": [],
                 },
                 {
@@ -424,8 +424,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMOUT0",
-                    "if_name": "dma",
-                    "port": "tdata_i",
+                    "if_name": "sys_axis",
+                    "port": "sys_tdata_i",
                     "bits": [],
                 },
                 {
@@ -438,8 +438,8 @@ class iob_soc_sut(iob_soc_opencryptolinux):
             (
                 {
                     "corename": "AXISTREAMOUT0",
-                    "if_name": "interrupt",
-                    "port": "fifo_threshold_o",
+                    "if_name": "general",
+                    "port": "interrupt_o",
                     "bits": [],
                 },
                 {
