@@ -19,7 +19,7 @@
 #define ILA0_BYTE_SIZE 7
 #define ILA0_BUFFER_SIZE (2 * *ILA0_BUFFER_W)
 
-void ila_init(int base_address);
+void ila_init();
 void ila_reset();
 void ila_set_trigger_type(int trigger, int type);
 void ila_set_trigger_enabled(int trigger, int enabled_bool);

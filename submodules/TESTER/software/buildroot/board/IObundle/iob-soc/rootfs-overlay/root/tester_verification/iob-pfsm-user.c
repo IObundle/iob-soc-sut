@@ -27,14 +27,16 @@ void iob_pfsm_set_memory(uint32_t value, uint32_t address) {
   }
 
   // check for invalid memory address
-  if ((address < 0) || (address >= IOB_PFSM_MEM_WORD_SELECT_ADDR)) {
+  if ((address < 0) || ((address<<2) >= IOB_PFSM_MEM_WORD_SELECT_ADDR)) {
     perror("[Tester|User] Invalid memory address");
     close(fd);
     return;
   }
 
   // Point to memory address
-  if (lseek(fd, IOB_PFSM_MEMORY_ADDR + address, SEEK_SET) == -1) {
+  // PFSM_MEMORY is addressed by 32-bit words
+  // fd lseek is addressed by bytes
+  if (lseek(fd, IOB_PFSM_MEMORY_ADDR + (address << 2), SEEK_SET) == -1) {
     perror("[Tester|User] Failed to seek memory address");
     close(fd);
     return;

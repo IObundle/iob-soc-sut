@@ -22,7 +22,7 @@ static inline int setBit(int bitfield, int bit, int value) {
 }
 
 // Init the ila module
-void ila_init(int base_address) {
+void ila_init() {
 
   triggerType = 0;
   triggerNegate = 0;

@@ -164,7 +164,7 @@ int main() {
 
  #ifdef USE_ILA_PFSM
      // init integrated logic analyzer
-     // ila_init(ILA0_BASE);
+     ila_init();
      // Enable ILA circular buffer
      // This allows for continuous sampling while the enable signal is active
      ila_set_circular_buffer(1);
@@ -444,8 +444,6 @@ void send_axistream() {
 
   // Print byte stream to send
   printf("[Tester]: Sending AXI stream bytes: ");
-  // for (i = 0; i < words_in_byte_stream*4; i++)
-  //   printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
   for (i = 0; i < words_in_byte_stream; i++)
     printf("0x%08x ", byte_stream[i]);
   printf("\n");
@@ -454,16 +452,13 @@ void send_axistream() {
   printf("[Tester]: Loading AXI words via DMA...\n");
   iob_axis_out_reset();
   iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_ENABLE, 1);
-  // iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_MODE, 1);
+  iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_MODE, 1);
   iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_NWORDS, words_in_byte_stream);
-  for (i = 0; i < words_in_byte_stream; i++){
-    iob_axis_write(byte_stream[i]);
-  }
-  // dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
+  dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
   // Send the last word with via SWregs with the TLAST signal.
   printf("[Tester]: Loading last AXI word via SWregs...\n\n");
-  // iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_MODE, 0);
-  // iob_axis_write(byte_stream[words_in_byte_stream-1]);
+  iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_MODE, 0);
+  iob_axis_write(byte_stream[words_in_byte_stream-1]);
 
   free(byte_stream);
 }
@@ -487,8 +482,6 @@ void receive_axistream() {
 
   // Print byte stream received
   printf("[Tester]: Received AXI stream %d bytes: ", n_received_words*4);
-  // for (i = 0; i < n_received_words*4; i++)
-  //   printf("0x%02x ", ((volatile uint8_t *)byte_stream)[i]);
   for (i = 0; i < n_received_words; i++)
     printf("0x%08x ", byte_stream[i]);
   printf("\n\n");
