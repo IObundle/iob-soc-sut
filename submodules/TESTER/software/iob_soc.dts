@@ -119,6 +119,15 @@
             reg = <0x/*DMA0_ADDR_MACRO*/ 0x10>;
         };
 
+        AXISTREAMIN0: axistream_in@/*AXISTREAMIN0_ADDR_MACRO*/ {
+            compatible = "iobundle,axistream_in0";
+            reg = <0x/*AXISTREAMIN0_ADDR_MACRO*/ 0x20>;
+        };
+
+        AXISTREAMOUT0: axistream_out@/*AXISTREAMOUT0_ADDR_MACRO*/ {
+            compatible = "iobundle,axistream_out0";
+            reg = <0x/*AXISTREAMOUT0_ADDR_MACRO*/ 0x20>;
+        };
 
         // Do we need PLIC0 here? OpenSBI already uses it.
         //PLIC0: plic@/*PLIC0_ADDR_MACRO*/ {

@@ -168,9 +168,8 @@ int main()
 
 // Read AXI stream input, print, and relay data to AXI stream output
 void axistream_loopback(){
-  uint32_t byte_stream[16];
+  uint32_t byte_stream[16] = {0};
   uint8_t i, received_words;
-  uint8_t tlast = 0;
   
   //Check if we are receiving an AXI stream
   if(!IOB_AXISTREAM_IN_GET_FIFO_EMPTY()){
@@ -181,9 +180,12 @@ void axistream_loopback(){
     }
     
     // Print received bytes
-    uart16550_puts("[SUT]: Received AXI stream bytes: ");
-    for(i=0;i<received_words*4;i++)
-      printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+    // uart16550_puts("[SUT]: Received AXI stream bytes: ");
+    printf("[SUT]: Received AXI stream %d bytes: %d\n\n",received_words*4);
+    // for(i=0;i<received_words*4;i++)
+    //   printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+    for(i=0;i<received_words;i++)
+      printf("0x%08x ", byte_stream[i]);
 
     // Send bytes to AXI stream output
     IOB_AXISTREAM_OUT_SET_NWORDS(received_words);

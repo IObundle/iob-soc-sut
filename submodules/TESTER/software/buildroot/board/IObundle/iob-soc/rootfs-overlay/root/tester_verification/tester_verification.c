@@ -3,13 +3,13 @@
  *********************************************************/
  // Place the compiled source in /etc/init.d/S99IObundleVerification
 
-//#include "bsp.h"
-//#include "iob-axistream-in.h"
-//#include "iob-axistream-out.h"
+// #include "bsp.h"
 #include "iob-gpio-user.h"
 #include "iob-uart16550.h"
 #include "iob-timer-user.h"
 #include "iob-soc-sut-user.h"
+#include "iob-axistream-in-user.h"
+#include "iob-axistream-out-user.h"
 
 //// System may not use ILA/PFSM for Quartus boards
 // how to fix this for linux program?
@@ -40,6 +40,10 @@
 
 #define BUFFER_SIZE 5096
 
+// copied from bsp.h
+#define BAUD 115200
+#define FREQ 100000000
+
 // We should ideally receive the INIT_MEM information from the PC
 // However, since most of the time we run linux on the FPGA,
 // the INIT_MEM will be 0, therefore we hardcode it for now.
@@ -54,8 +58,8 @@
 #define MONITOR_MINOR 1
 
 void print_ila_samples();
-//void send_axistream();
-//void receive_axistream();
+void send_axistream();
+void receive_axistream();
 void pfsm_program(char *, uint32_t);
 void ila_monitor_program(char *, uint32_t);
 //void clear_cache();
@@ -153,12 +157,11 @@ int main() {
 //    printf_init(&uart16550_putc);
 //    // Init SUT (connected through REGFILEIF)
 //    IOB_SOC_SUT_INIT_BASEADDR(SUT0_BASE);
-//    // init axistream
-//    axistream_in_init(AXISTREAMIN0_BASE);
-//    axistream_out_init(AXISTREAMOUT0_BASE, 4);
-//    axistream_in_enable();
-//    axistream_out_enable();
-//
+    // init axistream
+    iob_sysfs_write_file(IOB_AXISTREAM_IN_SYSFILE_ENABLE, 1);
+    iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_ENABLE, 1);
+
+
  #ifdef USE_ILA_PFSM
      // init integrated logic analyzer
      // ila_init(ILA0_BASE);
@@ -239,12 +242,12 @@ int main() {
 #endif //ifndef IOB_SOC_TESTER_INIT_MEM
 
 //    uart16550_base(UART0_BASE);
-//
-//    //Delay to allow time for sut to run bootloader and enable its axistream
-//    for ( i = 0; i < (FREQ/BAUD)*256; i++)asm("nop");
-//
-//    // Send byte stream via AXI stream
-//    send_axistream();
+
+   //Delay to allow time for sut to run bootloader and enable its axistream
+   for ( i = 0; i < (FREQ/BAUD)*256; i++)asm("nop");
+
+    // Send byte stream via AXI stream
+    send_axistream();
 
  #ifdef USE_ILA_PFSM
      // Disable all ILA triggers
@@ -314,8 +317,8 @@ int main() {
     // Read pattern from GPIO inputs (was set by the SUT)
     printf("\n[Tester]: Pattern read from GPIO inputs: 0x%x\n\n", gpio_get());
 //
-//    // Read byte stream via AXI stream
-//    receive_axistream();
+  // Read byte stream via AXI stream
+  receive_axistream();
 //
 //    uart16550_puts("\n[Tester] Using shared external memory. Obtain SUT memory string "
 //              "pointer via SUT's register 5...\n");
@@ -427,56 +430,72 @@ void print_ila_samples() {
   free((uint32_t *)samples);
 }
 #endif //USE_ILA_PFSM
-//
-// void send_axistream() {
-//   uint8_t i;
-//   uint8_t words_in_byte_stream = 4;
-//   // Allocate memory for byte stream
-//   uint32_t *byte_stream = (uint32_t *)malloc(words_in_byte_stream*sizeof(uint32_t));
-//   // Fill byte stream to send
-//   byte_stream[0] = 0x03020100;
-//   byte_stream[1] = 0x07060504;
-//   byte_stream[2] = 0xbbaa0908;
-//   byte_stream[3] = 0xffeeddcc;
-//
-//   // Print byte stream to send
-//   uart16550_puts("[Tester]: Sending AXI stream bytes: ");
-//   for (i = 0; i < words_in_byte_stream*4; i++)
-//     printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
-//   uart16550_puts("\n");
-//
-//   // Send bytes to AXI stream output via DMA, except the last word.
-//   uart16550_puts("[Tester]: Loading AXI words via DMA...\n");
-//   dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
-//   // Send the last word with via SWregs with the TLAST signal.
-//   uart16550_puts("[Tester]: Loading last AXI word via SWregs...\n\n");
-//   axistream_out_push(byte_stream[words_in_byte_stream-1], 1, 1);
-//
-//   free(byte_stream);
-// }
-//
-// void receive_axistream() {
-//   uint8_t i;
-//   uint8_t n_received_words = axistream_in_fifo_level();
-//
-//   // Allocate memory for byte stream
-//   volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
-//
-//   // Transfer bytes from AXI stream input via DMA
-//   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
-//   dma_start_transfer((uint32_t *)byte_stream+i, n_received_words, 1, 0);
-//
-//   clear_cache();
-//
-//   // Print byte stream received
-//   uart16550_puts("[Tester]: Received AXI stream bytes: ");
-//   for (i = 0; i < n_received_words*4; i++)
-//     printf("0x%02x ", ((volatile uint8_t *)byte_stream)[i]);
-//   uart16550_puts("\n\n");
-//
-//   free((uint32_t *)byte_stream);
-// }
-//
+
+void send_axistream() {
+  uint8_t i;
+  uint8_t words_in_byte_stream = 4;
+  // Allocate memory for byte stream
+  uint32_t *byte_stream = (uint32_t *)malloc(words_in_byte_stream*sizeof(uint32_t));
+  // Fill byte stream to send
+  byte_stream[0] = 0x03020100;
+  byte_stream[1] = 0x07060504;
+  byte_stream[2] = 0xbbaa0908;
+  byte_stream[3] = 0xffeeddcc;
+
+  // Print byte stream to send
+  printf("[Tester]: Sending AXI stream bytes: ");
+  // for (i = 0; i < words_in_byte_stream*4; i++)
+  //   printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+  for (i = 0; i < words_in_byte_stream; i++)
+    printf("0x%08x ", byte_stream[i]);
+  printf("\n");
+
+  // Send bytes to AXI stream output via DMA, except the last word.
+  printf("[Tester]: Loading AXI words via DMA...\n");
+  iob_axis_out_reset();
+  iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_ENABLE, 1);
+  // iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_MODE, 1);
+  iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_NWORDS, words_in_byte_stream);
+  for (i = 0; i < words_in_byte_stream; i++){
+    iob_axis_write(byte_stream[i]);
+  }
+  // dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
+  // Send the last word with via SWregs with the TLAST signal.
+  printf("[Tester]: Loading last AXI word via SWregs...\n\n");
+  // iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_MODE, 0);
+  // iob_axis_write(byte_stream[words_in_byte_stream-1]);
+
+  free(byte_stream);
+}
+
+void receive_axistream() {
+  uint8_t i;
+  uint32_t n_received_words = 0;
+  iob_sysfs_read_file(IOB_AXISTREAM_IN_SYSFILE_NWORDS, &n_received_words);
+
+  // Allocate memory for byte stream
+  volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
+  for (i = 0; i < n_received_words; i++)
+      byte_stream[i] = 0;
+
+  // Transfer bytes from AXI stream input via DMA
+  printf("[Tester]: Storing AXI words via DMA...\n");
+  iob_sysfs_write_file(IOB_AXISTREAM_IN_SYSFILE_MODE, 1);
+  dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
+
+  // clear_cache();
+
+  // Print byte stream received
+  printf("[Tester]: Received AXI stream %d bytes: ", n_received_words*4);
+  // for (i = 0; i < n_received_words*4; i++)
+  //   printf("0x%02x ", ((volatile uint8_t *)byte_stream)[i]);
+  for (i = 0; i < n_received_words; i++)
+    printf("0x%08x ", byte_stream[i]);
+  printf("\n\n");
+
+  free((uint32_t *)byte_stream);
+}
+
 // void clear_cache(){
 //   // Delay to ensure all data is written to memory
 //   for ( unsigned int i = 0; i < 10; i++)asm volatile("nop");
