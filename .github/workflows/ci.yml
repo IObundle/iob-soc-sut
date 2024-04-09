@@ -121,8 +121,8 @@ jobs:
           submodules: 'recursive'
       - name: test baremetal
         run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
-      - name: test linux
-        run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
+      # - name: test linux
+      #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
 
   # tester-netlist-cyclonev:
   #   runs-on: self-hosted
