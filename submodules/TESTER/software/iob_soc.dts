@@ -99,6 +99,36 @@
             reg = <0x/*GPIO0_ADDR_MACRO*/ 0x100>;
         };
 
+        PFSM0: pfsm@/*PFSM0_ADDR_MACRO*/ {
+            compatible = "iobundle,pfsm0";
+            reg = <0x/*PFSM0_ADDR_MACRO*/ 0x20000>;
+        };
+
+        // ILA: access only registers BEFORE Monitor and Version
+        ILA0: ila@/*ILA0_ADDR_MACRO*/ {
+            compatible = "iobundle,ila0";
+            reg = <0x/*ILA0_ADDR_MACRO*/ 0x40000>;
+        };
+        MONITOR0: monitor@/*/*ILA0_ADDR_MACRO*/+0x40000*/ {
+            compatible = "iobundle,pfsm0";
+            reg = <0x/*/*ILA0_ADDR_MACRO*/+0x40000*/ 0x40000>;
+        };
+
+        DMA0: dma@/*DMA0_ADDR_MACRO*/ {
+            compatible = "iobundle,dma0";
+            reg = <0x/*DMA0_ADDR_MACRO*/ 0x10>;
+        };
+
+        AXISTREAMIN0: axistream_in@/*AXISTREAMIN0_ADDR_MACRO*/ {
+            compatible = "iobundle,axistream_in0";
+            reg = <0x/*AXISTREAMIN0_ADDR_MACRO*/ 0x20>;
+        };
+
+        AXISTREAMOUT0: axistream_out@/*AXISTREAMOUT0_ADDR_MACRO*/ {
+            compatible = "iobundle,axistream_out0";
+            reg = <0x/*AXISTREAMOUT0_ADDR_MACRO*/ 0x20>;
+        };
+
         // Do we need PLIC0 here? OpenSBI already uses it.
         //PLIC0: plic@/*PLIC0_ADDR_MACRO*/ {
         //    #address-cells = <0>;

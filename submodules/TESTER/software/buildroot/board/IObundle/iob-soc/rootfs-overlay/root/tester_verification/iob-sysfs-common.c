@@ -56,3 +56,9 @@ int iob_sysfs_print_version(const char *filename) {
 	printf("[User] Version: 0x%x\n", version);
 	return 0;
 }
+
+char *iob_sysfs_gen_fname(char *filename, char *class_path, int minor,
+                          char *reg) {
+    sprintf(filename, "%s%d/%s", class_path, minor, reg);
+    return filename;
+}

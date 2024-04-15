@@ -66,10 +66,10 @@ int main()
   //init gpio
   gpio_init(GPIO0_BASE);   
   //init axistream
-  axistream_in_init(AXISTREAMIN0_BASE);   
-  axistream_out_init(AXISTREAMOUT0_BASE, 4);
-  axistream_in_enable();
-  axistream_out_enable();
+  IOB_AXISTREAM_IN_INIT_BASEADDR(AXISTREAMIN0_BASE);
+  IOB_AXISTREAM_OUT_INIT_BASEADDR(AXISTREAMOUT0_BASE);
+  IOB_AXISTREAM_IN_SET_ENABLE(1);
+  IOB_AXISTREAM_OUT_SET_ENABLE(1);
   // init eth
   eth_init(ETH0_BASE, &clear_cache);
 
@@ -168,24 +168,30 @@ int main()
 
 // Read AXI stream input, print, and relay data to AXI stream output
 void axistream_loopback(){
-  uint32_t byte_stream[16];
-  uint8_t i, rstrb, received_words;
+  uint32_t byte_stream[16] = {0};
+  uint8_t i, received_words;
   
   //Check if we are receiving an AXI stream
-  if(!axistream_in_empty()){
-    // Receive bytes while stream does not end (by TLAST signal), or up to 16 32-bit words
-    for(received_words=0, i=0; i<1 && received_words<16; received_words++)
-      byte_stream[received_words] = axistream_in_pop(&rstrb, &i);
+  if(!IOB_AXISTREAM_IN_GET_FIFO_EMPTY()){
+    // Read up to NWORD 32-bit words, or up to 16 32-bit words
+    received_words = IOB_AXISTREAM_IN_GET_NWORDS();
+    for(i=0; i<received_words && i<16; i++){
+      byte_stream[i] = IOB_AXISTREAM_IN_GET_DATA();
+    }
     
     // Print received bytes
-    uart16550_puts("[SUT]: Received AXI stream bytes: ");
-    for(i=0;i<received_words*4;i++)
-      printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+    // uart16550_puts("[SUT]: Received AXI stream bytes: ");
+    printf("[SUT]: Received AXI stream %d bytes: %d\n\n",received_words*4);
+    // for(i=0;i<received_words*4;i++)
+    //   printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
+    for(i=0;i<received_words;i++)
+      printf("0x%08x ", byte_stream[i]);
 
     // Send bytes to AXI stream output
-    for(i=0;i<received_words-1;i++)
-      axistream_out_push(byte_stream[i],1,0);
-    axistream_out_push(byte_stream[i],1,1); // Send the last word with the TLAST signal
+    IOB_AXISTREAM_OUT_SET_NWORDS(received_words);
+    for(i=0;i<received_words;i++)
+      iob_axis_write(byte_stream[i]);
+
     uart16550_puts("\n[SUT]: Sent AXI stream bytes back via output interface.\n\n");
   } else {
     // Input AXI stream queue is empty

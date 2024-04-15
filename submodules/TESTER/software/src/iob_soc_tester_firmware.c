@@ -142,10 +142,10 @@ int main() {
   // Init gpio
   gpio_init(GPIO0_BASE);
   // init axistream
-  axistream_in_init(AXISTREAMIN0_BASE);
-  axistream_out_init(AXISTREAMOUT0_BASE, 4);
-  axistream_in_enable();
-  axistream_out_enable();
+  IOB_AXISTREAM_IN_INIT_BASEADDR(AXISTREAMIN0_BASE);
+  IOB_AXISTREAM_OUT_INIT_BASEADDR(AXISTREAMOUT0_BASE);
+  IOB_AXISTREAM_IN_SET_ENABLE(1);
+  IOB_AXISTREAM_OUT_SET_ENABLE(1);
 
 #ifdef USE_ILA_PFSM
     // init integrated logic analyzer
@@ -434,24 +434,30 @@ void send_axistream() {
 
   // Send bytes to AXI stream output via DMA, except the last word.
   uart16550_puts("[Tester]: Loading AXI words via DMA...\n");
+  iob_axis_out_reset();
+  IOB_AXISTREAM_OUT_SET_ENABLE(1);
+  IOB_AXISTREAM_OUT_SET_MODE(1);
+  IOB_AXISTREAM_OUT_SET_NWORDS(words_in_byte_stream);
   dma_start_transfer(byte_stream, words_in_byte_stream-1, 0, 0);
   // Send the last word with via SWregs with the TLAST signal.
   uart16550_puts("[Tester]: Loading last AXI word via SWregs...\n\n");
-  axistream_out_push(byte_stream[words_in_byte_stream-1], 1, 1);
+  IOB_AXISTREAM_OUT_SET_MODE(0);
+  iob_axis_write(byte_stream[words_in_byte_stream-1]);
 
   free(byte_stream);
 }
 
 void receive_axistream() {
   uint8_t i;
-  uint8_t n_received_words = axistream_in_fifo_level();
+  uint8_t n_received_words = IOB_AXISTREAM_IN_GET_NWORDS();
   
   // Allocate memory for byte stream
   volatile uint32_t *byte_stream = (volatile uint32_t *)malloc((n_received_words)*sizeof(uint32_t));
 
   // Transfer bytes from AXI stream input via DMA
   uart16550_puts("[Tester]: Storing AXI words via DMA...\n");
-  dma_start_transfer((uint32_t *)byte_stream+i, n_received_words, 1, 0);
+  IOB_AXISTREAM_IN_SET_MODE(1);
+  dma_start_transfer((uint32_t *)byte_stream, n_received_words, 1, 0);
 
   clear_cache();
 

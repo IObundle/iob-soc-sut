@@ -4,6 +4,11 @@
 insmod /drivers/iob_timer.ko
 insmod /drivers/iob_soc_sut.ko
 insmod /drivers/iob_gpio.ko
+insmod /drivers/iob_pfsm.ko
+insmod /drivers/iob_ila.ko
+insmod /drivers/iob_dma.ko
+insmod /drivers/iob_axistream_in.ko
+insmod /drivers/iob_axistream_out.ko
 
 # Set correct settings for uart port connected to SUT
 stty -F /dev/ttyS0 115200 raw -echo -echoe -echok
