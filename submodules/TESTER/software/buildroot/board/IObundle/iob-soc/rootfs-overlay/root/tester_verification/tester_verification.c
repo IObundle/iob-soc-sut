@@ -250,6 +250,9 @@ int main() {
     send_axistream();
 
  #ifdef USE_ILA_PFSM
+
+      while(ila_number_samples()<4);
+
      // Disable all ILA triggers
      ila_disable_all_triggers();
 

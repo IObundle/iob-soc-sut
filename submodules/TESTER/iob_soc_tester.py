@@ -260,7 +260,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
                 sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
                 trigger_list=[
-                    "SUT0.AXISTREAMIN0.axis_tvalid_i"
+                    "SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o"
                 ],  # List of signals to use as triggers
                 probe_list=[  # List of signals to probe
                     ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
@@ -273,7 +273,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             # This PFSM will be used as an example, reacting to values of tvalid_i.
             # The output of this PFSM will be captured by the ILA.
             insert_verilog_in_module(
-                "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i};",
+                "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o};",
                 cls.build_dir
                 + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
             )

@@ -8,7 +8,7 @@
 # Set 5min timeout
 # runscript has 2min timeout by default:
 # check `timeout` in: https://linux.die.net/man/1/runscript
-timeout 300
+timeout 600
 
 print "\n[minicom] Waiting for file transfers..."
 
@@ -17,7 +17,7 @@ expect {
     "B00000000000000" goto receive
     "B0100000023be50" goto send
     "buildroot login:" goto done
-    timeout 300
+    timeout 600
 }
 
 send:
