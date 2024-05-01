@@ -173,11 +173,9 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             1,  # Monitor OUTPUT_W always 1. It is the internal trigger signal for the ILA.
         )
 
-        # Create a Monitor PFSM program that always has the trigger output
-        # enabled (to keep recording samples) until a certain sequence is detected
-        # in the input.
-        # In this example, When the input is 1 for one pulse, it disables the trigger output
-        # 4 clocks after it. This allows us to record the two pulses emitted by the Tester's example PFSM.
+        # Create a Monitor PFSM program that triggers when an AXI Stream word is being transfered (input bit 0 is high),
+        # and also trigger during 3 clock cycles after the last word (after input bit 1 is high).
+        # These last 3 samples allow capturing the output data of the PFSM peripheral.
         monitor_prog.set_records(
             [
                 # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
@@ -262,8 +260,8 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
                 trigger_list=[
                     "SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o",
-                    # Bit 1 is enabled when highest byte in tdata is 0xff and a word is being transfered
-                    "(&SUT0.AXISTREAMIN0.axis_tdata_i[23+:8]) & SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o",
+                    # Bit 1 is enabled when the last word is being transfered
+                    "SUT0.AXISTREAMIN0.axis_tlast_i & SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o",
                 ],  # List of signals to use as triggers
                 probe_list=[  # List of signals to probe
                     ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
@@ -273,10 +271,10 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             )
 
             # Create a probe for input of (independent) PFSM
-            # This PFSM will be used as an example, reacting to values of tvalid_i.
+            # This PFSM will be used as an example, reacting to values of tlast_i.
             # The output of this PFSM will be captured by the ILA.
             insert_verilog_in_module(
-                "   assign PFSM0_input_ports = {(&SUT0.AXISTREAMIN0.axis_tdata_i[23+:8]) & SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o};",
+                "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tlast_i & SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o};",
                 cls.build_dir
                 + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
             )
