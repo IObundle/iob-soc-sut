@@ -111,9 +111,9 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 "ILA0",
                 "Tester Integrated Logic Analyzer for SUT signals",
                 parameters={
-                    "BUFFER_W": "4",
+                    "BUFFER_W": "3",
                     "SIGNAL_W": "38",
-                    "TRIGGER_W": "1",
+                    "TRIGGER_W": "2",
                     "CLK_COUNTER": "1",
                     "MONITOR": "1",
                     "MONITOR_STATE_W": "2",
@@ -182,21 +182,22 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             [
                 # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
                 iob_fsm_record(
-                    # Keep jumping to this state while input is not high.
+                    # Keep jumping to this state while input bit 1 is not high.
+                    # Output is the same as bit 0 of input
                     "state_0",
-                    "0",
+                    "0-",
                     "state_0",
                     "i[0]",
                 ),
                 iob_fsm_record(
-                    # If the input is still high (more than 1 clock pulse), then go back to state 0.
+                    # If the input bit 1 is still high (more than 1 clock pulse), then go back to state 0.
                     "",
-                    "1",
+                    "1-",
                     "state_0",
                     "1",
                 ),
                 iob_fsm_record("", "", "", "1"),  # Wait one clock
-                iob_fsm_record("", "-", "state_0", "1"),  # Jump to state 0
+                iob_fsm_record("", "--", "state_0", "1"),  # Jump to state 0
             ]
         )
 
@@ -260,7 +261,9 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 "hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
                 sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
                 trigger_list=[
-                    "SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o"
+                    "SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o",
+                    # Bit 1 is enabled when highest byte in tdata is 0xff and a word is being transfered
+                    "(&SUT0.AXISTREAMIN0.axis_tdata_i[23+:8]) & SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o",
                 ],  # List of signals to use as triggers
                 probe_list=[  # List of signals to probe
                     ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
@@ -273,7 +276,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             # This PFSM will be used as an example, reacting to values of tvalid_i.
             # The output of this PFSM will be captured by the ILA.
             insert_verilog_in_module(
-                "   assign PFSM0_input_ports = {SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o};",
+                "   assign PFSM0_input_ports = {(&SUT0.AXISTREAMIN0.axis_tdata_i[23+:8]) & SUT0.AXISTREAMIN0.axis_tvalid_i & SUT0.AXISTREAMIN0.axis_tready_o};",
                 cls.build_dir
                 + "/hardware/src/iob_soc_tester.v",  # Name of the system file to generate the probe wires
             )
