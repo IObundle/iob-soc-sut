@@ -232,7 +232,7 @@ int main() {
   relay_file_transfer_to_sut(buffer, sut_firmware);
 
   uart16550_base(UART0_BASE);
-  uart16550_puts("[Tester]: SUT firmware transfered.");
+  uart16550_puts("[Tester]: SUT firmware transfered.\n\n");
 
 #endif //IOB_SOC_TESTER_INIT_MEM
 
