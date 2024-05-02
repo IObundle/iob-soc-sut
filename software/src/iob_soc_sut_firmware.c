@@ -181,7 +181,7 @@ void axistream_loopback(){
     
     // Print received bytes
     // uart16550_puts("[SUT]: Received AXI stream bytes: ");
-    printf("[SUT]: Received AXI stream %d bytes: %d\n\n",received_words*4);
+    printf("[SUT]: Received AXI stream %d bytes: ",received_words*4);
     // for(i=0;i<received_words*4;i++)
     //   printf("0x%02x ", ((uint8_t *)byte_stream)[i]);
     for(i=0;i<received_words;i++)

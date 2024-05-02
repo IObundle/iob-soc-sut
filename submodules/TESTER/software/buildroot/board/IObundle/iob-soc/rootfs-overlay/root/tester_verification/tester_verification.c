@@ -17,6 +17,8 @@
 #include "iob-ila-user.h"
 #include "iob-dma-user.h"
 #define USE_ILA_PFSM
+#define ILA0_BUFFER_W 3
+
 
 //
 //#include "iob-dma.h"
@@ -250,6 +252,9 @@ int main() {
     send_axistream();
 
  #ifdef USE_ILA_PFSM
+
+      while(ila_number_samples()<4);
+
      // Disable all ILA triggers
      ila_disable_all_triggers();
 
@@ -338,12 +343,11 @@ int main() {
 
  #ifdef USE_ILA_PFSM
      // Allocate memory for ILA output data
-     const uint32_t ila_n_samples = (1<<4); //Same as buffer size
-     uint32_t ila_data_size = ila_output_data_size(ila_n_samples, ILA0_DWORD_SIZE);
+     uint32_t ila_data_size = ila_output_data_size(ILA0_BUFFER_SIZE, ILA0_DWORD_SIZE);
 
      // Write data to allocated memory
      uint32_t latest_sample_index = ila_number_samples();
-     ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ila_n_samples, ila_n_samples, ILA0_DWORD_SIZE);
+     ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ILA0_BUFFER_SIZE, ILA0_BUFFER_SIZE, ILA0_DWORD_SIZE);
 
      // Send ila data to file via UART
      uart16550_sendfile("ila_data.bin", ila_data_size-1, buffer); //Don't send last byte (\0)
@@ -387,7 +391,7 @@ void pfsm_program(char *bitstreamBuffer, uint32_t read_size){
 // Program Monitor PFSM internal to ILA.
 void ila_monitor_program(char *bitstreamBuffer, uint32_t read_size){
   // init ILA Monitor (PFSM)
-  pfsm_init(2, 1, 1, MONITOR_MINOR);
+  pfsm_init(2, 2, 1, MONITOR_MINOR);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
   // file_size = uart16550_recvfile("monitor_pfsm.bit", bitstreamBuffer);
@@ -404,24 +408,23 @@ void print_ila_samples() {
   uint32_t i=0, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
   uint32_t latest_sample_index = ila_number_samples();
-  const uint32_t ila_buffer_size = (1<<4);
 
   // Allocate memory for samples
   // Each buffer sample has 2 * 32 bit words
-  volatile uint32_t *samples = (volatile uint32_t *)malloc((ila_buffer_size*2)*sizeof(uint32_t));
+  volatile uint32_t *samples = (volatile uint32_t *)malloc((ILA0_BUFFER_SIZE*2)*sizeof(uint32_t));
 
   // Point ila cursor to the latest sample
   ila_set_cursor(latest_sample_index,0);
 
   printf("[Tester]: Storing ILA samples into memory via DMA...\n");
-  dma_start_transfer((uint32_t *)samples, ila_buffer_size*2, 1, 1);
+  dma_start_transfer((uint32_t *)samples, ILA0_BUFFER_SIZE*2, 1, 1);
 
   // clear_cache(); // linux command: sync; echo 3 > /proc/sys/vm/drop_caches
 
   printf("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
   printf("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
   // For every sample in the buffer
-  for(i=0; i<ila_buffer_size*2; i+=2){
+  for(i=(ILA0_BUFFER_SIZE-latest_sample_index)*2; i<ILA0_BUFFER_SIZE*2; i+=2){
     fifo_value = samples[i+1]<<16 | samples[i]>>16;
     printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
   }

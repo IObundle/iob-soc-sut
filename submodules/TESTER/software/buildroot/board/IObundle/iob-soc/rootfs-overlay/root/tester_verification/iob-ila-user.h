@@ -17,7 +17,7 @@
 // Defines from generated file: ILA0.h
 #define ILA0_DWORD_SIZE 2
 #define ILA0_BYTE_SIZE 7
-#define ILA0_BUFFER_SIZE (2 * *ILA0_BUFFER_W)
+#define ILA0_BUFFER_SIZE (1<<ILA0_BUFFER_W)
 
 void ila_init();
 void ila_reset();
