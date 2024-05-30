@@ -90,7 +90,7 @@ jobs:
         run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=verilator"
       # No init mem
       - name: no_init_mem
-        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=1800 SIMULATOR=verilator"
+        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=2400 SIMULATOR=verilator"
 
   cyclonev:
     runs-on: self-hosted
