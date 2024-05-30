@@ -242,12 +242,14 @@ int main() {
   // Send byte stream via AXI stream
   send_axistream();
   
+  uart16550_puts("[Tester] Not printing ILA for now\n");
+
 #ifdef USE_ILA_PFSM
     // Disable all ILA triggers
     ila_disable_all_triggers();
     
     // Print sampled ILA values
-    print_ila_samples();
+    //print_ila_samples();
 #endif
 
   // Tell SUT that the Tester is running baremetal

@@ -16,6 +16,8 @@
 #define USE_TESTER
 #endif
 
+#include "versat_crypto_tests.h"
+
 void axistream_loopback();
 
 void clear_cache(){
@@ -57,6 +59,7 @@ int main()
   char buffer[64];
   char file_buffer[256];
   int ethernet_connected = 0;
+  int test_result = 0;
 
   //init uart
   uart16550_init(UART0_BASE, FREQ/(16*BAUD));
@@ -159,6 +162,17 @@ int main()
   //Give address of stored message to Tester using regfileif register 4
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart16550_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
+
+  InitializeCryptoSide(VERSAT0_BASE);
+
+  test_result |= VersatSimpleSHATests();
+  test_result |= VersatSimpleAESTests();
+
+  if(test_result){
+    uart16550_puts("\n\n[SUT]: Versat Failed\n\n");
+  } else {
+    uart16550_puts("\n\n[SUT]: Versat Passed\n\n");
+  }
 
   uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 
