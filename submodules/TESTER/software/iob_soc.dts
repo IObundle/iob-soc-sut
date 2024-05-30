@@ -111,17 +111,17 @@
         };
         MONITOR0: monitor@/*/*ILA0_ADDR_MACRO*/+0x40000*/ {
             compatible = "iobundle,pfsm0";
-            reg = <0xf7040000 0x40000>;
-        };
-
-        DMA0: dma@/*DMA0_ADDR_MACRO*/ {
-            compatible = "iobundle,dma0";
-            reg = <0x/*DMA0_ADDR_MACRO*/ 0x10>;
+            reg = <0x/*/*ILA0_ADDR_MACRO*/+0x40000*/ 0x40000>;
         };
 
         VERSAT0: versat@/*VERSAT0_ADDR_MACRO*/ {
             compatible = "iobundle,versat0";
             reg = <0x/*VERSAT0_ADDR_MACRO*/ 0x40000>;
+        };
+
+        DMA0: dma@/*DMA0_ADDR_MACRO*/ {
+            compatible = "iobundle,dma0";
+            reg = <0x/*DMA0_ADDR_MACRO*/ 0x10>;
         };
 
         AXISTREAMIN0: axistream_in@/*AXISTREAMIN0_ADDR_MACRO*/ {

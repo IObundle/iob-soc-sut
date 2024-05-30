@@ -1,13 +1,7 @@
 #include "bsp.h"
 #include "clint.h"
 #include "iob-eth.h"
-#include "iob-spi.h"
-#include "iob-spidefs.h"
-#include "iob-spiplatform.h"
 #include "iob-uart16550.h"
-#include "iob_soc_opencryptolinux_conf.h"
-#include "iob_soc_opencryptolinux_periphs.h"
-#include "iob_soc_opencryptolinux_system.h"
 #include "plic.h"
 #include "printf.h"
 #include <string.h>
@@ -41,7 +35,6 @@ void clear_cache() {
   // Flush VexRiscv CPU internal cache
   asm volatile(".word 0x500F" ::: "memory");
 }
-#endif
 
 // Send signal by uart to receive file by ethernet
 uint32_t uart_recvfile_ethernet(const char *file_name) {
@@ -67,6 +60,7 @@ uint32_t uart_recvfile_ethernet(const char *file_name) {
 
   return file_size;
 }
+#endif
 
 // copy src to dst
 // return number of copied chars (excluding '\0')
