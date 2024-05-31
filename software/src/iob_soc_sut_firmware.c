@@ -64,7 +64,10 @@ int main()
 
   //init uart
   uart16550_init(UART0_BASE, FREQ/(16*BAUD));
+  uart16550_puts("[SUT]: Inside\n");
   printf_init(&uart16550_putc);
+
+  uart16550_puts("[SUT]: Inside\n");
   //init regfileif
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
   //init gpio
@@ -164,22 +167,14 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart16550_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 
+  uart16550_puts("[SUT]: Gonna test Versat and the crypto algorithms.\n");
+
   versat_init(VERSAT0_BASE);
+  ConfigEnableDMA(false);
+  InitArena(1*1024*1024); 
   InitVersatAES();
   VersatAES();
   
-  //InitializeCryptoSide(VERSAT0_BASE);
-
-#if 0
-  test_result |= VersatSimpleAESTests();
-
-  if(test_result){
-    uart16550_puts("\n\n[SUT]: Versat Failed\n\n");
-  } else {
-    uart16550_puts("\n\n[SUT]: Versat Passed\n\n");
-  }
-#endif
-
   uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 
   uart16550_finish();

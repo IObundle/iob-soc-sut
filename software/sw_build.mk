@@ -90,23 +90,7 @@ IOB_SOC_SUT_LFLAGS=-Wl,-Bstatic,-T,$(TEMPLATE_LDS),--strip-debug
 IOB_SOC_SUT_FW_SRC=src/iob_soc_sut_firmware.S
 IOB_SOC_SUT_FW_SRC+=src/iob_soc_sut_firmware.c
 IOB_SOC_SUT_FW_SRC+=src/printf.c
-
-# NOTE(Ruben): To speed up simulation, we do not include or simulate crypto code in simulation. It greatly increases binary size and some tests would take forever. Better to run all tests in fpga-run.
-IOB_SOC_SUT_FW_SRC+=src/versat_crypto.c
-IOB_SOC_SUT_FW_SRC+=src/crypto/aes.c
-IOB_SOC_SUT_FW_SRC+=src/versat_crypto_common_tests.c
-IOB_SOC_SUT_FW_SRC+=src/opencryptoUtils.c
-
-#ifeq ($(SIMULATION),1)
-IOB_SOC_SUT_FW_SRC+=src/versat_simple_crypto_tests.c
 IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/arena.c)
-IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/common/sha2.c)
-#else
-#IOB_SOC_SUT_FW_SRC+=src/versat_crypto_tests.c
-#IOB_SOC_SUT_FW_SRC+=src/versat_mceliece.c
-#IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/*.c)
-#IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/common/*.c)
-#endif
 
 # PERIPHERAL SOURCES
 IOB_SOC_SUT_FW_SRC+=$(wildcard src/iob-*.c)
