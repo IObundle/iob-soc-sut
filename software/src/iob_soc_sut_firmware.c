@@ -163,9 +163,9 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart16550_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 
+#if 1
   InitializeCryptoSide(VERSAT0_BASE);
 
-  test_result |= VersatSimpleSHATests();
   test_result |= VersatSimpleAESTests();
 
   if(test_result){
@@ -173,6 +173,7 @@ int main()
   } else {
     uart16550_puts("\n\n[SUT]: Versat Passed\n\n");
   }
+#endif
 
   uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 

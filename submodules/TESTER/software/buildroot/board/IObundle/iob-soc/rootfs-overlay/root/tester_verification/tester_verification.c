@@ -38,7 +38,7 @@
 // Enable debug messages.
 #define DEBUG 0
 
-#define SUT_FIRMWARE_SIZE 38000
+#define SUT_FIRMWARE_SIZE 100000
 
 #define BUFFER_SIZE 5096
 
