@@ -19,6 +19,8 @@
 #include "versat_accel.h"
 #include "versat_crypto.h"
 
+void InitArena(int size);
+
 void axistream_loopback();
 
 void clear_cache(){

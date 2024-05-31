@@ -90,6 +90,7 @@ IOB_SOC_SUT_LFLAGS=-Wl,-Bstatic,-T,$(TEMPLATE_LDS),--strip-debug
 IOB_SOC_SUT_FW_SRC=src/iob_soc_sut_firmware.S
 IOB_SOC_SUT_FW_SRC+=src/iob_soc_sut_firmware.c
 IOB_SOC_SUT_FW_SRC+=src/printf.c
+IOB_SOC_SUT_FW_SRC+=src/versat_crypto.c
 IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/arena.c)
 
 # PERIPHERAL SOURCES
