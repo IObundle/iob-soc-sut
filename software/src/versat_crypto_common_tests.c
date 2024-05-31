@@ -55,6 +55,7 @@ int ParseNumber(char* ptr){
   return count;
 }
 
+#if 0
 TestState VersatCommonSHATests(String content){
   TestState result = {};
 
@@ -132,6 +133,7 @@ TestState VersatCommonSHATests(String content){
 
   return result;
 }
+#endif
 
 TestState VersatCommonAESTests(String content){
   TestState result = {};

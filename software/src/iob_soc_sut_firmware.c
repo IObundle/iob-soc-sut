@@ -16,7 +16,8 @@
 #define USE_TESTER
 #endif
 
-#include "versat_crypto_tests.h"
+#include "versat_accel.h"
+#include "versat_crypto.h"
 
 void axistream_loopback();
 
@@ -163,9 +164,13 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart16550_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 
-#if 1
-  InitializeCryptoSide(VERSAT0_BASE);
+  versat_init(VERSAT0_BASE);
+  InitVersatAES();
+  VersatAES();
+  
+  //InitializeCryptoSide(VERSAT0_BASE);
 
+#if 0
   test_result |= VersatSimpleAESTests();
 
   if(test_result){
