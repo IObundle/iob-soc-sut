@@ -1218,6 +1218,90 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
             ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "spi",
+                    "port": "spi_SS",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_SPI0_SS",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "spi",
+                    "port": "spi_SCLK",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_SPI0_SCLK",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "spi",
+                    "port": "spi_MISO",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_SPI0_MISO",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "spi",
+                    "port": "spi_MOSI",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_SPI0_MOSI",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "spi",
+                    "port": "spi_WP_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_SPI0_WP_N",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SUT0",
+                    "if_name": "spi",
+                    "port": "spi_HOLD_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "SUT0_SPI0_HOLD_N",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
         ]
 
         if USE_ILA_PFSM:
