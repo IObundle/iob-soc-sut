@@ -9,6 +9,7 @@
 #include "iob-gpio.h"
 #include "iob-eth.h"
 #include "printf.h"
+#include "iob-timer.h"
 #include "iob_regfileif_inverted_swreg.h"
 #include "iob-axistream-in.h"
 #include "iob-axistream-out.h"
@@ -16,10 +17,10 @@
 #define USE_TESTER
 #endif
 
+#include "arena.h"
 #include "versat_accel.h"
 #include "versat_crypto.h"
-
-void InitArena(int size);
+#include "versat_crypto_tests.h"
 
 void axistream_loopback();
 
@@ -54,6 +55,14 @@ uint32_t uart16550_recvfile_ethernet(char *file_name) {
   return file_size;
 }
 
+uint32_t uart_recvfile_ethernet(const char *file_name){
+  return uart16550_recvfile_ethernet(file_name);
+}
+
+int GetTime(){
+  return timer_get_count();
+}
+
 int main()
 {
   char pass_string[] = "Test passed!";
@@ -66,10 +75,10 @@ int main()
 
   //init uart
   uart16550_init(UART0_BASE, FREQ/(16*BAUD));
-  uart16550_puts("[SUT]: Inside\n");
   printf_init(&uart16550_putc);
 
-  uart16550_puts("[SUT]: Inside\n");
+  timer_init(TIMER0_BASE);
+
   //init regfileif
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
   //init gpio
@@ -169,19 +178,85 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart16550_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 
-  uart16550_puts("[SUT]: Gonna test Versat and the crypto algorithms.\n");
+  //uart16550_puts("[SUT]: Gonna test Versat and the crypto algorithms.\n");
 
   versat_init(VERSAT0_BASE);
   ConfigEnableDMA(false);
-  InitArena(1*1024*1024); 
-  InitVersatAES();
-  VersatAES();
-  
+  Arena arena = InitArena(16*1024*1024); 
+  globalArena = &arena;
+
+#if 1
+  test_result |= VersatSimpleSHATests();
+  test_result |= VersatSimpleAESTests();
+  //test_result |= VersatMcElieceTests();
+#endif
+
   uart16550_sendfile("test.log", strlen(pass_string), pass_string);
+
+#if 0
+  while(1){
+    char ch = uart16550_getc();
+
+    if(ch == ENQ){
+      break;
+    }
+  }
+
+  bool useVersat = true;
+  char versatMarker[] = "VERSAT";
+  for ( i = 0; i < 5; ) {
+    char ch = uart16550_getc();
+    if (ch == versatMarker[i]){
+      i++;
+    } else {
+      useVersat = false;
+      break;
+    }
+  }
+
+  while(1){
+    char ch = uart16550_getc();
+
+    if(ch == ENQ){
+      break;
+    }
+  }
+
+  char string[256];
+  for ( i = 0; true ; ) {
+    char ch = uart16550_getc();
+    if (ch == ENQ){
+      break;
+    } else {
+      string[i++] = ch;
+    }
+  }
+  string[i] = '\0';
+
+  char message[256];
+  int bytes = HexStringToHex(message,string);
+  int len = (i * 4) / 8;
+
+  char digest[64];
+  VersatSHA(digest,message,len);
+  digest[32] = '\0';
+
+  int HASH_SIZE = (256/8);
+
+  char messageBuffer[256];
+  GetHexadecimal((char*) digest,messageBuffer, HASH_SIZE);  
+
+  printf("%d %s\n",len,messageBuffer);
+
+  if(useVersat){
+    uart16550_puts("[SUT] Gonna use versat\n");
+  } else {
+    uart16550_puts("[SUT] Not possible\n");
+  }
+#endif
 
   uart16550_finish();
 }
-
 
 // Read AXI stream input, print, and relay data to AXI stream output
 void axistream_loopback(){
@@ -212,7 +287,7 @@ void axistream_loopback(){
     uart16550_puts("\n[SUT]: Sent AXI stream bytes back via output interface.\n\n");
   } else {
     // Input AXI stream queue is empty
-    uart16550_puts("[SUT]: AXI stream input is empty. Skipping AXI stream tranfer.\n\n");
+    uart16550_puts("[SUT]: AXI stream input is empty. Skipping AXI stream transfer.\n\n");
   }
 
 }

@@ -2,6 +2,7 @@
 import os
 import sys
 import glob
+import shutil
 
 from iob_soc_opencryptolinux import iob_soc_opencryptolinux
 from iob_soc_sut import iob_soc_sut
@@ -390,6 +391,11 @@ copy_remote_simulation_ila_data:
                 data2append = fp.read()
             with open(os.path.join(cls.build_dir, filepath), "a") as fp:
                 fp.write(data2append)
+
+                shutil.copyfile(
+                    f"{__class__.setup_dir}/software/true_sw_build.mk",
+                    f"{cls.build_dir}/software/sw_build.mk",
+                )
 
         # Replace `MEM_ADDR_W` macro in *_firmware.S files by `SRAM_ADDR_W`
         # This prevents the Tester+SUT from using entire shared memory, therefore preventing conflicts
@@ -1433,7 +1439,7 @@ copy_remote_simulation_ila_data:
                 {
                     "name": "SRAM_ADDR_W",
                     "type": "P",
-                    "val": "18",
+                    "val": "19",
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",

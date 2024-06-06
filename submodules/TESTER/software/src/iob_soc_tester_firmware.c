@@ -31,9 +31,9 @@
 #define ETH_MAC_ADDR 0x01606e11020f
 
 // Enable debug messages.
-#define DEBUG 0
+#define DEBUG 1
 
-#define SUT_FIRMWARE_SIZE 50000
+#define SUT_FIRMWARE_SIZE 150000
 
 void print_ila_samples();
 void send_axistream();
@@ -70,6 +70,10 @@ uint32_t uart_recvfile_ethernet(char *file_name) {
   uart16550_putc(ACK);
 
   return file_size;
+}
+
+int GetTime(){
+  return 0;
 }
 
 /*
@@ -132,7 +136,8 @@ int main() {
   char c, buffer[5096], *sutStr;
   int i;
 #ifndef IOB_SOC_TESTER_INIT_MEM
-  char sut_firmware[SUT_FIRMWARE_SIZE];
+  char* sut_firmware = (char*) malloc(SUT_FIRMWARE_SIZE);
+  //char sut_firmware[SUT_FIRMWARE_SIZE];
 #endif
 
   // Init uart0
@@ -241,15 +246,13 @@ int main() {
 
   // Send byte stream via AXI stream
   send_axistream();
-  
-  uart16550_puts("[Tester] Not printing ILA for now\n");
 
 #ifdef USE_ILA_PFSM
     // Disable all ILA triggers
     ila_disable_all_triggers();
     
     // Print sampled ILA values
-    //print_ila_samples();
+    print_ila_samples();
 #endif
 
   // Tell SUT that the Tester is running baremetal
@@ -296,6 +299,34 @@ int main() {
   // ignore file contents received (test.log)
   for (i = 0; i < file_size; i++)
     uart16550_getc();
+
+#if 0
+  uart16550_base(UART1_BASE);
+  uart16550_putc(ENQ);
+  uart16550_puts("VERSAT");
+  uart16550_putc(ENQ);
+
+  IOB_SOC_SUT_SET_REG1(1); // Select SHA
+
+  uart16550_puts("09FC1ACCC230A205E4A208E64A8F204291F581A12756392DA4B8C0CF5EF02B95");
+  uart16550_putc(ENQ);
+
+  char result[256];
+
+  i = 0;
+  while ((c = uart16550_getc()) != EOT) {
+    result[i] = c;
+    if (DEBUG) {
+      uart16550_base(UART0_BASE);
+      uart16550_putc(c);
+      uart16550_base(UART1_BASE);
+    }
+    i++;
+  }
+  //result[i] = EOT;
+  result[i] = '\0';
+
+#endif
 
   // End UART1 connection with SUT
   uart16550_finish();

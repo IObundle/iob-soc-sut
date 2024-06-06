@@ -23,8 +23,14 @@ IOB_SOC_SUT_FW_LFLAGS=-Wl,-Bstatic,-T,src/iob_soc_sut_firmware.lds,--strip-debug
 IOB_SOC_SUT_FW_SRC=src/iob_soc_sut_firmware.S
 IOB_SOC_SUT_FW_SRC+=src/iob_soc_sut_firmware.c
 IOB_SOC_SUT_FW_SRC+=src/printf.c
-IOB_SOC_SUT_FW_SRC+=src/versat_crypto.c
-IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/arena.c)
+
+#IOB_SOC_SUT_FW_SRC+=src/versat_crypto.c
+#IOB_SOC_SUT_FW_SRC+=src/crypto/aes.c
+#IOB_SOC_SUT_FW_SRC+=src/versat_crypto_common_tests.c
+#IOB_SOC_SUT_FW_SRC+=src/versat_crypto_tests.c
+#IOB_SOC_SUT_FW_SRC+=src/versat_mceliece.c
+#IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/*.c)
+#IOB_SOC_SUT_FW_SRC+=$(wildcard src/crypto/McEliece/common/*.c)
 
 # PERIPHERAL SOURCES
 IOB_SOC_SUT_FW_SRC+=$(wildcard src/iob-*.c)
