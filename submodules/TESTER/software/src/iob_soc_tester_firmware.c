@@ -709,15 +709,12 @@ int main() {
   for (i = 0; i < file_size; i++)
     uart16550_getc();
 
+#if 1
   while(uart16550_getc() != ENQ); // Read the messages outputted by file transfer function
-
-  // At this point the SUT is in waiting for Versat requests mode
-  // UART is used to send requests and to receive results
 
   // Request SUT to perform various cryptographic operations
   Arena globalArenaInst = InitArena(1 * 1024 * 1024); 
   globalArena = &globalArenaInst;
-#if 1
   connect_sut();
   
   #if 0
@@ -727,21 +724,6 @@ int main() {
 
   String content = PushFile("../../software/KAT/AESECB256.rsp");
   VersatCommonAESTests(content);
-
-#if 0
-  uart16550_putc(PERFORM_SHA);
-  send_large_data("OLA",3);
-
-  String result = receive_small_string();
-  report_string(result);
-#endif
-
-#if 0
-  uart16550_putc(PERFORM_AES);
-
-  send_large_data("CC22DA787F375711C76302BEF0979D8EDDF842829C2B99EF3DD04E23E54CC24B",64);
-  send_large_data("CCC62C6B0A09A671D64456818DB29A4D",32);
-#endif
 
   uart16550_putc(ETX);
 

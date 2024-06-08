@@ -248,6 +248,7 @@ int main()
 
   uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 
+#ifdef USE_TESTER
   uart16550_putc(ENQ);
 
   versat_init(VERSAT0_BASE);
@@ -294,74 +295,7 @@ int main()
     }
   }
 end:
-
-#if 0
-  test_result |= VersatSimpleSHATests();
-  test_result |= VersatSimpleAESTests();
-  //test_result |= VersatMcElieceTests();
-#endif
-
-#if 0
-  while(1){
-    char ch = uart16550_getc();
-
-    if(ch == ENQ){
-      break;
-    }
-  }
-
-  bool useVersat = true;
-  char versatMarker[] = "VERSAT";
-  for ( i = 0; i < 5; ) {
-    char ch = uart16550_getc();
-    if (ch == versatMarker[i]){
-      i++;
-    } else {
-      useVersat = false;
-      break;
-    }
-  }
-
-  while(1){
-    char ch = uart16550_getc();
-
-    if(ch == ENQ){
-      break;
-    }
-  }
-
-  char string[256];
-  for ( i = 0; true ; ) {
-    char ch = uart16550_getc();
-    if (ch == ENQ){
-      break;
-    } else {
-      string[i++] = ch;
-    }
-  }
-  string[i] = '\0';
-
-  char message[256];
-  int bytes = HexStringToHex(message,string);
-  int len = (i * 4) / 8;
-
-  char digest[64];
-  VersatSHA(digest,message,len);
-  digest[32] = '\0';
-
-  int HASH_SIZE = (256/8);
-
-  char messageBuffer[256];
-  GetHexadecimal((char*) digest,messageBuffer, HASH_SIZE);  
-
-  printf("%d %s\n",len,messageBuffer);
-
-  if(useVersat){
-    uart16550_puts("[SUT] Gonna use versat\n");
-  } else {
-    uart16550_puts("[SUT] Not possible\n");
-  }
-#endif
+#endif // USE_TESTER
 
   uart16550_finish();
 }

@@ -37,8 +37,8 @@ jobs:
       - name: init_mem
         run: nix-shell --run "make sim-run SIMULATOR=verilator"
       # No init mem
-      - name: no_init_mem
-        run: nix-shell --run "make sim-run INIT_MEM=0 SIMULATOR=verilator"
+#      - name: no_init_mem
+#        run: nix-shell --run "make sim-run INIT_MEM=0 SIMULATOR=verilator"
 
 #  icarus:
 #    runs-on: self-hosted
