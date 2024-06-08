@@ -709,7 +709,6 @@ int main() {
   for (i = 0; i < file_size; i++)
     uart16550_getc();
 
-#if 1
   while(uart16550_getc() != ENQ); // Read the messages outputted by file transfer function
 
   // Request SUT to perform various cryptographic operations
@@ -717,16 +716,52 @@ int main() {
   globalArena = &globalArenaInst;
   connect_sut();
   
-  #if 0
+  {
+  int mark = MarkArena(globalArena);
   String content = PushFile("../../software/KAT/SHA256ShortMsg.rsp");
-  VersatCommonSHATests(content);
-  #endif
+  TestState result = VersatCommonSHATests(content);
 
+  int last = connect_terminal();
+  if(result.earlyExit){
+    printf("SHA early exit. Check testcases to see if they follow the expected format\n");
+  } else {
+    printf("\n\n=======================================================\n");
+    printf("SHA tests: %d passed out of %d\n\n",result.goodTests,result.tests);
+    printf("=======================================================\n\n");
+  }
+  restore_connection(last);
+
+  PopArena(globalArena,mark);
+  }
+
+  {
+  int mark = MarkArena(globalArena);
   String content = PushFile("../../software/KAT/AESECB256.rsp");
+  TestState result = VersatCommonAESTests(content);
+
+  int last = connect_terminal();
+  if(result.earlyExit){
+    printf("AES early exit. Check testcases to see if they follow the expected format\n");
+  } else {
+    printf("\n\n=======================================================\n");
+    printf("AES tests: %d passed out of %d\n\n",result.goodTests,result.tests);
+    printf("=======================================================\n\n");
+  }
+  restore_connection(last);
+
+  PopArena(globalArena,mark);
+  }
+
+#ifndef SIMULATION
+  {
+  int mark = MarkArena(globalArena);
+  String content = PushFile("../../software/KAT/McElieceRound4kat_kem.rsp");
   VersatCommonAESTests(content);
+  PopArena(globalArena,mark);
+  }
+#endif
 
   uart16550_putc(ETX); // Terminate loop on SUT side
-#endif
 
   // End UART1 connection with SUT
   uart16550_finish();

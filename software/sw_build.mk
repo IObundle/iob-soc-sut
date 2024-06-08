@@ -14,6 +14,17 @@ CONSOLE_CMD ?=rm -f soc2cnsl cnsl2soc; $(IOB_CONSOLE_PYTHON_ENV) $(PYTHON_DIR)/c
 ROOT_DIR ?=..
 # Local embedded makefile settings for custom bootloader and firmware targets.
 
+# Bootloader flow options:
+# 1. CONSOLE_TO_EXTMEM: default: load firmware from console to external memory
+# 2. CONSOLE_TO_FLASH: program flash with firmware
+# 3. FLASH_TO_EXTMEM: load firmware from flash to external memory 
+BOOT_FLOW ?= CONSOLE_TO_EXTMEM
+UTARGETS += boot_flow
+
+boot_flow:
+	echo -n "$(BOOT_FLOW)" > boot.flow
+	# -n to avoid newline
+
 #Function to obtain parameter named $(1) in verilog header file located in $(2)
 #Usage: $(call GET_MACRO,<param_name>,<vh_path>)
 GET_MACRO = $(shell grep "define $(1)" $(2) | rev | cut -d" " -f1 | rev)
@@ -117,7 +128,7 @@ iob_soc_sut_boot:
 	make $@.elf INCLUDES="$(IOB_SOC_SUT_INCLUDES)" LFLAGS="$(IOB_SOC_SUT_LFLAGS) -Wl,-Map,$@.map" SRC="$(IOB_SOC_SUT_BOOT_SRC)" TEMPLATE_LDS="$(TEMPLATE_LDS)" CFLAGS="$(IOB_SOC_SUT_CFLAGS)"
 
 
-.PHONY: build_iob_soc_sut_software iob_soc_sut_firmware check_if_run_linux iob_soc_sut_boot
+.PHONY: build_iob_soc_sut_software iob_soc_sut_firmware check_if_run_linux iob_soc_sut_boot boot_flow
 
 #########################################
 #         PC emulation targets          #

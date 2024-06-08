@@ -1464,7 +1464,7 @@ copy_remote_simulation_ila_data:
                 {
                     "name": "SRAM_ADDR_W",
                     "type": "P",
-                    "val": "21",
+                    "val": "23",
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",

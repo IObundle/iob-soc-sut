@@ -253,7 +253,7 @@ int main()
 
   versat_init(VERSAT0_BASE);
   ConfigEnableDMA(false);
-  Arena arena = InitArena(1*1024*1024); 
+  Arena arena = InitArena(1*1024*1024);
   globalArena = &arena;
 
   char ch = 0;
