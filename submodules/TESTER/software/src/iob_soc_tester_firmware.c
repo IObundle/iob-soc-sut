@@ -725,9 +725,7 @@ int main() {
   String content = PushFile("../../software/KAT/AESECB256.rsp");
   VersatCommonAESTests(content);
 
-  uart16550_putc(ETX);
-
-  connect_terminal();
+  uart16550_putc(ETX); // Terminate loop on SUT side
 #endif
 
   // End UART1 connection with SUT
