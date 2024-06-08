@@ -30,10 +30,30 @@
 #include "iob_eth_rmac.h"
 #define ETH_MAC_ADDR 0x01606e11020f
 
+#include "versat_interface.h"
+
 // Enable debug messages.
 #define DEBUG 1
 
 #define SUT_FIRMWARE_SIZE 150000
+
+#if 0
+#define printf_terminal(...) \
+  { \
+    int last = connect_terminal(); \
+    printf(__ARGS__); \
+    restore_connection(last); \
+  }
+
+#define printf_sut(...) \
+  { \
+    int last = connect_sut(); \
+    printf(__ARGS__); \
+    restore_connection(last); \
+  }
+
+#undef printf // Do not use a naked printf.
+#endif
 
 void print_ila_samples();
 void send_axistream();
@@ -74,6 +94,394 @@ uint32_t uart_recvfile_ethernet(char *file_name) {
 
 int GetTime(){
   return 0;
+}
+
+#include "arena.h"
+
+typedef struct{
+  char* str;
+  int size;
+} String;
+
+int connect_terminal(){
+  return uart16550_base(UART0_BASE);
+}
+
+int connect_sut(){
+  return uart16550_base(UART1_BASE);
+}
+
+void restore_connection(int last_connection){
+  uart16550_base(last_connection);
+}
+
+String PushFile(const char* filepath){
+  int last = connect_terminal();
+  // Make request to host
+  int file_size = uart16550_recvfile(filepath, globalArena->ptr);
+  char* content = PushBytes(globalArena,file_size + 1);
+  content[file_size] = '\0';
+
+  restore_connection(last);
+  return (String){.str=content,.size=file_size};
+}
+
+// When sending multiple amounts of data to sut
+// Need to call end_message afterwards
+void start_message(){
+  int connection = connect_sut();
+  uart16550_putc(STX);
+  restore_connection(connection);
+}
+
+void end_message(){
+  int connection = connect_sut();
+  uart16550_putc(ETX);
+  restore_connection(connection);
+}
+
+void report(const char* message){
+  int last = connect_terminal();
+  uart16550_puts(message);
+  restore_connection(last);
+}
+
+void report_string(String str){
+  int last = connect_terminal();
+  printf("%.*s",str.size,str.str);
+  restore_connection(last);
+}
+
+// A small string contains a maximum of 255 bytes (256 if counting '\0')
+// Anything bigger is cutoff
+void send_small_string(const char* string){
+  start_message();
+
+  int bytesSent = 0;
+  while(bytesSent < 255 && string[bytesSent] != '\0'){
+    uart16550_putc(string[bytesSent]);
+    bytesSent += 1;
+  }
+
+  if(string[bytesSent] != '\0'){
+    report("[TESTER] send_small_string was cutoff\n");
+  }
+
+  end_message();
+}
+
+void getc_until(char toSee){
+  char ch = 0;
+  bool seenOne = false;
+  while((ch = uart16550_getc()) != toSee){
+    if(!seenOne){
+      report("Stream got out of sync, got unexpected data:");
+    }
+    int last = connect_terminal();
+    printf("%02x ",ch);
+    restore_connection(last);
+
+    seenOne = true;
+  }
+  if(seenOne){
+    report("\n");    
+  }
+}
+
+String receive_small_string(){
+  int last = connect_sut();
+  getc_until(STX);
+
+  int bytesSeen = 0;
+  char ch = 0;
+  char* buffer = globalArena->ptr;
+  while((ch = uart16550_getc()) != ETX){
+    buffer[bytesSeen] = ch;
+    bytesSeen += 1;
+  }
+  PushBytes(globalArena,bytesSeen + 1);
+
+  buffer[bytesSeen] = '\0';
+
+  restore_connection(last);
+  return (String){.str = buffer,.size = bytesSeen};
+}
+
+void send_int(int integer){
+  int last = connect_sut();
+  uart16550_putc(integer & 0x000000FF);
+  uart16550_putc((integer >> 8) & 0x000000FF);
+  uart16550_putc((integer >> 16) & 0x000000FF);
+  uart16550_putc((integer >> 24) & 0x000000FF);
+  restore_connection(last);
+}
+
+void send_large_data(const char* buffer,int size){
+  start_message();
+
+  send_int(size);
+  
+#if 1
+  int last = connect_sut();
+  for(int i = 0; i < size; i++){
+    uart16550_putc(buffer[i]);
+  }  
+  restore_connection(last);
+#endif
+
+#if 0
+  connect_terminal();
+  eth_send_file(buffer, size);
+  connect_sut();
+#endif
+
+  end_message();
+}
+
+#include <string.h>
+#define STRING(str) (String){str,strlen(str)}
+
+char* SearchAndAdvance(char* ptr,String str){
+  char* firstChar = strstr(ptr,str.str);
+  if(firstChar == NULL){
+    return NULL;
+  }
+
+  char* advance = firstChar + str.size;
+  return advance;
+}
+
+int ParseNumber(char* ptr){
+  int count = 0;
+
+  while(ptr != NULL){
+    char ch = *ptr;
+
+    if(ch >= '0' && ch <= '9'){
+      count *= 10;
+      count += ch - '0';
+      ptr += 1;
+      continue;
+    }
+
+    break;
+  }
+
+  return count;
+}
+
+char GetHexadecimalChar(unsigned char value){
+  if(value < 10){
+    return '0' + value;
+  } else{
+    return 'A' + (value - 10);
+  }
+}
+
+char* GetHexadecimal(const char* text,char* buffer,int str_size){
+  int i = 0;
+  unsigned char* view = (unsigned char*) text;
+  for(; i< str_size; i++){
+    buffer[i*2] = GetHexadecimalChar(view[i] / 16);
+    buffer[i*2+1] = GetHexadecimalChar(view[i] % 16);
+  }
+
+  buffer[i*2] = '\0';
+
+  return buffer;
+}
+
+static char HexToInt(char ch){
+   if('0' <= ch && ch <= '9'){
+      return (ch - '0');
+   } else if('a' <= ch && ch <= 'f'){
+      return ch - 'a' + 10;
+   } else if('A' <= ch && ch <= 'F'){
+      return ch - 'A' + 10;
+   } else {
+      return 0x7f;
+   }
+}
+
+// Make sure that buffer is capable of storing the whole thing. Returns number of bytes inserted
+int HexStringToHex(char* buffer,const char* str){
+   int inserted = 0;
+   for(int i = 0; ; i += 2){
+      char upper = HexToInt(str[i]);
+      char lower = HexToInt(str[i+1]);
+
+      if(upper >= 16 || lower >= 16){
+         if(upper < 16){ // Upper is good but lower is not
+            report("Warning: HexString was not divisible by 2\n");
+         }
+         break;
+      }
+
+      buffer[inserted++] = upper * 16 + lower;
+   }
+
+   return inserted;
+}
+
+typedef struct {
+  int initTime;
+  int tests;
+  int goodTests;
+  int versatTimeAccum;
+  int softwareTimeAccum;
+  int earlyExit;
+} TestState;
+
+TestState VersatCommonSHATests(String content){
+  TestState testResult = {};
+
+  int mark = MarkArena(globalArena);
+
+  static const int HASH_SIZE = (256/8);
+
+  char* ptr = content.str;
+  while(1){
+    int testMark = MarkArena(globalArena);
+
+    ptr = SearchAndAdvance(ptr,STRING("LEN = "));
+    if(ptr == NULL){
+      break;
+    }
+
+    int len = ParseNumber(ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("MSG = "));
+    if(ptr == NULL){ // Note: It's only a error if any check after the first one fails, because we are assuming that if the first passes then that must mean that the rest should pass as well.
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    unsigned char* message = PushArray(globalArena,len,unsigned char);
+    int bytes = HexStringToHex(message,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("MD = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* expected = ptr;
+
+    int last = connect_sut();
+    uart16550_putc(PERFORM_SHA);
+
+    if(len == 0){
+      send_large_data("",0);
+    } else {
+      send_large_data(message,bytes);
+    }
+
+    String result = receive_small_string();
+    restore_connection(last);
+
+    bool good = true;
+    for(int i = 0; i < 64; i++){
+      if(result.str[i] != expected[i]){
+        good = false;
+        break;
+      }
+    }
+
+    if(good){
+      testResult.goodTests += 1;
+    } else {
+      int last = connect_terminal();
+      printf("SHA Test %02d: Error\n",testResult.tests);
+      printf("  Expected: %.64s\n",expected); 
+      printf("  Versat:   %.*s\n",result.size,result.str);
+      restore_connection(last);
+    }
+
+    testResult.tests += 1;
+    PopArena(globalArena,testMark);
+  }
+
+  PopArena(globalArena,mark);
+
+  return testResult;
+}
+
+TestState VersatCommonAESTests(String content){
+  TestState testResult = {};
+
+  int mark = MarkArena(globalArena);
+
+  char* ptr = content.str;
+  while(1){
+    int testMark = MarkArena(globalArena);
+
+    ptr = SearchAndAdvance(ptr,STRING("COUNT = "));
+    if(ptr == NULL){
+      break;
+    }
+
+    int count = ParseNumber(ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("KEY = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    unsigned char* key = PushArray(globalArena,32 + 1,unsigned char);
+    HexStringToHex(key,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("PLAINTEXT = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+  
+    unsigned char* plain = PushArray(globalArena,16 + 1,unsigned char);
+    HexStringToHex(plain,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("CIPHERTEXT = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* cypher = ptr;
+
+    int last = connect_sut();
+    uart16550_putc(PERFORM_AES);    
+
+    send_large_data(key,32);
+    send_large_data(plain,16);
+
+    String result = receive_small_string();
+    restore_connection(last);
+
+    bool good = true;
+    for(int i = 0; i < 16; i++){
+      if(result.str[i] != cypher[i]){
+        good = false;
+        break;
+      }
+    }
+
+    if(good){
+      testResult.goodTests += 1;
+    } else {
+      int last = connect_terminal();
+      printf("AES Test %02d: Error\n",testResult.tests);
+      printf("  Expected: %.32s\n",cypher); 
+      printf("  Versat:   %.*s\n",result.size,result.str);
+      restore_connection(last);
+    }
+
+    testResult.tests += 1;
+    PopArena(globalArena,testMark);
+  }
+
+  PopArena(globalArena,mark);
+
+  return testResult;
 }
 
 /*
@@ -257,7 +665,7 @@ int main() {
 
   // Tell SUT that the Tester is running baremetal
   uart16550_base(UART1_BASE);
-  uart16550_puts("TESTER_RUN_BAREMETAL\n");
+  send_small_string("TESTER_RUN_BAREMETAL");
   uart16550_base(UART0_BASE);
 
   // Test sending data to SUT via ethernet
@@ -269,6 +677,7 @@ int main() {
   uart16550_putc('\n'); uart16550_putc('\n');
   // Send file
   eth_send_file(buffer, 64);
+
   uart16550_puts("\n[Tester]: Reading SUT messages...\n");
   uart16550_base(UART1_BASE);
 
@@ -300,32 +709,43 @@ int main() {
   for (i = 0; i < file_size; i++)
     uart16550_getc();
 
+  while(uart16550_getc() != ENQ); // Read the messages outputted by file transfer function
+
+  // At this point the SUT is in waiting for Versat requests mode
+  // UART is used to send requests and to receive results
+
+  // Request SUT to perform various cryptographic operations
+  Arena globalArenaInst = InitArena(1 * 1024 * 1024); 
+  globalArena = &globalArenaInst;
+#if 1
+  connect_sut();
+  
+  #if 0
+  String content = PushFile("../../software/KAT/SHA256ShortMsg.rsp");
+  VersatCommonSHATests(content);
+  #endif
+
+  String content = PushFile("../../software/KAT/AESECB256.rsp");
+  VersatCommonAESTests(content);
+
 #if 0
-  uart16550_base(UART1_BASE);
-  uart16550_putc(ENQ);
-  uart16550_puts("VERSAT");
-  uart16550_putc(ENQ);
+  uart16550_putc(PERFORM_SHA);
+  send_large_data("OLA",3);
 
-  IOB_SOC_SUT_SET_REG1(1); // Select SHA
+  String result = receive_small_string();
+  report_string(result);
+#endif
 
-  uart16550_puts("09FC1ACCC230A205E4A208E64A8F204291F581A12756392DA4B8C0CF5EF02B95");
-  uart16550_putc(ENQ);
+#if 0
+  uart16550_putc(PERFORM_AES);
 
-  char result[256];
+  send_large_data("CC22DA787F375711C76302BEF0979D8EDDF842829C2B99EF3DD04E23E54CC24B",64);
+  send_large_data("CCC62C6B0A09A671D64456818DB29A4D",32);
+#endif
 
-  i = 0;
-  while ((c = uart16550_getc()) != EOT) {
-    result[i] = c;
-    if (DEBUG) {
-      uart16550_base(UART0_BASE);
-      uart16550_putc(c);
-      uart16550_base(UART1_BASE);
-    }
-    i++;
-  }
-  //result[i] = EOT;
-  result[i] = '\0';
+  uart16550_putc(ETX);
 
+  connect_terminal();
 #endif
 
   // End UART1 connection with SUT
@@ -336,8 +756,10 @@ int main() {
 
   // Send messages previously stored from SUT
   uart16550_puts("[Tester]: #### Messages received from SUT: ####\n\n");
-  for (i = 0; buffer[i] != EOT; i++) {
-    uart16550_putc(buffer[i]);
+  if(!DEBUG){
+    for (i = 0; buffer[i] != EOT; i++) {
+      uart16550_putc(buffer[i]);
+    }
   }
   uart16550_puts("\n[Tester]: #### End of messages received from SUT ####\n\n");
 

@@ -545,7 +545,7 @@ endif
                 {
                     "name": "SRAM_ADDR_W",
                     "type": "P",
-                    "val": "18",
+                    "val": "20",
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",

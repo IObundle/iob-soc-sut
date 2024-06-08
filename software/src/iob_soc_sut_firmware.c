@@ -21,6 +21,7 @@
 #include "versat_accel.h"
 #include "versat_crypto.h"
 #include "versat_crypto_tests.h"
+#include "versat_interface.h"
 
 void axistream_loopback();
 
@@ -63,6 +64,81 @@ int GetTime(){
   return timer_get_count();
 }
 
+void getc_until(char toSee){
+  char ch = 0;
+  bool seenOne = false;
+  while((ch = uart16550_getc()) != toSee){
+    if(!seenOne){
+      printf("Stream got out of sync, got unexpected data\n");
+    }
+    seenOne = true;
+  }
+}
+
+int send_small_string(const char* string){
+  uart16550_putc(STX);
+
+  int bytesSent = 0;
+  while(bytesSent < 255 && string[bytesSent] != '\0'){
+    uart16550_putc(string[bytesSent]);
+    bytesSent += 1;
+  }
+
+  uart16550_putc(ETX);
+}
+
+int receive_small_string(char* buffer){
+  getc_until(STX);
+
+  int bytesSeen = 0;
+  char ch = 0;
+  while((ch = uart16550_getc()) != ETX){
+    buffer[bytesSeen] = ch;
+    bytesSeen += 1;
+  }
+
+  buffer[bytesSeen] = '\0';
+  return bytesSeen;
+}
+
+int receive_int(){
+  int result = uart16550_getc();
+  result |= ((uint32_t)uart16550_getc()) << 8;
+  result |= ((uint32_t)uart16550_getc()) << 16;
+  result |= ((uint32_t)uart16550_getc()) << 24;
+
+  return result;
+}
+
+void read_remaining(){
+  char ch = 0;
+  while((ch = uart16550_getc()) != EOT){
+    printf("%02x ",ch);
+  }
+  printf("\n");
+}
+
+String receive_large_data(Arena* out){
+  getc_until(STX);
+
+  int size = receive_int();
+  char* res = PushBytes(out,size + 1);
+
+  //printf("Got %d\n",size);
+
+#if 1
+  for(int i = 0; i < size; i++){
+    res[i] = uart16550_getc();
+  }
+#endif
+
+//  eth_rcv_file(res,size);
+  res[size] = '\0';
+
+  getc_until(ETX);
+  return (String){.str = res,.size = size};
+}
+
 int main()
 {
   char pass_string[] = "Test passed!";
@@ -70,6 +146,7 @@ int main()
   int i;
   char buffer[64];
   char file_buffer[256];
+  char misc_buffer[256];
   int ethernet_connected = 0;
   int test_result = 0;
 
@@ -96,22 +173,13 @@ int main()
 
 #ifdef USE_TESTER
   // Receive a special string message from tester to tell if its running linux
-  char tester_run_type[] = "TESTER_RUN_";
-  for ( i = 0; i < 11; ) {
-    if (uart16550_getc() == tester_run_type[i])
-      i++;
-    else
-      i = 0;
-  }
-  char tester_run_type2[] = "LINUX";
-  int tester_run_linux = 1;
-  for ( i = 0; i < 5; ) {
-    if (uart16550_getc() == tester_run_type2[i]) {
-      i++;
-    } else {
-      tester_run_linux = 0;
-      break;
-    }
+  receive_small_string(misc_buffer);
+
+  bool tester_run_linux = false;
+  if(strcmp(misc_buffer,"TESTER_RUN_LINUX") == 0){
+    tester_run_linux = true;
+  } else if(strcmp(misc_buffer,"TESTER_RUN_BAREMETAL") == 0){
+    tester_run_linux = false;
   }
 
   if (!tester_run_linux) { //Ethernet does not work on Linux yet
@@ -178,20 +246,60 @@ int main()
   IOB_REGFILEIF_INVERTED_SET_REG5((int)sutMemoryMessage);
   uart16550_puts("[SUT]: Stored string memory location in REGFILEIF register 5.\n");
 
-  //uart16550_puts("[SUT]: Gonna test Versat and the crypto algorithms.\n");
+  uart16550_sendfile("test.log", strlen(pass_string), pass_string);
+
+  uart16550_putc(ENQ);
 
   versat_init(VERSAT0_BASE);
   ConfigEnableDMA(false);
-  Arena arena = InitArena(16*1024*1024); 
+  Arena arena = InitArena(1*1024*1024); 
   globalArena = &arena;
 
-#if 1
+  char ch = 0;
+  while((ch = uart16550_getc()) != ETX){
+    switch(ch){
+    case PERFORM_SHA:{
+      int mark = MarkArena(globalArena);
+      String received = receive_large_data(globalArena);
+      InitVersatSHA();
+
+      unsigned char digest[256];
+      VersatSHA(digest,received.str,received.size);
+
+      static const int HASH_SIZE = (256/8);
+      char versat_buffer[2048];
+      GetHexadecimal((char*) digest,versat_buffer, HASH_SIZE);
+      
+      send_small_string(versat_buffer);
+      PopArena(globalArena,mark);
+    } break;
+    case PERFORM_AES:{
+      String key = receive_large_data(globalArena);
+      String plaintext = receive_large_data(globalArena);
+
+      InitVersatAES();
+      InitAES();
+
+      unsigned char chiperBuffer[17];
+      AES_ECB256(key.str,plaintext.str,chiperBuffer);
+      
+      char versat_buffer[2048];
+      GetHexadecimal((char*) chiperBuffer,versat_buffer, 16);      
+      send_small_string(versat_buffer);
+    } break;
+    case PERFORM_MCELIECE:{
+      printf("PERFORM_MCELIECE\n");
+    } break;
+    default: goto end; // Something is wrong 
+    }
+  }
+end:
+
+#if 0
   test_result |= VersatSimpleSHATests();
   test_result |= VersatSimpleAESTests();
   //test_result |= VersatMcElieceTests();
 #endif
-
-  uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 
 #if 0
   while(1){

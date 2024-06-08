@@ -10,6 +10,7 @@ from iob_gpio import iob_gpio
 from iob_uart16550 import iob_uart16550
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
+from iob_spi_master import iob_spi_master
 from iob_ila import iob_ila
 from iob_pfsm import iob_pfsm
 from iob_dma import iob_dma
@@ -81,6 +82,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                         )
                     ),
                     "ETH0_MEM_ADDR_OFFSET": "`IOB_SOC_TESTER_SUT0_MEM_ADDR_OFFSET",
+                    "VERSAT0_MEM_ADDR_OFFSET": "`IOB_SOC_TESTER_SUT0_MEM_ADDR_OFFSET",
                 },
             )
         )
@@ -155,10 +157,33 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             )
         )
 
+        cls.peripherals.append(
+            iob_eth(
+                "ETH0",
+                "Ethernet interface",
+                parameters={
+                    "AXI_ID_W": "AXI_ID_W",
+                    "AXI_LEN_W": "AXI_LEN_W",
+                    "AXI_ADDR_W": "AXI_ADDR_W",
+                    "AXI_DATA_W": "AXI_DATA_W",
+                    "MEM_ADDR_OFFSET": "MEM_ADDR_OFFSET",
+                },
+            )
+        )
+
+        cls.peripherals.append(iob_uart16550("UART0", "Default UART interface"))
+        cls.peripherals.append(
+            iob_spi_master("SPI0", "SPI master peripheral")
+        )  # Not being used but setup complains if not inserted
+
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
+        saved = cls.peripherals.copy()
+
         super()._create_instances()
+
+        cls.peripherals = saved
 
     @classmethod
     def _generate_monitor_bitstream(cls):
@@ -392,10 +417,10 @@ copy_remote_simulation_ila_data:
             with open(os.path.join(cls.build_dir, filepath), "a") as fp:
                 fp.write(data2append)
 
-                shutil.copyfile(
-                    f"{__class__.setup_dir}/software/true_sw_build.mk",
-                    f"{cls.build_dir}/software/sw_build.mk",
-                )
+        shutil.copyfile(
+            f"{__class__.setup_dir}/software/true_sw_build.mk",
+            f"{cls.build_dir}/software/sw_build.mk",
+        )
 
         # Replace `MEM_ADDR_W` macro in *_firmware.S files by `SRAM_ADDR_W`
         # This prevents the Tester+SUT from using entire shared memory, therefore preventing conflicts
@@ -1439,7 +1464,7 @@ copy_remote_simulation_ila_data:
                 {
                     "name": "SRAM_ADDR_W",
                     "type": "P",
-                    "val": "19",
+                    "val": "21",
                     "min": "1",
                     "max": "32",
                     "descr": "SRAM address width",
