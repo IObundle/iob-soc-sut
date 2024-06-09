@@ -23,6 +23,9 @@
 #include "versat_crypto_tests.h"
 #include "versat_interface.h"
 
+#include "api.h"
+void nist_kat_init(unsigned char *entropy_input, unsigned char *personalization_string, int security_strength);
+
 void axistream_loopback();
 
 void clear_cache(){
@@ -69,7 +72,9 @@ void getc_until(char toSee){
   bool seenOne = false;
   while((ch = uart16550_getc()) != toSee){
     if(!seenOne){
-      printf("Stream got out of sync, got unexpected data\n");
+      //SUT cannot report because the tester cannot handle receiving unexpected messages from the SUT
+      //At least while the SUT is inside the Versat loop.
+      //printf("Stream got out of sync, got unexpected data\n");
     }
     seenOne = true;
   }
@@ -83,6 +88,31 @@ int send_small_string(const char* string){
     uart16550_putc(string[bytesSent]);
     bytesSent += 1;
   }
+
+  uart16550_putc(ETX);
+}
+
+void send_int(int integer){
+  uart16550_putc(integer & 0x000000FF);
+  uart16550_putc((integer >> 8) & 0x000000FF);
+  uart16550_putc((integer >> 16) & 0x000000FF);
+  uart16550_putc((integer >> 24) & 0x000000FF);
+}
+
+void send_large_data(const char* buffer,int size){
+  uart16550_putc(STX);
+
+  send_int(size);
+  
+  for(int i = 0; i < size; i++){
+    uart16550_putc(buffer[i]);
+  }  
+
+#if 0
+  connect_terminal();
+  eth_send_file(buffer, size);
+  connect_sut();
+#endif
 
   uart16550_putc(ETX);
 }
@@ -253,14 +283,16 @@ int main()
 
   versat_init(VERSAT0_BASE);
   ConfigEnableDMA(false);
-  Arena arena = InitArena(1*1024*1024);
+  Arena arena = InitArena(2*1024*1024);
   globalArena = &arena;
 
   char ch = 0;
   while((ch = uart16550_getc()) != ETX){
+    int mark = MarkArena(globalArena);
+
     switch(ch){
     case PERFORM_SHA:{
-      int mark = MarkArena(globalArena);
+
       String received = receive_large_data(globalArena);
       InitVersatSHA();
 
@@ -272,7 +304,6 @@ int main()
       GetHexadecimal((char*) digest,versat_buffer, HASH_SIZE);
       
       send_small_string(versat_buffer);
-      PopArena(globalArena,mark);
     } break;
     case PERFORM_AES:{
       String key = receive_large_data(globalArena);
@@ -281,7 +312,7 @@ int main()
       InitVersatAES();
       InitAES();
 
-      unsigned char chiperBuffer[17];
+      unsigned char chiperBuffer[16 + 1];
       AES_ECB256(key.str,plaintext.str,chiperBuffer);
       
       char versat_buffer[2048];
@@ -289,10 +320,22 @@ int main()
       send_small_string(versat_buffer);
     } break;
     case PERFORM_MCELIECE:{
-      printf("PERFORM_MCELIECE\n");
+      String seed = receive_large_data(globalArena);
+
+      nist_kat_init(seed.str, NULL, 256);
+
+      unsigned char* public_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES,unsigned char);
+      unsigned char* secret_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES,unsigned char);
+
+      VersatMcEliece(public_key, secret_key);
+
+      send_large_data(public_key,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES);
+      send_large_data(secret_key,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES);
     } break;
     default: goto end; // Something is wrong 
     }
+
+    PopArena(globalArena,mark);
   }
 end:
 #endif // USE_TESTER

@@ -31,6 +31,7 @@
 #define ETH_MAC_ADDR 0x01606e11020f
 
 #include "versat_interface.h"
+#include "api.h" // McEliece constants to allocate result memory
 
 // Enable debug messages.
 #define DEBUG 1
@@ -205,6 +206,38 @@ String receive_small_string(){
 
   restore_connection(last);
   return (String){.str = buffer,.size = bytesSeen};
+}
+
+int receive_int(){
+  int result = uart16550_getc();
+  result |= ((uint32_t)uart16550_getc()) << 8;
+  result |= ((uint32_t)uart16550_getc()) << 16;
+  result |= ((uint32_t)uart16550_getc()) << 24;
+
+  return result;
+}
+
+String receive_large_data(Arena* out){
+  int last = connect_sut();
+  getc_until(STX);
+
+  int size = receive_int();
+  char* res = PushBytes(out,size + 1);
+
+  //printf("Got %d\n",size);
+
+#if 1
+  for(int i = 0; i < size; i++){
+    res[i] = uart16550_getc();
+  }
+#endif
+
+//  eth_rcv_file(res,size);
+  res[size] = '\0';
+
+  getc_until(ETX);
+  restore_connection(last);
+  return (String){.str = res,.size = size};
 }
 
 void send_int(int integer){
@@ -484,6 +517,101 @@ TestState VersatCommonAESTests(String content){
   return testResult;
 }
 
+
+TestState VersatMcElieceTests(String content){
+  TestState testResult = {};
+
+  int mark = MarkArena(globalArena);
+
+  char* ptr = content.str;
+  while(1){
+    int testMark = MarkArena(globalArena);
+
+    ptr = SearchAndAdvance(ptr,STRING("COUNT = "));
+    if(ptr == NULL){
+      break;
+    }
+
+    int count = ParseNumber(ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("SEED = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    unsigned char seed[49];
+    HexStringToHex(seed,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("PK = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+  
+    char* good_pk = ptr;
+
+    ptr = SearchAndAdvance(ptr,STRING("SK = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* good_sk = ptr;
+
+    //nist_kat_init(seed, NULL, 256);
+
+    uart16550_putc(PERFORM_MCELIECE);
+    send_large_data(seed,48);    
+
+    String public_key = receive_large_data(globalArena);
+    String secret_key = receive_large_data(globalArena);
+
+    unsigned char* public_key_hex = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES * 2 + 1,char);
+    unsigned char* secret_key_hex = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES * 2 + 1,char);
+
+    GetHexadecimal(public_key.str,public_key_hex,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES);
+    GetHexadecimal(secret_key.str,secret_key_hex,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES);
+
+    bool good = true;
+    for(int i = 0; i < PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES; i++){
+      if(public_key_hex[i] != good_pk[i]){
+        good = false;
+        break;
+      }
+    }
+    for(int i = 0; i < PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES; i++){
+      if(secret_key_hex[i] != good_sk[i]){
+        good = false;
+        break;
+      }
+    }
+
+    if(good){
+      testResult.goodTests += 1;
+    } else {
+      int last = connect_terminal();
+      printf("McEliece Test %02d: Error\n",testResult.tests);
+      printf("  Expected Public (first 32 chars): %.32s\n",good_pk); 
+      printf("  Expected Secret (first 32 chars): %.32s\n",good_sk); 
+      printf("  Got Public (first 32 chars):      %.32s\n",public_key_hex);
+      printf("  Got Secret (first 32 chars):      %.32s\n",secret_key_hex);
+      restore_connection(last);
+    }
+
+    testResult.tests += 1;
+    PopArena(globalArena,testMark);
+
+    // McEliece takes a decent amount of time
+    if(testResult.tests >= 2){
+      break;
+    }
+  }
+
+  return testResult;
+}
+
+
 /*
  * Receive a file transfer request from SUT;
  * relay that request to the console;
@@ -712,7 +840,7 @@ int main() {
   while(uart16550_getc() != ENQ); // Read the messages outputted by file transfer function
 
   // Request SUT to perform various cryptographic operations
-  Arena globalArenaInst = InitArena(1 * 1024 * 1024); 
+  Arena globalArenaInst = InitArena(2 * 1024 * 1024); 
   globalArena = &globalArenaInst;
   connect_sut();
   
@@ -726,7 +854,7 @@ int main() {
     printf("SHA early exit. Check testcases to see if they follow the expected format\n");
   } else {
     printf("\n\n=======================================================\n");
-    printf("SHA tests: %d passed out of %d\n\n",result.goodTests,result.tests);
+    printf("SHA tests: %d passed out of %d\n",result.goodTests,result.tests);
     printf("=======================================================\n\n");
   }
   restore_connection(last);
@@ -744,7 +872,7 @@ int main() {
     printf("AES early exit. Check testcases to see if they follow the expected format\n");
   } else {
     printf("\n\n=======================================================\n");
-    printf("AES tests: %d passed out of %d\n\n",result.goodTests,result.tests);
+    printf("AES tests: %d passed out of %d\n",result.goodTests,result.tests);
     printf("=======================================================\n\n");
   }
   restore_connection(last);
@@ -752,11 +880,21 @@ int main() {
   PopArena(globalArena,mark);
   }
 
-#ifndef SIMULATION
+#ifndef SIMULATION // Too slow for simulation. It's faster to fpga-run
   {
   int mark = MarkArena(globalArena);
   String content = PushFile("../../software/KAT/McElieceRound4kat_kem.rsp");
-  VersatCommonAESTests(content);
+  TestState result = VersatMcElieceTests(content);
+
+  int last = connect_terminal();
+  if(result.earlyExit){
+    printf("McEliece early exit. Check testcases to see if they follow the expected format\n");
+  } else {
+    printf("\n\n=======================================================\n");
+    printf("McEliece tests: %d passed out of %d\n",result.goodTests,result.tests);
+    printf("=======================================================\n\n");
+  }
+  restore_connection(last);  
   PopArena(globalArena,mark);
   }
 #endif
