@@ -23,7 +23,7 @@ on:
 jobs:
   verilator:
     runs-on: self-hosted
-    timeout-minutes: 30
+    timeout-minutes: 60
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
@@ -37,44 +37,44 @@ jobs:
       - name: init_mem
         run: nix-shell --run "make sim-run SIMULATOR=verilator"
       # No init mem
-#      - name: no_init_mem
-#        run: nix-shell --run "make sim-run INIT_MEM=0 SIMULATOR=verilator"
+      - name: no_init_mem
+        run: nix-shell --run "make sim-run INIT_MEM=0 SIMULATOR=verilator"
 
-#  icarus:
-#    runs-on: self-hosted
-#    timeout-minutes: 180
-#    # always run, except when previous job was cancelled
-#    if: ${{ !cancelled() }}
+  icarus:
+    runs-on: self-hosted
+    timeout-minutes: 240
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
 
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          submodules: 'recursive'
-#      # Init mem
-#      - name: init_mem
-#        run: nix-shell --run "make sim-run SIMULATOR=icarus"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      # Init mem
+      - name: init_mem
+        run: nix-shell --run "make sim-run SIMULATOR=icarus"
 
-#  tester-icarus:
-#    runs-on: self-hosted
-#    timeout-minutes: 180
-#    # always run, except when previous job was cancelled
-#    if: ${{ !cancelled() }}
-#    # run after indicated job
-#    needs: [ icarus ]
+  tester-icarus:
+    runs-on: self-hosted
+    timeout-minutes: 240
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ icarus ]
 
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
-#      # Init mem
-#      - name: init_mem
-#        run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=icarus"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
+      # Init mem
+      - name: init_mem
+        run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=icarus"
 
   tester-verilator:
     runs-on: self-hosted
-    timeout-minutes: 90
+    timeout-minutes: 180
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
@@ -89,40 +89,40 @@ jobs:
       - name: init_mem
         run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=verilator"
       # No init mem
-#      - name: no_init_mem
-#        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=5400 SIMULATOR=verilator"
+      - name: no_init_mem
+        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=1800 SIMULATOR=verilator"
 
-#  cyclonev:
-#    runs-on: self-hosted
-#    timeout-minutes: 60
-#    if: ${{ !cancelled() }}
-#    needs: [ icarus, verilator ]
+  cyclonev:
+    runs-on: self-hosted
+    timeout-minutes: 90
+    if: ${{ !cancelled() }}
+    needs: [ icarus, verilator ]
 
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          submodules: 'recursive'
-#      # No init mem
-#      - name: no_init_mem
-#        run: make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      # No init mem
+      - name: no_init_mem
+        run: make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK
 
-#  tester-cyclonev:
-#    runs-on: self-hosted
-#    timeout-minutes: 180
-#    # always run, except when previous job was cancelled
-#    if: ${{ !cancelled() }}
-#    # run after indicated job
-#    needs: [ cyclonev ]
+  tester-cyclonev:
+    runs-on: self-hosted
+    timeout-minutes: 180
+    # always run, except when previous job was cancelled
+    if: ${{ !cancelled() }}
+    # run after indicated job
+    needs: [ cyclonev ]
 
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      - name: test baremetal
-#        run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
-#      # - name: test linux
-#      #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: test baremetal
+        run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
+      # - name: test linux
+      #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
 
   # tester-netlist-cyclonev:
   #   runs-on: self-hosted
@@ -144,8 +144,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 90
     if: ${{ !cancelled() }}
-    #needs: [ icarus, verilator ]
-    needs: [ verilator ]
+    needs: [ icarus, verilator ]
 
     steps:
       - uses: actions/checkout@v3
@@ -189,16 +188,16 @@ jobs:
   #    - name: Tester Netlist KU040
   #      run: nix-shell --run "make tester-sut-netlist BOARD=AES-KU040-DB-G"
 
-#  doc:
-#    runs-on: self-hosted
-#    timeout-minutes: 60
-#    if: ${{ !cancelled() }}
-#    needs: [ cyclonev, aes-ku040 ]
+  doc:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    if: ${{ !cancelled() }}
+    needs: [ cyclonev, aes-ku040 ]
 
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-#          submodules: 'recursive'
-#      - name: doc test
-#        run: nix-shell --run "make clean setup && make -C ../iob_soc_sut_V* doc-test"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+          submodules: 'recursive'
+      - name: doc test
+        run: nix-shell --run "make clean setup && make -C ../iob_soc_sut_V* doc-test"
