@@ -23,7 +23,7 @@ on:
 jobs:
   verilator:
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 30
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
@@ -42,7 +42,7 @@ jobs:
 
   icarus:
     runs-on: self-hosted
-    timeout-minutes: 240
+    timeout-minutes: 30
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
 
@@ -56,7 +56,7 @@ jobs:
 
   tester-icarus:
     runs-on: self-hosted
-    timeout-minutes: 240
+    timeout-minutes: 60
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
@@ -70,11 +70,11 @@ jobs:
       # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
       # Init mem
       - name: init_mem
-        run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=icarus"
+        run: nix-shell --run "make sim-run TESTER=1 GRAB_TIMEOUT=3600 SIMULATOR=icarus"
 
   tester-verilator:
     runs-on: self-hosted
-    timeout-minutes: 180
+    timeout-minutes: 90
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job
@@ -90,7 +90,7 @@ jobs:
         run: nix-shell --run "make sim-run TESTER=1 SIMULATOR=verilator"
       # No init mem
       - name: no_init_mem
-        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=1800 SIMULATOR=verilator"
+        run: nix-shell --run "make sim-run TESTER=1 INIT_MEM=0 GRAB_TIMEOUT=5400 SIMULATOR=verilator"
 
   cyclonev:
     runs-on: self-hosted
