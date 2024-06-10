@@ -19,6 +19,7 @@
 #define USE_ILA_PFSM
 #define ILA0_BUFFER_W 3
 
+#include <stdbool.h>
 
 //
 //#include "iob-dma.h"
@@ -38,7 +39,7 @@
 // Enable debug messages.
 #define DEBUG 0
 
-#define SUT_FIRMWARE_SIZE 100000
+#define SUT_FIRMWARE_SIZE 150000
 
 #define BUFFER_SIZE 5096
 
@@ -74,7 +75,26 @@ void ila_monitor_program(char *, uint32_t);
  *  - fsize: size of file to read.
  * return: size of file read.
  */
-uint32_t rz_request_file(char *fname, char *buffer, uint32_t fsize){
+uint32_t rz_request_file_by_path(const char *filepath,const char *fname, char *buffer, uint32_t fsize){
+  FILE *fp = NULL;
+  uint32_t file_size = 0;
+  int i = 0;
+
+  // Make request to host
+  puts(filepath);
+  i = system("rz");
+  if (i != 0) puts("[Tester]: File transfer via rz failed!\n");
+  fp = fopen(fname, "r");
+  if(fp == NULL){
+    puts("fp is null\n");
+  }
+  file_size = fread(buffer, 1, fsize, fp);
+  fclose(fp);
+
+  return file_size;
+}
+
+uint32_t rz_request_file(const char *fname, char *buffer, uint32_t fsize){
   FILE *fp = NULL;
   uint32_t file_size = 0;
   int i = 0;
@@ -84,10 +104,542 @@ uint32_t rz_request_file(char *fname, char *buffer, uint32_t fsize){
   i = system("rz");
   if (i != 0) puts("[Tester]: File transfer via rz failed!\n");
   fp = fopen(fname, "r");
+  if(fp == NULL){
+    puts("fp is null\n");
+  }
   file_size = fread(buffer, 1, fsize, fp);
   fclose(fp);
-
+  
   return file_size;
+}
+
+// ASCII characters are the safest to send
+#define PERFORM_SHA 'a'
+#define PERFORM_AES 'b'
+#define PERFORM_MCELIECE 'c'
+#define PERFORM_MCELIECE_SHORT 'd'
+
+#define PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES 261120
+#define PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES 6492
+#define PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_CIPHERTEXTBYTES 96
+#define PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_BYTES 32
+
+typedef struct{
+  char* ptr;
+  int used;
+  int allocated;
+} Arena;
+
+//Arena globalArenaInst = {};
+static Arena* globalArena = NULL;
+
+Arena InitArena(int size){
+  Arena arena = {};
+  arena.ptr = (char*) malloc(size * sizeof(char));
+  arena.allocated = size;
+
+  return arena;
+}
+
+void* PushBytes(Arena* arena,int size){
+  char* ptr = &arena->ptr[arena->used];
+
+  size = (size + 3) & (~3); // Align to 4 byte boundary
+  arena->used += size;
+
+  if(arena->used > arena->allocated){
+    printf("Arena overflow\n");
+    printf("Size: %d,Used: %d, Allocated: %d\n",size,arena->used,arena->allocated);
+  }
+
+  return ptr;
+}
+
+void* PushAndZeroBytes(Arena* arena,int size){
+  char* ptr = PushBytes(arena,size);
+
+  for (int i = 0; i < size; i++) {
+    ptr[i] = 0;
+  }
+
+  return ptr;
+}
+
+int MarkArena(Arena* arena){
+  return arena->used;
+}
+
+void PopArena(Arena* arena,int mark){
+  arena->used = mark;
+}
+
+#define PushArray(ARENA,N_ELEM,TYPE) (TYPE*) PushBytes(ARENA,(N_ELEM) * sizeof(TYPE))
+
+typedef struct{
+  char* str;
+  int size;
+} String;
+
+#include <string.h>
+#define STRING(str) (String){str,strlen(str)}
+
+String PushFile(const char* filepath,const char* filename){
+  // Make request to host
+  int file_size = rz_request_file_by_path(filepath,filename, globalArena->ptr,globalArena->allocated - globalArena->used);
+  char* content = PushBytes(globalArena,file_size + 1);
+  content[file_size] = '\0';
+
+  return (String){.str=content,.size=file_size};
+}
+
+void getc_until(char toSee){
+  char ch = 0;
+  bool seenOne = false;
+  while((ch = uart16550_getc()) != toSee){
+    if(!seenOne){
+      puts("Stream got out of sync, got unexpected data:");
+    }
+    printf("%02x ",ch);
+
+    seenOne = true;
+  }
+  if(seenOne){
+    puts("\n");    
+  }
+}
+
+String receive_small_string(){
+  getc_until(STX);
+
+  int bytesSeen = 0;
+  char ch = 0;
+  char* buffer = globalArena->ptr;
+  while((ch = uart16550_getc()) != ETX){
+    buffer[bytesSeen] = ch;
+    bytesSeen += 1;
+  }
+  PushBytes(globalArena,bytesSeen + 1);
+
+  buffer[bytesSeen] = '\0';
+
+  return (String){.str = buffer,.size = bytesSeen};
+}
+
+int receive_int(){
+  int result = uart16550_getc();
+  result |= ((uint32_t)uart16550_getc()) << 8;
+  result |= ((uint32_t)uart16550_getc()) << 16;
+  result |= ((uint32_t)uart16550_getc()) << 24;
+
+  return result;
+}
+
+String receive_large_data(Arena* out){
+  getc_until(STX);
+
+  int size = receive_int();
+  char* res = PushBytes(out,size + 1);
+
+  for(int i = 0; i < size; i++){
+    res[i] = uart16550_getc();
+  }
+
+  res[size] = '\0';
+
+  getc_until(ETX);
+  return (String){.str = res,.size = size};
+}
+
+void send_int(int integer){
+  uart16550_putc(integer & 0x000000FF);
+  uart16550_putc((integer >> 8) & 0x000000FF);
+  uart16550_putc((integer >> 16) & 0x000000FF);
+  uart16550_putc((integer >> 24) & 0x000000FF);
+}
+
+void send_large_data(const char* buffer,int size){
+  uart16550_putc(STX);
+
+  send_int(size);
+  
+  for(int i = 0; i < size; i++){
+    uart16550_putc(buffer[i]);
+  }  
+
+  uart16550_putc(ETX);
+}
+
+void send_small_string(const char* string){
+  uart16550_putc(STX);
+
+  int bytesSent = 0;
+  while(bytesSent < 255 && string[bytesSent] != '\0'){
+    uart16550_putc(string[bytesSent]);
+    bytesSent += 1;
+  }
+
+  if(string[bytesSent] != '\0'){
+    puts("[TESTER] send_small_string was cutoff\n");
+  }
+
+  uart16550_putc(ETX);
+}
+
+char* SearchAndAdvance(char* ptr,String str){
+  char* firstChar = strstr(ptr,str.str);
+  if(firstChar == NULL){
+    return NULL;
+  }
+
+  char* advance = firstChar + str.size;
+  return advance;
+}
+
+int ParseNumber(char* ptr){
+  int count = 0;
+
+  while(ptr != NULL){
+    char ch = *ptr;
+
+    if(ch >= '0' && ch <= '9'){
+      count *= 10;
+      count += ch - '0';
+      ptr += 1;
+      continue;
+    }
+
+    break;
+  }
+
+  return count;
+}
+
+char GetHexadecimalChar(unsigned char value){
+  if(value < 10){
+    return '0' + value;
+  } else{
+    return 'A' + (value - 10);
+  }
+}
+
+char* GetHexadecimal(const char* text,char* buffer,int str_size){
+  int i = 0;
+  unsigned char* view = (unsigned char*) text;
+  for(; i< str_size; i++){
+    buffer[i*2] = GetHexadecimalChar(view[i] / 16);
+    buffer[i*2+1] = GetHexadecimalChar(view[i] % 16);
+  }
+
+  buffer[i*2] = '\0';
+
+  return buffer;
+}
+
+static char HexToInt(char ch){
+   if('0' <= ch && ch <= '9'){
+      return (ch - '0');
+   } else if('a' <= ch && ch <= 'f'){
+      return ch - 'a' + 10;
+   } else if('A' <= ch && ch <= 'F'){
+      return ch - 'A' + 10;
+   } else {
+      return 0x7f;
+   }
+}
+
+// Make sure that buffer is capable of storing the whole thing. Returns number of bytes inserted
+int HexStringToHex(char* buffer,const char* str){
+   int inserted = 0;
+   for(int i = 0; ; i += 2){
+      char upper = HexToInt(str[i]);
+      char lower = HexToInt(str[i+1]);
+
+      if(upper >= 16 || lower >= 16){
+         if(upper < 16){ // Upper is good but lower is not
+            puts("Warning: HexString was not divisible by 2\n");
+         }
+         break;
+      }
+
+      buffer[inserted++] = upper * 16 + lower;
+   }
+
+   return inserted;
+}
+
+typedef struct {
+  int initTime;
+  int tests;
+  int goodTests;
+  int versatTimeAccum;
+  int softwareTimeAccum;
+  int earlyExit;
+} TestState;
+
+TestState VersatCommonSHATests(String content){
+  TestState testResult = {};
+
+  int mark = MarkArena(globalArena);
+
+  char* ptr = content.str;
+  while(1){
+    int testMark = MarkArena(globalArena);
+
+    ptr = SearchAndAdvance(ptr,STRING("LEN = "));
+    if(ptr == NULL){
+      break;
+    }
+
+    int len = ParseNumber(ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("MSG = "));
+    if(ptr == NULL){ // Note: It's only a error if any check after the first one fails, because we are assuming that if the first passes then that must mean that the rest should pass as well.
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* message = PushArray(globalArena,len,char);
+    int bytes = HexStringToHex(message,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("MD = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* expected = ptr;
+
+    uart16550_putc(PERFORM_SHA);
+
+    if(len == 0){
+      send_large_data("",0);
+    } else {
+      send_large_data(message,bytes);
+    }
+
+    String result = receive_small_string();
+
+    bool good = true;
+    for(int i = 0; i < 64; i++){
+      if(result.str[i] != expected[i]){
+        good = false;
+        break;
+      }
+    }
+
+    if(good){
+      testResult.goodTests += 1;
+    } else {
+      printf("SHA Test %02d: Error\n",testResult.tests);
+      printf("  Expected: %.64s\n",expected); 
+      printf("  Versat:   %.*s\n",result.size,result.str);
+    }
+
+    testResult.tests += 1;
+    PopArena(globalArena,testMark);
+  }
+
+  PopArena(globalArena,mark);
+
+  return testResult;
+}
+
+TestState VersatCommonAESTests(String content){
+  TestState testResult = {};
+
+  int mark = MarkArena(globalArena);
+
+  char* ptr = content.str;
+  while(1){
+    int testMark = MarkArena(globalArena);
+
+    ptr = SearchAndAdvance(ptr,STRING("COUNT = "));
+    if(ptr == NULL){
+      break;
+    }
+
+    ParseNumber(ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("KEY = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* key = PushArray(globalArena,32 + 1,char);
+    HexStringToHex(key,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("PLAINTEXT = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+  
+    char* plain = PushArray(globalArena,16 + 1,char);
+    HexStringToHex(plain,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("CIPHERTEXT = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* cypher = ptr;
+
+    uart16550_putc(PERFORM_AES);    
+
+    send_large_data(key,32);
+    send_large_data(plain,16);
+
+    String result = receive_small_string();
+
+    bool good = true;
+    for(int i = 0; i < 16; i++){
+      if(result.str[i] != cypher[i]){
+        good = false;
+        break;
+      }
+    }
+
+    if(good){
+      testResult.goodTests += 1;
+    } else {
+      printf("AES Test %02d: Error\n",testResult.tests);
+      printf("  Expected: %.32s\n",cypher); 
+      printf("  Versat:   %.*s\n",result.size,result.str);
+    }
+
+    testResult.tests += 1;
+    PopArena(globalArena,testMark);
+  }
+
+  PopArena(globalArena,mark);
+
+  return testResult;
+}
+
+TestState VersatMcElieceShortTests(String content){
+  TestState testResult = {};
+
+  int mark = MarkArena(globalArena);
+
+  char* ptr = content.str;
+  while(1){
+    int testMark = MarkArena(globalArena);
+
+    ptr = SearchAndAdvance(ptr,STRING("COUNT = "));
+    if(ptr == NULL){
+      break;
+    }
+
+    ParseNumber(ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("SEED = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char seed[49];
+    HexStringToHex(seed,ptr);
+
+    ptr = SearchAndAdvance(ptr,STRING("PK = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+  
+    char* good_pk_start = ptr;
+
+    ptr = SearchAndAdvance(ptr,STRING("PKL = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+  
+    char* good_pk_end = ptr;
+
+    ptr = SearchAndAdvance(ptr,STRING("SK = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* good_sk_start = ptr;
+
+    ptr = SearchAndAdvance(ptr,STRING("SKL = "));
+    if(ptr == NULL){
+      testResult.earlyExit = 1;
+      break;
+    }
+
+    char* good_sk_end = ptr;
+
+    uart16550_putc(PERFORM_MCELIECE_SHORT);
+    send_large_data(seed,48);    
+
+    String public_key_start = receive_large_data(globalArena);
+    String public_key_end = receive_large_data(globalArena);
+    String secret_key_start = receive_large_data(globalArena);
+    String secret_key_end = receive_large_data(globalArena);
+
+    char* public_key_start_hex = PushArray(globalArena,512 * 2 + 1,char);
+    char* public_key_end_hex = PushArray(globalArena,512 * 2 + 1,char);
+    char* secret_key_start_hex = PushArray(globalArena,512 * 2 + 1,char);
+    char* secret_key_end_hex = PushArray(globalArena,512 * 2 + 1,char);
+
+    GetHexadecimal(public_key_start.str,public_key_start_hex,512);
+    GetHexadecimal(public_key_end.str,public_key_end_hex,512);
+    GetHexadecimal(secret_key_start.str,secret_key_start_hex,512);
+    GetHexadecimal(secret_key_end.str,secret_key_end_hex,512);
+
+    bool good = true;
+    for(int i = 0; i < 1024; i++){
+      if(public_key_start_hex[i] != good_pk_start[i]){
+        good = false;
+        break;
+      }
+    }
+    for(int i = 0; i < 1024; i++){
+      if(public_key_end_hex[i] != good_pk_end[i]){
+        good = false;
+        break;
+      }
+    }
+    for(int i = 0; i < 1024; i++){
+      if(secret_key_start_hex[i] != good_sk_start[i]){
+        good = false;
+        break;
+      }
+    }
+    for(int i = 0; i < 1024; i++){
+      if(secret_key_end_hex[i] != good_sk_end[i]){
+        good = false;
+        break;
+      }
+    }
+
+    if(good){
+      testResult.goodTests += 1;
+    } else {
+      printf("McEliece Test %02d: Error\n",testResult.tests);
+      printf("  Expected Public first (first 32 chars): %.32s\n",good_pk_start); 
+      printf("  Got Public first (first 32 chars):      %.32s\n",public_key_start_hex);
+      printf("  Expected Public last  (first 32 chars): %.32s\n",good_pk_end); 
+      printf("  Got Public last  (first 32 chars):      %.32s\n",public_key_end_hex);
+      printf("  Expected Secret first (first 32 chars): %.32s\n",good_sk_start); 
+      printf("  Got Secret first (first 32 chars):      %.32s\n",secret_key_start_hex);
+      printf("  Expected Secret last  (first 32 chars): %.32s\n",good_sk_end); 
+      printf("  Got Secret last  (first 32 chars):      %.32s\n",secret_key_end_hex);
+    }
+
+    testResult.tests += 1;
+    PopArena(globalArena,testMark);
+  }
+
+  PopArena(globalArena,mark);
+
+  return testResult;
 }
 
 /*
@@ -151,7 +703,7 @@ int main() {
   char c, buffer[BUFFER_SIZE];//, *sutStr;
   int i;
 #ifndef IOB_SOC_TESTER_INIT_MEM
-  char sut_firmware[SUT_FIRMWARE_SIZE];
+  char* sut_firmware = (char*) malloc(SUT_FIRMWARE_SIZE);
 #endif
 
 //    // Init uart0
@@ -263,7 +815,7 @@ int main() {
  #endif
 
   // Tell SUT that the Tester is running linux
-  uart16550_puts("TESTER_RUN_LINUX\n");
+  send_small_string("TESTER_RUN_LINUX");
 //    // Test sending data to SUT via ethernet
 //    uart16550_puts("[Tester]: Sending data to SUT via ethernet:\n");
 //    for(i=0; i<64; i++) {
@@ -300,6 +852,62 @@ int main() {
   // ignore file contents received (test.log)
   for (i = 0; i < file_size; i++)
     uart16550_getc();
+
+#if 1
+  while(uart16550_getc() != ENQ); // Read the messages outputted by file transfer function
+  // Request SUT to perform various cryptographic operations
+  Arena globalArenaInst = InitArena(2 * 1024 * 1024); 
+  globalArena = &globalArenaInst;
+  
+  {
+  int mark = MarkArena(globalArena);
+  String content = PushFile("../../software/KAT/SHA256ShortMsg.rsp","SHA256ShortMsg.rsp");
+  TestState result = VersatCommonSHATests(content);
+
+  if(result.earlyExit){
+    printf("SHA early exit. Check testcases to see if they follow the expected format\n");
+  } else {
+    printf("\n\n=======================================================\n");
+    printf("SHA tests: %d passed out of %d\n",result.goodTests,result.tests);
+    printf("=======================================================\n\n");
+  }
+
+  PopArena(globalArena,mark);
+  }
+
+  {
+  int mark = MarkArena(globalArena);
+  String content = PushFile("../../software/KAT/AESECB256.rsp","AESECB256.rsp");
+  TestState result = VersatCommonAESTests(content);
+
+  if(result.earlyExit){
+    printf("AES early exit. Check testcases to see if they follow the expected format\n");
+  } else {
+    printf("\n\n=======================================================\n");
+    printf("AES tests: %d passed out of %d\n",result.goodTests,result.tests);
+    printf("=======================================================\n\n");
+  }
+
+  PopArena(globalArena,mark);
+  }
+
+  {
+  int mark = MarkArena(globalArena);
+  String content = PushFile("../../software/KAT/McElieceRound4kat_kem_short.rsp","McElieceRound4kat_kem_short.rsp");
+  TestState result = VersatMcElieceShortTests(content);
+
+  if(result.earlyExit){
+    printf("McEliece early exit. Check testcases to see if they follow the expected format\n");
+  } else {
+    printf("\n\n=======================================================\n");
+    printf("McEliece tests: %d passed out of %d\n",result.goodTests,result.tests);
+    printf("=======================================================\n\n");
+  }
+  PopArena(globalArena,mark);
+  }
+
+  uart16550_putc(ETX); // Terminate loop on SUT side
+#endif
 
   // End UART1 connection with SUT
   uart16550_finish();

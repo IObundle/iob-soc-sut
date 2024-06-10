@@ -9,7 +9,6 @@ insmod /drivers/iob_ila.ko
 insmod /drivers/iob_dma.ko
 insmod /drivers/iob_axistream_in.ko
 insmod /drivers/iob_axistream_out.ko
-insmod /drivers/iob_versat.ko
 
 # Set correct settings for uart port connected to SUT
 stty -F /dev/ttyS0 115200 raw -echo -echoe -echok

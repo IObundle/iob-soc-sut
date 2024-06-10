@@ -332,6 +332,24 @@ int main()
       send_large_data(public_key,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES);
       send_large_data(secret_key,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES);
     } break;
+    case PERFORM_MCELIECE_SHORT:{
+      String seed = receive_large_data(globalArena);
+
+      nist_kat_init(seed.str, NULL, 256);
+
+      unsigned char* public_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES,unsigned char);
+      unsigned char* secret_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES,unsigned char);
+
+      VersatMcEliece(public_key, secret_key);
+
+      int pkOffset = PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES - 512;
+      int skOffset = PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES - 512;
+
+      send_large_data(public_key,512);
+      send_large_data(public_key + pkOffset,512);
+      send_large_data(secret_key,512);
+      send_large_data(secret_key + skOffset,512);
+    } break;
     default: goto end; // Something is wrong 
     }
 

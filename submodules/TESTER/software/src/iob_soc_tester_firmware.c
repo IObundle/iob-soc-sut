@@ -837,8 +837,8 @@ int main() {
   for (i = 0; i < file_size; i++)
     uart16550_getc();
 
+#if 1 // Versat specific
   while(uart16550_getc() != ENQ); // Read the messages outputted by file transfer function
-
   // Request SUT to perform various cryptographic operations
   Arena globalArenaInst = InitArena(2 * 1024 * 1024); 
   globalArena = &globalArenaInst;
@@ -900,6 +900,7 @@ int main() {
 #endif
 
   uart16550_putc(ETX); // Terminate loop on SUT side
+#endif
 
   // End UART1 connection with SUT
   uart16550_finish();

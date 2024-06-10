@@ -2,4 +2,4 @@
 #define PERFORM_SHA 'a'
 #define PERFORM_AES 'b'
 #define PERFORM_MCELIECE 'c'
-
+#define PERFORM_MCELIECE_SHORT 'd'
