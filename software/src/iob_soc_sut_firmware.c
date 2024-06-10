@@ -36,7 +36,7 @@ void clear_cache(){
 }
 
 // Send signal by uart to receive file by ethernet
-uint32_t uart16550_recvfile_ethernet(char *file_name) {
+uint32_t uart16550_recvfile_ethernet(const char *file_name) {
 
   uart16550_puts(UART_PROGNAME);
   uart16550_puts (": requesting to receive file by ethernet\n");
@@ -282,19 +282,35 @@ int main()
   uart16550_putc(ENQ);
 
   versat_init(VERSAT0_BASE);
-  ConfigEnableDMA(false);
+  ConfigEnableDMA(true);
   Arena arena = InitArena(2*1024*1024);
   globalArena = &arena;
 
+  char lastActivated = 0;
   char ch = 0;
   while((ch = uart16550_getc()) != ETX){
     int mark = MarkArena(globalArena);
 
+    if(lastActivated != ch){
+      switch(ch){
+        case PERFORM_SHA:{
+          InitVersatSHA();
+        } break;
+        case PERFORM_AES:{
+          InitVersatAES();
+          InitAES();
+        } break;
+        case PERFORM_MCELIECE: break;
+        case PERFORM_MCELIECE_SHORT: break;
+        default: break;
+      }
+
+      lastActivated = ch;
+    }
+
     switch(ch){
     case PERFORM_SHA:{
-
       String received = receive_large_data(globalArena);
-      InitVersatSHA();
 
       unsigned char digest[256];
       VersatSHA(digest,received.str,received.size);
@@ -308,9 +324,6 @@ int main()
     case PERFORM_AES:{
       String key = receive_large_data(globalArena);
       String plaintext = receive_large_data(globalArena);
-
-      InitVersatAES();
-      InitAES();
 
       unsigned char chiperBuffer[16 + 1];
       AES_ECB256(key.str,plaintext.str,chiperBuffer);

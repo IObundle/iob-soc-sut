@@ -34,7 +34,7 @@
 #include "api.h" // McEliece constants to allocate result memory
 
 // Enable debug messages.
-#define DEBUG 1
+#define DEBUG 0
 
 #define SUT_FIRMWARE_SIZE 150000
 
@@ -70,7 +70,7 @@ void clear_cache(){
 }
 
 // Send signal by uart to receive file by ethernet
-uint32_t uart_recvfile_ethernet(char *file_name) {
+uint32_t uart_recvfile_ethernet(const char *file_name) {
 
   uart16550_puts(UART_PROGNAME);
   uart16550_puts (": requesting to receive file by ethernet\n");
