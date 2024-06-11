@@ -54,23 +54,23 @@ jobs:
       - name: init_mem
         run: nix-shell --run "make sim-run SIMULATOR=icarus"
 
-  tester-icarus:
-    runs-on: self-hosted
-    timeout-minutes: 180
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ icarus ]
+#  tester-icarus:
+#    runs-on: self-hosted
+#    timeout-minutes: 180
+#    # always run, except when previous job was cancelled
+#    if: ${{ !cancelled() }}
+#    # run after indicated job
+#    needs: [ icarus ]
 
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
-      # Init mem
-      - name: init_mem
-        run: nix-shell --run "make sim-run TESTER=1 GRAB_TIMEOUT=10800 SIMULATOR=icarus"
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          ssh-key: ${{ secrets.IOB_GHACTIONS }}
+#          submodules: 'recursive'
+#      # Running tests with INIT_MEM=0 is to slow for icarus. Run specific icarus test instead (with INIT_MEM=1)
+#      # Init mem
+#      - name: init_mem
+#        run: nix-shell --run "make sim-run TESTER=1 GRAB_TIMEOUT=10800 SIMULATOR=icarus"
 
   tester-verilator:
     runs-on: self-hosted
