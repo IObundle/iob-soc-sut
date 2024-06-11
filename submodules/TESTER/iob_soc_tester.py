@@ -163,11 +163,11 @@ class iob_soc_tester(iob_soc_opencryptolinux):
 
         super()._create_instances()
 
-        versatInst = None
-        for x in iob_soc_tester.peripherals:
-            if x.name == "VERSAT0":
-                versatInst = x
-        iob_soc_tester.peripherals.remove(versatInst)
+        #        versatInst = None
+        #        for x in iob_soc_tester.peripherals:
+        #            if x.name == "VERSAT0":
+        #                versatInst = x
+        #        iob_soc_tester.peripherals.remove(versatInst)
 
         """
         cls.peripherals.append(
