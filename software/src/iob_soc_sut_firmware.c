@@ -9,12 +9,22 @@
 #include "iob-gpio.h"
 #include "iob-eth.h"
 #include "printf.h"
+#include "iob-timer.h"
 #include "iob_regfileif_inverted_swreg.h"
 #include "iob-axistream-in.h"
 #include "iob-axistream-out.h"
 #if __has_include("iob_soc_tester_conf.h")
 #define USE_TESTER
 #endif
+
+#include "arena.h"
+#include "versat_accel.h"
+#include "versat_crypto.h"
+#include "versat_crypto_tests.h"
+#include "versat_interface.h"
+
+#include "api.h"
+void nist_kat_init(unsigned char *entropy_input, unsigned char *personalization_string, int security_strength);
 
 void axistream_loopback();
 
@@ -26,7 +36,7 @@ void clear_cache(){
 }
 
 // Send signal by uart to receive file by ethernet
-uint32_t uart16550_recvfile_ethernet(char *file_name) {
+uint32_t uart16550_recvfile_ethernet(const char *file_name) {
 
   uart16550_puts(UART_PROGNAME);
   uart16550_puts (": requesting to receive file by ethernet\n");
@@ -49,6 +59,116 @@ uint32_t uart16550_recvfile_ethernet(char *file_name) {
   return file_size;
 }
 
+uint32_t uart_recvfile_ethernet(const char *file_name){
+  return uart16550_recvfile_ethernet(file_name);
+}
+
+int GetTime(){
+  return timer_get_count();
+}
+
+void getc_until(char toSee){
+  char ch = 0;
+  bool seenOne = false;
+  while((ch = uart16550_getc()) != toSee){
+    if(!seenOne){
+      //SUT cannot report because the tester cannot handle receiving unexpected messages from the SUT
+      //At least while the SUT is inside the Versat loop.
+      //printf("Stream got out of sync, got unexpected data\n");
+    }
+    seenOne = true;
+  }
+}
+
+int send_small_string(const char* string){
+  uart16550_putc(STX);
+
+  int bytesSent = 0;
+  while(bytesSent < 255 && string[bytesSent] != '\0'){
+    uart16550_putc(string[bytesSent]);
+    bytesSent += 1;
+  }
+
+  uart16550_putc(ETX);
+}
+
+void send_int(int integer){
+  uart16550_putc(integer & 0x000000FF);
+  uart16550_putc((integer >> 8) & 0x000000FF);
+  uart16550_putc((integer >> 16) & 0x000000FF);
+  uart16550_putc((integer >> 24) & 0x000000FF);
+}
+
+void send_large_data(const char* buffer,int size){
+  uart16550_putc(STX);
+
+  send_int(size);
+  
+  for(int i = 0; i < size; i++){
+    uart16550_putc(buffer[i]);
+  }  
+
+#if 0
+  connect_terminal();
+  eth_send_file(buffer, size);
+  connect_sut();
+#endif
+
+  uart16550_putc(ETX);
+}
+
+int receive_small_string(char* buffer){
+  getc_until(STX);
+
+  int bytesSeen = 0;
+  char ch = 0;
+  while((ch = uart16550_getc()) != ETX){
+    buffer[bytesSeen] = ch;
+    bytesSeen += 1;
+  }
+
+  buffer[bytesSeen] = '\0';
+  return bytesSeen;
+}
+
+int receive_int(){
+  int result = uart16550_getc();
+  result |= ((uint32_t)uart16550_getc()) << 8;
+  result |= ((uint32_t)uart16550_getc()) << 16;
+  result |= ((uint32_t)uart16550_getc()) << 24;
+
+  return result;
+}
+
+void read_remaining(){
+  char ch = 0;
+  while((ch = uart16550_getc()) != EOT){
+    printf("%02x ",ch);
+  }
+  printf("\n");
+}
+
+String receive_large_data(Arena* out){
+  getc_until(STX);
+
+  int size = receive_int();
+  char* res = PushBytes(out,size + 1);
+
+  //printf("Got %d\n",size);
+
+#if 1
+  for(int i = 0; i < size; i++){
+    res[i] = uart16550_getc();
+  }
+#endif
+
+//  eth_rcv_file(res,size);
+  res[size] = '\0';
+
+  getc_until(ETX);
+  return (String){.str = res,.size = size};
+}
+
 int main()
 {
   char pass_string[] = "Test passed!";
@@ -56,11 +176,16 @@ int main()
   int i;
   char buffer[64];
   char file_buffer[256];
+  char misc_buffer[256];
   int ethernet_connected = 0;
+  int test_result = 0;
 
   //init uart
   uart16550_init(UART0_BASE, FREQ/(16*BAUD));
   printf_init(&uart16550_putc);
+
+  timer_init(TIMER0_BASE);
+
   //init regfileif
   IOB_REGFILEIF_INVERTED_INIT_BASEADDR(REGFILEIF0_BASE);
   //init gpio
@@ -78,22 +203,13 @@ int main()
 
 #ifdef USE_TESTER
   // Receive a special string message from tester to tell if its running linux
-  char tester_run_type[] = "TESTER_RUN_";
-  for ( i = 0; i < 11; ) {
-    if (uart16550_getc() == tester_run_type[i])
-      i++;
-    else
-      i = 0;
-  }
-  char tester_run_type2[] = "LINUX";
-  int tester_run_linux = 1;
-  for ( i = 0; i < 5; ) {
-    if (uart16550_getc() == tester_run_type2[i]) {
-      i++;
-    } else {
-      tester_run_linux = 0;
-      break;
-    }
+  receive_small_string(misc_buffer);
+
+  bool tester_run_linux = false;
+  if(strcmp(misc_buffer,"TESTER_RUN_LINUX") == 0){
+    tester_run_linux = true;
+  } else if(strcmp(misc_buffer,"TESTER_RUN_BAREMETAL") == 0){
+    tester_run_linux = false;
   }
 
   if (!tester_run_linux) { //Ethernet does not work on Linux yet
@@ -162,9 +278,101 @@ int main()
 
   uart16550_sendfile("test.log", strlen(pass_string), pass_string);
 
+#ifdef USE_TESTER
+  uart16550_putc(ENQ);
+
+  versat_init(VERSAT0_BASE);
+  ConfigEnableDMA(true);
+  Arena arena = InitArena(2*1024*1024);
+  globalArena = &arena;
+
+  char lastActivated = 0;
+  char ch = 0;
+  while((ch = uart16550_getc()) != ETX){
+    int mark = MarkArena(globalArena);
+
+    if(lastActivated != ch){
+      switch(ch){
+        case PERFORM_SHA:{
+          InitVersatSHA();
+        } break;
+        case PERFORM_AES:{
+          InitVersatAES();
+          InitAES();
+        } break;
+        case PERFORM_MCELIECE: break;
+        case PERFORM_MCELIECE_SHORT: break;
+        default: break;
+      }
+
+      lastActivated = ch;
+    }
+
+    switch(ch){
+    case PERFORM_SHA:{
+      String received = receive_large_data(globalArena);
+
+      unsigned char digest[256];
+      VersatSHA(digest,received.str,received.size);
+
+      static const int HASH_SIZE = (256/8);
+      char versat_buffer[2048];
+      GetHexadecimal((char*) digest,versat_buffer, HASH_SIZE);
+      
+      send_small_string(versat_buffer);
+    } break;
+    case PERFORM_AES:{
+      String key = receive_large_data(globalArena);
+      String plaintext = receive_large_data(globalArena);
+
+      unsigned char chiperBuffer[16 + 1];
+      AES_ECB256(key.str,plaintext.str,chiperBuffer);
+      
+      char versat_buffer[2048];
+      GetHexadecimal((char*) chiperBuffer,versat_buffer, 16);      
+      send_small_string(versat_buffer);
+    } break;
+    case PERFORM_MCELIECE:{
+      String seed = receive_large_data(globalArena);
+
+      nist_kat_init(seed.str, NULL, 256);
+
+      unsigned char* public_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES,unsigned char);
+      unsigned char* secret_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES,unsigned char);
+
+      VersatMcEliece(public_key, secret_key);
+
+      send_large_data(public_key,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES);
+      send_large_data(secret_key,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES);
+    } break;
+    case PERFORM_MCELIECE_SHORT:{
+      String seed = receive_large_data(globalArena);
+
+      nist_kat_init(seed.str, NULL, 256);
+
+      unsigned char* public_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES,unsigned char);
+      unsigned char* secret_key = PushArray(globalArena,PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES,unsigned char);
+
+      VersatMcEliece(public_key, secret_key);
+
+      int pkOffset = PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_PUBLICKEYBYTES - 512;
+      int skOffset = PQCLEAN_MCELIECE348864_CLEAN_CRYPTO_SECRETKEYBYTES - 512;
+
+      send_large_data(public_key,512);
+      send_large_data(public_key + pkOffset,512);
+      send_large_data(secret_key,512);
+      send_large_data(secret_key + skOffset,512);
+    } break;
+    default: goto end; // Something is wrong 
+    }
+
+    PopArena(globalArena,mark);
+  }
+end:
+#endif // USE_TESTER
+
   uart16550_finish();
 }
-
 
 // Read AXI stream input, print, and relay data to AXI stream output
 void axistream_loopback(){
@@ -195,7 +403,7 @@ void axistream_loopback(){
     uart16550_puts("\n[SUT]: Sent AXI stream bytes back via output interface.\n\n");
   } else {
     // Input AXI stream queue is empty
-    uart16550_puts("[SUT]: AXI stream input is empty. Skipping AXI stream tranfer.\n\n");
+    uart16550_puts("[SUT]: AXI stream input is empty. Skipping AXI stream transfer.\n\n");
   }
 
 }
