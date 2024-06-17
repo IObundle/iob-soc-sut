@@ -10,7 +10,6 @@ from iob_gpio import iob_gpio
 from iob_uart16550 import iob_uart16550
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
-from iob_spi_master import iob_spi_master
 from iob_ila import iob_ila
 from iob_pfsm import iob_pfsm
 from iob_dma import iob_dma
@@ -19,7 +18,6 @@ from iob_ram_2p_be import iob_ram_2p_be
 from config_gen import append_str_config_build_mk
 from verilog_gen import insert_verilog_in_module, inplace_change
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
-from iob_timer import iob_timer
 
 # Select if should include ILA and PFSM peripherals.
 # Disable this to reduce the amount of FPGA resources used.
@@ -162,42 +160,6 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
         super()._create_instances()
-
-        #        versatInst = None
-        #        for x in iob_soc_tester.peripherals:
-        #            if x.name == "VERSAT0":
-        #                versatInst = x
-        #        iob_soc_tester.peripherals.remove(versatInst)
-
-        """
-        cls.peripherals.append(
-            iob_eth(
-                "ETH0",
-                "Ethernet interface",
-                parameters={
-                    "AXI_ID_W": "AXI_ID_W",
-                    "AXI_LEN_W": "AXI_LEN_W",
-                    "AXI_ADDR_W": "AXI_ADDR_W",
-                    "AXI_DATA_W": "AXI_DATA_W",
-                    "MEM_ADDR_OFFSET": "MEM_ADDR_OFFSET",
-                },
-            )
-        )
-
-        cls.peripherals.append(iob_uart16550("UART0", "Default UART interface"))
-        cls.peripherals.append(
-            iob_spi_master("SPI0", "SPI master peripheral")
-        )  # Not being used but setup complains if not inserted
-        cls.peripherals.append(iob_timer("TIMER0"))
-
-        # This extra copy is used to prevent the automatic insertion of: TIMER0,UART0,SPI0,VERSAT0,ETH0 - from the opencrypto repo
-        # Some of these are needed, but these must be instantiated before hand, do not rely on opencrypto instantiate them
-        saved = cls.peripherals.copy()
-        super()._create_instances()
-        cls.peripherals = saved
-
-        print([x.name for x in cls.peripherals], file=sys.stderr)
-        """
 
     @classmethod
     def _generate_monitor_bitstream(cls):
