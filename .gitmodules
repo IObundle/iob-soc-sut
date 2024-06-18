@@ -22,3 +22,6 @@
 [submodule "submodules/OPENCRYPTOLINUX"]
 	path = submodules/OPENCRYPTOLINUX
 	url = git@github.com:IObundle/iob-soc-opencryptolinux.git
+[submodule "submodules/SPI"]
+	path = submodules/SPI
+	url = git@github.com:IObundle/iob-spi.git
