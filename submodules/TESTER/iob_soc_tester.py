@@ -1271,7 +1271,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_SS",
                     "port": "",
                     "bits": [],
@@ -1285,7 +1285,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_SCLK",
                     "port": "",
                     "bits": [],
@@ -1299,7 +1299,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_MISO",
                     "port": "",
                     "bits": [],
@@ -1313,7 +1313,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_MOSI",
                     "port": "",
                     "bits": [],
@@ -1327,7 +1327,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_WP_N",
                     "port": "",
                     "bits": [],
@@ -1341,7 +1341,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_HOLD_N",
                     "port": "",
                     "bits": [],
