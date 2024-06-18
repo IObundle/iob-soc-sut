@@ -130,22 +130,16 @@ set_property IOB TRUE [get_ports ENET_TX_EN]
 #
 
 # CS
-set_property PACKAGE_PIN D19 [get_ports spi_SS_o]
 set_property IOSTANDARD LVCMOS18 [get_ports spi_SS_o]
 # CLK
-set_property PACKAGE_PIN F10 [get_ports spi_SCLK_o]
 set_property IOSTANDARD LVCMOS18 [get_ports spi_SCLK_o]
 # DQ0
-set_property PACKAGE_PIN G11 [get_ports spi_MOSI_io]
 set_property IOSTANDARD LVCMOS18 [get_ports spi_MOSI_io]
 # DQ1
-set_property PACKAGE_PIN H11 [get_ports spi_MISO_io]
 set_property IOSTANDARD LVCMOS18 [get_ports spi_MISO_io]
 # DQ2
-set_property PACKAGE_PIN J11 [get_ports spi_WP_N_io]
 set_property IOSTANDARD LVCMOS18 [get_ports spi_WP_N_io]
 # DQ3
-set_property PACKAGE_PIN H12 [get_ports spi_HOLD_N_io]
 set_property IOSTANDARD LVCMOS18 [get_ports spi_HOLD_N_io]
 
 set_property IOB TRUE [get_ports spi_SS_o]
@@ -183,3 +177,32 @@ set_property IOB TRUE [get_cells iob_soc_tester0/SUT0/SPI0/fl_spi0/dq_out_r_reg[
 # Allow bitstream without setting PINS
 set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
 
+#
+# SPI1 constraints
+#
+
+# CS
+set_property PACKAGE_PIN D19 [get_ports SPI1_SS_o]
+set_property IOSTANDARD LVCMOS18 [get_ports SPI1_SS_o]
+# CLK
+set_property PACKAGE_PIN F10 [get_ports SPI1_SCLK_o]
+set_property IOSTANDARD LVCMOS18 [get_ports SPI1_SCLK_o]
+# DQ0
+set_property PACKAGE_PIN G11 [get_ports SPI1_MOSI_io]
+set_property IOSTANDARD LVCMOS18 [get_ports SPI1_MOSI_io]
+# DQ1
+set_property PACKAGE_PIN H11 [get_ports SPI1_MISO_io]
+set_property IOSTANDARD LVCMOS18 [get_ports SPI1_MISO_io]
+# DQ2
+set_property PACKAGE_PIN J11 [get_ports SPI1_WP_N_io]
+set_property IOSTANDARD LVCMOS18 [get_ports SPI1_WP_N_io]
+# DQ3
+set_property PACKAGE_PIN H12 [get_ports SPI1_HOLD_N_io]
+set_property IOSTANDARD LVCMOS18 [get_ports SPI1_HOLD_N_io]
+
+set_property IOB TRUE [get_ports SPI1_SS_o]
+set_property IOB TRUE [get_ports SPI1_SCLK_o]
+set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[0]]
+set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[1]]
+set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[2]]
+set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[3]]

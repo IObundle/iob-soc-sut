@@ -10,6 +10,7 @@ from iob_gpio import iob_gpio
 from iob_uart16550 import iob_uart16550
 from iob_axistream_in import iob_axistream_in
 from iob_axistream_out import iob_axistream_out
+from iob_spi_master import iob_spi_master
 from iob_ila import iob_ila
 from iob_pfsm import iob_pfsm
 from iob_dma import iob_dma
@@ -42,6 +43,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             iob_axistream_out,
             iob_dma,
             iob_eth,
+            iob_spi_master,
             # Modules required for AXISTREAM
             (iob_ram_2p_be, {"purpose": "simulation"}),
             (iob_ram_2p_be, {"purpose": "fpga"}),
@@ -154,6 +156,10 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "AXI_DATA_W": "AXI_DATA_W",
                 },
             )
+        )
+
+        cls.peripherals.append(
+            iob_spi_master("SPI1", "SPI interface for communication with Flash memory")
         )
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
@@ -1305,6 +1311,188 @@ copy_remote_simulation_ila_data:
                 {
                     "corename": "external",
                     "if_name": "SUT0_SPI0_HOLD_N",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "SS",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "SCLK",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "MISO",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "MOSI",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "WP_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "HOLD_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "avalid_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "address_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "wdata_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "wstrb_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "rdata_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "rvalid_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "ready_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
                     "port": "",
                     "bits": [],
                 },

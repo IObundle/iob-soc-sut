@@ -18,6 +18,8 @@
 
 #include "iob-dma.h"
 #include "iob-eth.h"
+#include "iob-spi.h"
+#include "iob-spiplatform.h"
 #include "iob_soc_sut_swreg.h"
 #include "iob_soc_tester_conf.h"
 #include "iob_soc_tester_periphs.h"
@@ -665,6 +667,54 @@ void relay_file_transfer_to_sut(char *file_name_buffer, char *file_content_buffe
     uart16550_putc(file_content_buffer[i]);
 }
 
+/* Test SPI:
+ * - arguments:
+ *   - spi_base: base address of SPI peripheral
+ *   - flash_addr: base address of flash memory
+ *   - test_size: number of bytes to write and read
+ * - returns:
+ *   - 0: test passed
+ *   - 1: otherwise
+ */
+int test_spi(int spi_base, unsigned int flash_addr, int test_size){
+    int test_failed = 0;
+    int i = 0, j = 0;
+    char data_buf[4] = {0};
+    unsigned int read_data = 0;
+
+    spiflash_init(spi_base);
+
+    // erase flash region
+    spiflash_erase_address_range(flash_addr, test_size);
+
+    // write data to flash
+    for (i = 0; i < test_size; i = i+4){
+        // set data buffer
+        for (j = 0; j < 4; j++){
+            data_buf[j] = (char) (i+j & 0xFF);
+        }
+
+        if (test_size > i+4){
+            spiflash_memProgram(data_buf, 4, flash_addr + i);
+        } else{
+            // if test_size is not multiple of 4, write remainder bytes
+            spiflash_memProgram(data_buf, test_size-i, flash_addr + i);
+        }
+    }
+
+    // check data
+    for (i = 0; i < test_size; i = i+4 ){
+        read_data = spiflash_readmem(flash_addr + i);
+        for (j = 0; j < 4; j++){
+            if ((char)(i+j & 0xFF) != (read_data >> (j*8) & 0xFF)){
+            test_failed = 1;
+            break;
+            }
+        }
+    }
+    return test_failed;
+}
+
 int main() {
   char pass_string[] = "Test passed!";
   char fail_string[] = "Test failed!";
@@ -728,6 +778,16 @@ int main() {
   // Write a test pattern to the GPIO outputs to be read by the SUT.
   gpio_set(0x1234abcd);
   uart16550_puts("[Tester]: Placed test pattern 0x1234abcd in GPIO outputs.\n\n");
+
+#ifdef XILINX
+  // SPI test
+  // 0x01FF F000: last subsector of flash memory
+  if (test_spi(SPI1_BASE, 0x01FFF000, 64) == 0){
+    uart16550_puts("[Tester]: SPI test passed!\n\n");
+  } else {
+    uart16550_puts("[Tester]: SPI test failed!\n\n");
+  }
+#endif // ifdef XILINX
 
 #ifdef USE_ILA_PFSM
     // Program PFSM

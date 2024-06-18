@@ -13,13 +13,22 @@ module iob_soc_tester_fpga_wrapper (
    output txd_o,
    input  rxd_i,
 
-   //spi
+   //spi0
    output spi_SS_o,
    output spi_SCLK_o,
    inout spi_MISO_io,
    inout spi_MOSI_io,
    inout spi_WP_N_io,
    inout spi_HOLD_N_io,
+
+   //spi1
+   output SPI1_SS_o,
+   output SPI1_SCLK_o,
+   inout SPI1_MISO_io,
+   inout SPI1_MOSI_io,
+   inout SPI1_WP_N_io,
+   inout SPI1_HOLD_N_io,
+
 
    // SUT spi
    output sut_spi_SS_o,
@@ -270,6 +279,19 @@ wire [1-1:0] memory_axi_rready; //Read channel ready.
                .SUT0_SPI0_MOSI_spi_MOSI(SUT0_SPI0_MOSI_spi_MOSI),
                .SUT0_SPI0_WP_N_spi_WP_N(SUT0_SPI0_WP_N_spi_WP_N),
                .SUT0_SPI0_HOLD_N_spi_HOLD_N(SUT0_SPI0_HOLD_N_spi_HOLD_N),
+               .SPI1_SS(SPI1_SS_o),
+               .SPI1_SCLK(SPI1_SCLK_o),
+               .SPI1_MISO(SPI1_MISO_io),
+               .SPI1_MOSI(SPI1_MOSI_io),
+               .SPI1_WP_N(SPI1_WP_N_io),
+               .SPI1_HOLD_N(SPI1_HOLD_N_io),
+               .SPI1_avalid_cache(1'b0),
+               .SPI1_address_cache(1'b0),
+               .SPI1_wdata_cache(1'b0),
+               .SPI1_wstrb_cache(1'b0),
+               .SPI1_rdata_cache(),
+               .SPI1_rvalid_cache(),
+               .SPI1_ready_cache(),
 
 `ifdef IOB_SOC_TESTER_USE_EXTMEM
 .axi_awid_o(axi_awid[0+:8*AXI_ID_W]), //Address write channel ID.
