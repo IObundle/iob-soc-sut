@@ -224,7 +224,6 @@ int main()
     uart16550_puts("[SUT]: Tester running on Linux\n");
   }
 #else //USE_TESTER
-#ifndef SIMULATION
   // Receive data from console via Ethernet
   uint32_t file_size;
   file_size = uart16550_recvfile_ethernet("../src/eth_example.txt");
@@ -232,7 +231,6 @@ int main()
   uart16550_puts("\n[SUT]: File received from console via ethernet:\n");
   for(i=0; i<file_size; i++)
     uart16550_putc(file_buffer[i]);
-#endif //SIMULATION
 #endif //USE_TESTER
 
   uart16550_puts("\n\n\n[SUT]: Hello world!\n\n\n");

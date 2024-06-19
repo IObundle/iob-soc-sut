@@ -755,14 +755,12 @@ int main() {
   uart16550_puts("\n[Tester]: Waiting for ethernet PHY reset to finish...\n\n");
   eth_wait_phy_rst();
 
-#ifndef SIMULATION
   // Receive data from console via Ethernet
   file_size = uart_recvfile_ethernet("../src/eth_example.txt");
   eth_rcv_file(buffer,file_size);
   uart16550_puts("\n[Tester]: File received from console via ethernet:\n");
   for(i=0; i<file_size; i++)
     uart16550_putc(buffer[i]);
-#endif
 
   // init SUT eth
   eth_init_mac(ETH1_BASE, ETH_RMAC_ADDR, ETH_MAC_ADDR);
