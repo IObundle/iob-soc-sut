@@ -1,72 +1,273 @@
-#!/usr/bin/env python3
-"""
 #!/usr/bin/micropython
-"""
+
+import struct
+
+SUBSECTOR_SIZE = 4096
+
+# Command types
+COMM = 0
+COMMANS = 1
+COMMADDR_ANS = 2
+COMM_DTIN = 3
+COMMADDR_DTIN = 4
+COMMADDR = 5
+
+# Commands
+PAGE_PROGRAM = 0x02
+READ = 0x03
+READ_STATUSREG = 0x05
+WRITE_ENABLE = 0x06
+SUB_ERASE = 0x20
+
+# Command field offsets
+CMD_COMMAND = 0
+CMD_NDATA_BITS = 8
+CMD_DUMMY_CYCLES = 16
+CMD_FRAME_STRUCT = 20
+
+SPI_SYSFS = "/sys/devices/virtual/iob_spi_master/iob_spi_master0"
+
+SPI_SYSFILE_FL_RESET = SPI_SYSFS + "/fl_reset"
+SPI_SYSFILE_FL_DATAIN = SPI_SYSFS + "/fl_datain"
+SPI_SYSFILE_FL_ADDRESS = SPI_SYSFS + "/fl_address"
+SPI_SYSFILE_FL_COMMAND = SPI_SYSFS + "/fl_command"
+SPI_SYSFILE_FL_COMMANDTP = SPI_SYSFS + "/fl_commandtp"
+SPI_SYSFILE_FL_VALIDFLG = SPI_SYSFS + "/fl_validflg"
+SPI_SYSFILE_FL_READY = SPI_SYSFS + "/fl_ready"
+SPI_SYSFILE_FL_DATAOUT = SPI_SYSFS + "/fl_dataout"
+SPI_SYSFILE_VERSION = SPI_SYSFS + "/version"
 
 
-def flash_execute_command(cmd_type, addr, cmd):
-    print(
-        f"flash_execute_command: cmd_type: {hex(cmd_type)} addr: {hex(addr)} cmd: {hex(cmd)}"
-    )
-    return 0x00
+def iob_sysfs_read_file(fname):
+    read_value = 0x00
+    with open(fname, "rb") as f:
+        bin_data = f.read(4)
+        # pad with zeros if less than 4 bytes
+        if len(bin_data) < 4:
+            bin_data = b'\x00' * (4 - len(bin_data)) + bin_data
+        # unpack bytes as little-endian unsigned int
+        read_value = struct.unpack("<I", bin_data)[0]
+    return read_value
+
+
+def iob_sysfs_write_file(fname, value):
+    with open(fname, "wb") as f:
+        f.write(struct.pack("<I", value))
+    return
+
+
+def spi_set_command(cmd):
+    iob_sysfs_write_file(SPI_SYSFILE_FL_COMMAND, cmd)
+
+
+def spi_set_command_type(cmd_type):
+    iob_sysfs_write_file(SPI_SYSFILE_FL_COMMANDTP, cmd_type)
+
+
+def spi_set_valid(value):
+    iob_sysfs_write_file(SPI_SYSFILE_FL_VALIDFLG, value)
+
+
+def spi_set_address(addr):
+    iob_sysfs_write_file(SPI_SYSFILE_FL_ADDRESS, addr)
+
+
+def spi_set_datain(data_in):
+    iob_sysfs_write_file(SPI_SYSFILE_FL_DATAIN, data_in)
+
+
+def spi_get_ready():
+    return iob_sysfs_read_file(SPI_SYSFILE_FL_READY)
+
+
+def spi_get_data_out():
+    return iob_sysfs_read_file(SPI_SYSFILE_FL_DATAOUT)
+
+
+def spi_wait_for_ready():
+    while True:
+        if spi_get_ready():
+            break
+
+
+def flash_execute_command(cmd_type, data_in, addr, cmd):
+    data_out = 0x00
+    print("flash_execute_command:")
+    print(f"\tcmd_type: {hex(cmd_type)}")
+    print(f"\tdata_in: {hex(data_in)}")
+    print(f"\taddr: {hex(addr)}")
+    print(f"\tcmd: {hex(cmd)}")
+
+    spi_set_command(cmd)
+    spi_set_command_type(cmd_type)
+
+    spi_wait_for_ready()
+
+    if cmd_type == COMM:
+        print("\t\tCommand type: COMM")
+        spi_set_valid(1)
+        spi_set_valid(0)
+    elif cmd_type == COMMANS:
+        print("\t\tCommand type: COMMANS")
+        spi_set_valid(1)
+        spi_set_valid(0)
+        spi_wait_for_ready()
+        data_out = spi_get_data_out()
+    elif cmd_type == COMMADDR_ANS:
+        print("\t\tCommand type: COMMADDR_ANS")
+        spi_set_address(addr)
+        spi_set_valid(1)
+        spi_set_valid(0)
+        spi_wait_for_ready()
+        data_out = spi_get_data_out()
+    elif cmd_type == COMM_DTIN:
+        print("\t\tCommand type: COMM_DTIN")
+        spi_set_datain(data_in)
+        spi_set_valid(1)
+        spi_set_valid(0)
+    elif cmd_type == COMMADDR_DTIN:
+        print("\t\tCommand type: COMMADDR_DTIN")
+        spi_set_address(addr)
+        spi_set_datain(data_in)
+        spi_set_valid(1)
+        spi_set_valid(0)
+    elif cmd_type == COMMADDR:
+        print("\t\tCommand type: COMMADDR")
+        spi_set_address(addr)
+        spi_set_valid(1)
+        spi_set_valid(0)
+    else:
+        print("\t\tCommand type: UNKNOWN")
+        spi_set_valid(1)
+        spi_set_valid(0)
+    return data_out
+
+
+def build_command(frame_struct, dummy_cycles, ndata_bits, command):
+    cmd = 0x00
+    cmd = cmd | (command << CMD_COMMAND)
+    cmd = cmd | (ndata_bits << CMD_NDATA_BITS)
+    cmd = cmd | (dummy_cycles << CMD_DUMMY_CYCLES)
+    cmd = cmd | (frame_struct << CMD_FRAME_STRUCT)
+    return cmd
 
 
 def flash_read_status_reg():
-    return 0x02
+    status_cmd = build_command(
+        frame_struct=0x00,
+        dummy_cycles=0x00,
+        ndata_bits=1 * 8,
+        command=READ_STATUSREG,
+    )
+    read_data = flash_execute_command(
+        cmd_type=COMMANS,
+        data_in=0,
+        addr=0,
+        cmd=status_cmd,
+    )
+    return read_data
 
 
-def erase_flash_sector(flash_addr):
-    print(f"flash_addr: {hex(flash_addr)}")
-
-    cmd = 0x00
-    cmd_type = 0x00
-    addr = 0x00
+def erase_flash_subsector(flash_addr):
+    print(f"erase_flash_subsector: {hex(flash_addr)}")
 
     # Write Enable
+    _ = flash_execute_command(cmd_type=COMM, data_in=0, addr=0, cmd=WRITE_ENABLE)
 
-    # Read Status Register until not busy
+    # Wait for write enable latch to be set
     while True:
-        status = flash_read_status_reg()
-        if status & 0x02:
-            print("\t\tStatus: ready")
+        if flash_read_status_reg() & 0x02:
+            print("\t\tPost write enable: ready")
             break
 
     # Execute ERASE
-    _ = flash_execute_command(cmd_type, addr, cmd)
+    _ = flash_execute_command(
+        cmd_type=COMMADDR,
+        data_in=0,
+        addr=flash_addr,
+        cmd=SUB_ERASE,
+    )
 
     # wait for write in progress ready: 0: ready; 1: busy
     while True:
-        status = flash_read_status_reg()
-        if status & 0x01 == 0:
-            print("\t\tWIP: ready")
+        if (flash_read_status_reg() & 0x01) == 0:
+            print("\t\tPost erase WIP: ready")
             break
-        break
 
 
-def flash_memProgram(data, addr):
-    print(f"flash_memProgram: {data.hex()} at addr: {hex(addr)}")
+# Write data up to 32bits
+def flash_program_32bit(data, addr, nbytes=4):
+    print(f"flash_program_32bit: {data.hex()} at addr: {hex(addr)}")
+
+    # Write Enable
+    _ = flash_execute_command(cmd_type=COMM, data_in=0, addr=0, cmd=WRITE_ENABLE)
+
+    # Wait for write enable latch to be set
+    while True:
+        if flash_read_status_reg() & 0x02:
+            print("\t\tPost write enable: ready")
+            break
+
+    program_cmd = build_command(
+        frame_struct=0x00,
+        dummy_cycles=0x00,
+        ndata_bits=nbytes * 8,
+        command=PAGE_PROGRAM,
+    )
+
+    _ = flash_execute_command(
+        cmd_type=COMMADDR_DTIN,
+        data_in=data,
+        addr=addr,
+        cmd=program_cmd,
+    )
+
+    # wait for write in progress ready: 0: ready; 1: busy
+    while True:
+        if (flash_read_status_reg() & 0x01) == 0:
+            print("\t\tPost program WIP: ready")
+            break
 
 
 def flash_readmem(addr):
     print(f"flash_readmem at addr: {hex(addr)}")
-    return bytes([0x00, 0x00, 0x00, 0x00])
+    read_cmd = build_command(
+        frame_struct=0x00,
+        dummy_cycles=0x00,
+        ndata_bits=4 * 8,
+        command=READ,
+    )
+    return flash_execute_command(
+        cmd_type=COMMADDR_ANS,
+        data_in=0,
+        addr=addr,
+        cmd=read_cmd,
+    )
 
 
 def main():
     print("MicroPython SPI test")
 
     flash_addr = 0x01FFF000
-    test_size = 64
+    test_size = 16
 
     test_failed = False
 
-    # Note: assume test_size fits in a single sector
-    erase_flash_sector(flash_addr)
+    # assume test_size fits in a single subsector
+    assert (
+        test_size <= SUBSECTOR_SIZE
+    ), f"Test size {test_size} exceeds subsector size {SUBSECTOR_SIZE}"
+    erase_flash_subsector(flash_addr)
 
     # write data to flash
     for i in range(0, test_size, 4):
         word32bit = bytes([i + 3, i + 2, i + 1, i])
-        flash_memProgram(word32bit, flash_addr + i)
+        if test_size > (i + 4):
+            nbytes = 4
+        else:
+            nbytes = test_size - i
+
+        flash_program_32bit(data=word32bit, addr=flash_addr + i, nbytes=nbytes)
 
     # read data back
     for i in range(0, test_size, 4):
