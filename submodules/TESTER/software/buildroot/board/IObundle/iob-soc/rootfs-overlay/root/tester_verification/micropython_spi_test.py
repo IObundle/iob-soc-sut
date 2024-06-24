@@ -1,7 +1,5 @@
 #!/usr/bin/micropython
 
-import struct
-
 SUBSECTOR_SIZE = 4096
 
 # Command types
@@ -39,20 +37,16 @@ SPI_SYSFILE_VERSION = SPI_SYSFS + "/version"
 
 
 def iob_sysfs_read_file(fname):
-    read_value = 0x00
-    with open(fname, "rb") as f:
-        bin_data = f.read(4)
-        # pad with zeros if less than 4 bytes
-        if len(bin_data) < 4:
-            bin_data = b'\x00' * (4 - len(bin_data)) + bin_data
-        # unpack bytes as little-endian unsigned int
-        read_value = struct.unpack("<I", bin_data)[0]
-    return read_value
+    # Open file for read
+    with open(fname, "r") as file:
+        # Read uint32_t value from file in ASCII
+        read_value = int(file.readline().strip())
+        return read_value
 
 
 def iob_sysfs_write_file(fname, value):
-    with open(fname, "wb") as f:
-        f.write(struct.pack("<I", value))
+    with open(fname, "w") as f:
+        f.write(str(value))
     return
 
 
@@ -197,7 +191,7 @@ def erase_flash_subsector(flash_addr):
 
 # Write data up to 32bits
 def flash_program_32bit(data, addr, nbytes=4):
-    print(f"flash_program_32bit: {data.hex()} at addr: {hex(addr)}")
+    print(f"flash_program_32bit: {hex(data)} at addr: {hex(addr)}")
 
     # Write Enable
     _ = flash_execute_command(cmd_type=COMM, data_in=0, addr=0, cmd=WRITE_ENABLE)
@@ -261,7 +255,10 @@ def main():
 
     # write data to flash
     for i in range(0, test_size, 4):
-        word32bit = bytes([i + 3, i + 2, i + 1, i])
+        word32bit = i
+        word32bit = word32bit | ((i + 1) << (1 * 8))
+        word32bit = word32bit | ((i + 2) << (2 * 8))
+        word32bit = word32bit | ((i + 3) << (3 * 8))
         if test_size > (i + 4):
             nbytes = 4
         else:
@@ -271,9 +268,12 @@ def main():
 
     # read data back
     for i in range(0, test_size, 4):
-        expected_data = bytes([i + 3, i + 2, i + 1, i])
+        expected_data = i
+        expected_data = expected_data | ((i + 1) << (1 * 8))
+        expected_data = expected_data | ((i + 2) << (2 * 8))
+        expected_data = expected_data | ((i + 3) << (3 * 8))
         read_data = flash_readmem(flash_addr + i)
-        print(f"expected_data: {expected_data.hex()} read_data: {read_data.hex()}")
+        print(f"expected_data: {hex(expected_data)} read_data: {hex(read_data)}")
         if expected_data != read_data:
             print("\t\tError: data mismatch")
             test_failed = True

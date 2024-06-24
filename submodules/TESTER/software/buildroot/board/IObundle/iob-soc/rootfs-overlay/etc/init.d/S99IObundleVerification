@@ -16,3 +16,6 @@ stty -F /dev/ttyS0 115200 raw -echo -echoe -echok
 
 # Run verification program
 /root/tester_verification/run_verification
+
+# Run Python SPI test program
+/root/tester_verification/micropython_spi_test.py
