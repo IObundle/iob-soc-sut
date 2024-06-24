@@ -5,6 +5,28 @@ This repository contains an example System Under Test (SUT) and a Tester to veri
 
 The SUT runs on bare metal and has UART, GPIO, AXI4-Stream, and IOb-native interfaces.
 
+## Table of Contents
+- [OpenCryptoTester](https://github.com/IObundle/iob-soc-sut#opencryptotester)
+    - [Dependencies](https://github.com/IObundle/iob-soc-sut#dependencies)
+    - [Nix Environment](https://github.com/IObundle/iob-soc-sut#nix-environment)
+    - [Setup SUT](https://github.com/IObundle/iob-soc-sut#setup-the-sut)
+        - [Emulate SUT](https://github.com/IObundle/iob-soc-sut#emulate-the-sut-on-the-pc)
+        - [Simulate SUT](https://github.com/IObundle/iob-soc-sut#simulate-the-sut)
+        - [Build and run on FPGA](https://github.com/IObundle/iob-soc-sut#build-and-run-the-sut-on-the-fpga-board)
+    - [Setup Tester](https://github.com/IObundle/iob-soc-sut#setup-the-tester-along-with-the-sut)
+        - [Build and run Tester](https://github.com/IObundle/iob-soc-sut#build-and-run-the-tester-along-with-the-sut)
+    - [Cleaning](https://github.com/IObundle/iob-soc-sut#cleaning)
+    - [Setup SUT as netlist](https://github.com/IObundle/iob-soc-sut#setup-the-sut-as-a-netlist)
+- [OpenCryptoTester with Generic UUT](https://github.com/IObundle/iob-soc-sut#instructions-to-configure-the-opencryptotester-with-a-generic-uut)
+    - [UUT's Repository Minimum Requirements](https://github.com/IObundle/iob-soc-sut#uuts-repository-minimum-requirements)
+    - [Clone the IOb-SoC-OpenCryptoLinux's repository](https://github.com/IObundle/iob-soc-sut#clone-the-iob-soc-opencryptolinuxs-repository)
+    - [Configure the Tester](https://github.com/IObundle/iob-soc-sut#configure-the-tester)
+    - [Setup, build and run the Tester](https://github.com/IObundle/iob-soc-sut#setup-build-and-run-the-tester-along-with-uut)
+    - [Add a new Device to be tested](https://github.com/IObundle/iob-soc-sut#add-a-new-device-to-be-tested)
+    - [Cleaning](https://github.com/IObundle/iob-soc-sut#cleaning)
+- [Installing the RISC-V GNU Compiler Toolchain](https://github.com/IObundle/iob-soc-sut#instructions-for-installing-the-risc-v-gnu-compiler-toolchain)
+- [Acknowledgement](https://github.com/IObundle/iob-soc-sut#acknowledgement)
+
 # [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack)
 
 The [OpenCryptoTester](https://nlnet.nl/project/OpenCryptoTester#ack) project aims to develop a System-on-Chip (SoC) used mainly to verify cryptographic systems that improve internet security but can also be used on any SoC. It is synergetic with several other NGI Assure-funded open-source projects - notably [OpenCryptoHW](https://nlnet.nl/project/OpenCryptoHW) (Coarse-Grained Reconfigurable Array cryptographic hardware) and [OpenCryptoLinux](https://nlnet.nl/project/OpenCryptoLinux). The proposed SoC will support test instruments as peripherals and use OpenCryptoHW as the System Under Test (SUT), hopefully opening the way for open-source test instrumentation operated under Linux.
@@ -238,6 +260,7 @@ rm -r ../iob_soc_tester_V*
 ```
 
 # Instructions to configure the OpenCryptoTester with a generic UUT
+instructions-to-configure-the-opencryptotester-with-a-generic-uut
 
 ## UUT's Repository Minimum Requirements
 
@@ -356,6 +379,10 @@ To run the Tester in the FPGA, type:
 ```Bash
 make -C ../iob_soc_tester_V* fpga-run [BOARD=<board directory name>]
 ```
+
+## Add a new Device to be tested
+Checkout [this tutorial](document/new_device_tutorial.md) for more details on
+how to add a new device to be tested.
 
 ## Cleaning
 

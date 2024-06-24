@@ -19,7 +19,6 @@ from iob_ram_2p_be import iob_ram_2p_be
 from config_gen import append_str_config_build_mk
 from verilog_gen import insert_verilog_in_module, inplace_change
 from iob_pfsm_program import iob_pfsm_program, iob_fsm_record
-from iob_timer import iob_timer
 
 # Select if should include ILA and PFSM peripherals.
 # Disable this to reduce the amount of FPGA resources used.
@@ -44,6 +43,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             iob_axistream_out,
             iob_dma,
             iob_eth,
+            iob_spi_master,
             # Modules required for AXISTREAM
             (iob_ram_2p_be, {"purpose": "simulation"}),
             (iob_ram_2p_be, {"purpose": "fpga"}),
@@ -158,46 +158,14 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             )
         )
 
+        cls.peripherals.append(
+            iob_spi_master("SPI1", "SPI interface for communication with Flash memory")
+        )
+
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
 
         super()._create_instances()
-
-        #        versatInst = None
-        #        for x in iob_soc_tester.peripherals:
-        #            if x.name == "VERSAT0":
-        #                versatInst = x
-        #        iob_soc_tester.peripherals.remove(versatInst)
-
-        """
-        cls.peripherals.append(
-            iob_eth(
-                "ETH0",
-                "Ethernet interface",
-                parameters={
-                    "AXI_ID_W": "AXI_ID_W",
-                    "AXI_LEN_W": "AXI_LEN_W",
-                    "AXI_ADDR_W": "AXI_ADDR_W",
-                    "AXI_DATA_W": "AXI_DATA_W",
-                    "MEM_ADDR_OFFSET": "MEM_ADDR_OFFSET",
-                },
-            )
-        )
-
-        cls.peripherals.append(iob_uart16550("UART0", "Default UART interface"))
-        cls.peripherals.append(
-            iob_spi_master("SPI0", "SPI master peripheral")
-        )  # Not being used but setup complains if not inserted
-        cls.peripherals.append(iob_timer("TIMER0"))
-
-        # This extra copy is used to prevent the automatic insertion of: TIMER0,UART0,SPI0,VERSAT0,ETH0 - from the opencrypto repo
-        # Some of these are needed, but these must be instantiated before hand, do not rely on opencrypto instantiate them
-        saved = cls.peripherals.copy()
-        super()._create_instances()
-        cls.peripherals = saved
-
-        print([x.name for x in cls.peripherals], file=sys.stderr)
-        """
 
     @classmethod
     def _generate_monitor_bitstream(cls):
@@ -1271,7 +1239,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_SS",
                     "port": "",
                     "bits": [],
@@ -1285,7 +1253,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_SCLK",
                     "port": "",
                     "bits": [],
@@ -1299,7 +1267,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_MISO",
                     "port": "",
                     "bits": [],
@@ -1313,7 +1281,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_MOSI",
                     "port": "",
                     "bits": [],
@@ -1327,7 +1295,7 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_WP_N",
                     "port": "",
                     "bits": [],
@@ -1341,8 +1309,190 @@ copy_remote_simulation_ila_data:
                     "bits": [],
                 },
                 {
-                    "corename": "internal",
+                    "corename": "external",
                     "if_name": "SUT0_SPI0_HOLD_N",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "SS",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "SCLK",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "MISO",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "MOSI",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "WP_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "HOLD_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "avalid_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "address_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "wdata_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "wstrb_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "rdata_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "rvalid_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "ready_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
                     "port": "",
                     "bits": [],
                 },

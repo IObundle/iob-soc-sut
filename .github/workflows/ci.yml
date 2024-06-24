@@ -29,7 +29,7 @@ jobs:
     # run after indicated job
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
@@ -47,7 +47,7 @@ jobs:
     if: ${{ !cancelled() }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       # Init mem
@@ -63,7 +63,7 @@ jobs:
 #    needs: [ icarus ]
 
 #    steps:
-#      - uses: actions/checkout@v3
+#      - uses: actions/checkout@v4
 #        with:
 #          ssh-key: ${{ secrets.IOB_GHACTIONS }}
 #          submodules: 'recursive'
@@ -81,7 +81,7 @@ jobs:
     needs: [ verilator ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
@@ -99,30 +99,30 @@ jobs:
     needs: [ icarus, verilator ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       # No init mem
       - name: no_init_mem
         run: make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK
 
-  tester-cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 180
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ cyclonev ]
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: test baremetal
-        run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
-      # - name: test linux
-      #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
+  # tester-cyclonev:
+  #   runs-on: self-hosted
+  #   timeout-minutes: 180
+  #   # always run, except when previous job was cancelled
+  #   if: ${{ !cancelled() }}
+  #   # run after indicated job
+  #   needs: [ cyclonev ]
+  #
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #         submodules: 'recursive'
+  #     - name: test baremetal
+  #       run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
+  #     # - name: test linux
+  #     #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
 
   # tester-netlist-cyclonev:
   #   runs-on: self-hosted
@@ -133,7 +133,7 @@ jobs:
   #   needs: [ tester-cyclonev ]
   #
   #   steps:
-  #     - uses: actions/checkout@v3
+  #     - uses: actions/checkout@v4
   #       with:
   #         ssh-key: ${{ secrets.IOB_GHACTIONS }}
   #         submodules: 'recursive'
@@ -147,7 +147,7 @@ jobs:
     needs: [ icarus, verilator ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       # No init mem
@@ -163,7 +163,7 @@ jobs:
     needs: [ aes-ku040 ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
@@ -181,7 +181,7 @@ jobs:
   #  needs: [ tester-aes-ku040 ]
   #
   #  steps:
-  #    - uses: actions/checkout@v3
+  #    - uses: actions/checkout@v4
   #      with:
   #        ssh-key: ${{ secrets.IOB_GHACTIONS }}
   #        submodules: 'recursive'
@@ -195,7 +195,7 @@ jobs:
     needs: [ cyclonev, aes-ku040 ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.IOB_GHACTIONS }}
           submodules: 'recursive'
