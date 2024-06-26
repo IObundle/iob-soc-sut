@@ -138,6 +138,7 @@ MODULE_NAMES += iob_ila
 MODULE_NAMES += iob_dma
 MODULE_NAMES += iob_axistream_in
 MODULE_NAMES += iob_axistream_out
+MODULE_NAMES += iob_spi_master
 
 build-linux-drivers:
 	@$(foreach module,$(MODULE_NAMES), \

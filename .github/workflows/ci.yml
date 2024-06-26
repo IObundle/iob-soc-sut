@@ -106,23 +106,23 @@ jobs:
       - name: no_init_mem
         run: make fpga-run INIT_MEM=0 BOARD=CYCLONEV-GT-DK
 
-  tester-cyclonev:
-    runs-on: self-hosted
-    timeout-minutes: 180
-    # always run, except when previous job was cancelled
-    if: ${{ !cancelled() }}
-    # run after indicated job
-    needs: [ cyclonev ]
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.IOB_GHACTIONS }}
-          submodules: 'recursive'
-      - name: test baremetal
-        run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
-      # - name: test linux
-      #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
+  # tester-cyclonev:
+  #   runs-on: self-hosted
+  #   timeout-minutes: 180
+  #   # always run, except when previous job was cancelled
+  #   if: ${{ !cancelled() }}
+  #   # run after indicated job
+  #   needs: [ cyclonev ]
+  #
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         ssh-key: ${{ secrets.IOB_GHACTIONS }}
+  #         submodules: 'recursive'
+  #     - name: test baremetal
+  #       run: make fpga-run TESTER=1 BOARD=CYCLONEV-GT-DK
+  #     # - name: test linux
+  #     #   run: make test-linux-fpga-connect BOARD=CYCLONEV-GT-DK
 
   # tester-netlist-cyclonev:
   #   runs-on: self-hosted

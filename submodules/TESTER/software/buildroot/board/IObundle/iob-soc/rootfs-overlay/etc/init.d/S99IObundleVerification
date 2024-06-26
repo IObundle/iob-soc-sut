@@ -9,9 +9,13 @@ insmod /drivers/iob_ila.ko
 insmod /drivers/iob_dma.ko
 insmod /drivers/iob_axistream_in.ko
 insmod /drivers/iob_axistream_out.ko
+insmod /drivers/iob_spi_master.ko
 
 # Set correct settings for uart port connected to SUT
 stty -F /dev/ttyS0 115200 raw -echo -echoe -echok
 
 # Run verification program
 /root/tester_verification/run_verification
+
+# Run Python SPI test program
+/root/tester_verification/micropython_spi_test.py
