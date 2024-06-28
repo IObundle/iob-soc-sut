@@ -196,7 +196,7 @@ void ila_set_cursor(int index, int partSelect) {
 
 static inline char *OutputHex(char *buffer, int value) {
   char hex_table[] = "0123456789ABCDEF";
-  int lw = hex_table[value & 0xFF]; // value % 16
+  int lw = hex_table[value & 0x0F]; // value % 16
   int hw = hex_table[value >> 4];   // value / 16
 
   (*buffer++) = hw;
