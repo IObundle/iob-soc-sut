@@ -15,6 +15,7 @@ from iob_ila import iob_ila
 from iob_pfsm import iob_pfsm
 from iob_dma import iob_dma
 from iob_eth import iob_eth
+from iob_nco import iob_nco
 from iob_ram_2p_be import iob_ram_2p_be
 from config_gen import append_str_config_build_mk
 from verilog_gen import insert_verilog_in_module, inplace_change
@@ -44,6 +45,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
             iob_dma,
             iob_eth,
             iob_spi_master,
+            iob_nco,
             # Modules required for AXISTREAM
             (iob_ram_2p_be, {"purpose": "simulation"}),
             (iob_ram_2p_be, {"purpose": "fpga"}),
@@ -115,12 +117,12 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                 "ILA0",
                 "Tester Integrated Logic Analyzer for SUT signals",
                 parameters={
-                    "BUFFER_W": "3",
-                    "SIGNAL_W": "38",
+                    "BUFFER_W": "4",
+                    "SIGNAL_W": "39",
                     "TRIGGER_W": "2",
                     "CLK_COUNTER": "1",
                     "MONITOR": "1",
-                    "MONITOR_STATE_W": "2",
+                    "MONITOR_STATE_W": "3",
                 },
             )
             cls.peripherals.append(cls.ila0_instance)
@@ -161,6 +163,9 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         cls.peripherals.append(
             iob_spi_master("SPI1", "SPI interface for communication with Flash memory")
         )
+        cls.peripherals.append(
+            iob_nco("NCO0", "Numerically Controlled Oscillator to generate test clock")
+        )
 
         # Set name of sut firmware (used to join sut firmware with tester firmware)
         cls.sut_fw_name = "iob_soc_sut_firmware.c"
@@ -182,8 +187,8 @@ class iob_soc_tester(iob_soc_opencryptolinux):
         )
 
         # Create a Monitor PFSM program that triggers when an AXI Stream word is being transfered (input bit 0 is high),
-        # and also trigger during 3 clock cycles after the last word (after input bit 1 is high).
-        # These last 3 samples allow capturing the output data of the PFSM peripheral.
+        # and also trigger during 7 clock cycles after the last word (after input bit 1 is high).
+        # These last 7 samples allow capturing the output data of the PFSM and NCO peripherals.
         monitor_prog.set_records(
             [
                 # Format: iob_fsm_record("label", "input_cond", "next_state", "output_expr")
@@ -202,6 +207,10 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     "state_0",
                     "1",
                 ),
+                iob_fsm_record("", "", "", "1"),  # Wait one clock
+                iob_fsm_record("", "", "", "1"),  # Wait one clock
+                iob_fsm_record("", "", "", "1"),  # Wait one clock
+                iob_fsm_record("", "", "", "1"),  # Wait one clock
                 iob_fsm_record("", "", "", "1"),  # Wait one clock
                 iob_fsm_record("", "--", "state_0", "1"),  # Jump to state 0
             ]
@@ -275,6 +284,7 @@ class iob_soc_tester(iob_soc_opencryptolinux):
                     ("SUT0.AXISTREAMIN0.axis_tdata_i", 32),
                     ("SUT0.AXISTREAMIN0.data_fifo.w_level_o", 5),
                     ("PFSM0.output_ports", 1),
+                    ("NCO0_clk_o", 1),
                 ],
             )
 
@@ -1613,6 +1623,20 @@ copy_remote_simulation_ila_data:
                     {
                         "corename": "internal",
                         "if_name": "PFSM0",
+                        "port": "",
+                        "bits": [],
+                    },
+                ),
+                (
+                    {
+                        "corename": "NCO0",
+                        "if_name": "clk_gen",
+                        "port": "clk_o",
+                        "bits": [],
+                    },
+                    {
+                        "corename": "internal",
+                        "if_name": "NCO0",
                         "port": "",
                         "bits": [],
                     },
