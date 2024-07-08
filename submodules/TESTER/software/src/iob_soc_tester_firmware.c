@@ -755,12 +755,13 @@ int main() {
   // init nco
   nco_init(NCO0_BASE);
 
-  // Configure NCO period to be 2 times the system clock period
+  // Configure NCO period to be 3 times the system clock period (2 clock cycles + 1 implicit by iob_nco)
   // Lowest 8 bits of value are the fractional part of the period by default
+  uart16550_puts("\n[Tester]: Configuring iob_nco to output a signal with 3x period of the system clock\n\n");
   nco_set_period(0x200);
   nco_enable(1);
 
-  uart16550_puts("\n[Tester]: Waiting for ethernet PHY reset to finish...\n\n");
+  uart16550_puts("[Tester]: Waiting for ethernet PHY reset to finish...\n\n");
   eth_wait_phy_rst();
 
   // Receive data from console via Ethernet
