@@ -17,7 +17,7 @@
 #include "iob-ila-user.h"
 #include "iob-dma-user.h"
 #define USE_ILA_PFSM
-#define ILA0_BUFFER_W 3
+#define ILA0_BUFFER_W 4
 
 #include <stdbool.h>
 
@@ -999,7 +999,7 @@ void pfsm_program(char *bitstreamBuffer, uint32_t read_size){
 // Program Monitor PFSM internal to ILA.
 void ila_monitor_program(char *bitstreamBuffer, uint32_t read_size){
   // init ILA Monitor (PFSM)
-  pfsm_init(2, 2, 1, MONITOR_MINOR);
+  pfsm_init(3, 2, 1, MONITOR_MINOR);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
   // file_size = uart16550_recvfile("monitor_pfsm.bit", bitstreamBuffer);
@@ -1030,11 +1030,11 @@ void print_ila_samples() {
   // clear_cache(); // linux command: sync; echo 3 > /proc/sys/vm/drop_caches
 
   printf("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  printf("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  printf("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output | NCO output |\n");
   // For every sample in the buffer
   for(i=(ILA0_BUFFER_SIZE-latest_sample_index)*2; i<ILA0_BUFFER_SIZE*2; i+=2){
     fifo_value = samples[i+1]<<16 | samples[i]>>16;
-    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           | %d          |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1, samples[i+1]>>22 & 0x1);
   }
   uart16550_putc('\n');
 
