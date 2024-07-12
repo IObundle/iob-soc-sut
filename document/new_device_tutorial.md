@@ -2,20 +2,24 @@
 This tutorial uses [iob-spi](https://github.com/iobundle/iob-spi) as an example
 device to be added for testing.
 
-1. Add peripheral as a submodule:
+## 1. Add peripheral as a submodule:
+
 ```bash
 git submodule add git@github.com:IObundle/iob-spi.git submodules/SPI
 git submodule update --init --recursive
 ```
 
 
-2. Add peripheral to `iob_soc_tester.py`:
+## 2. Add peripheral to `iob_soc_tester.py`:
+
 2.1. Import module:
+
 ```python
 from iob_spi_master import iob_spi_master
 ```
 
 2.2. Add to submodule list:
+
 ```python
     def _create_submodules_list(cls):
         submodules = [
@@ -25,6 +29,7 @@ from iob_spi_master import iob_spi_master
 ```
 
 2.3. Add to peripheral list:
+
 ```python
     
     def _create_instances(cls):
@@ -35,9 +40,12 @@ from iob_spi_master import iob_spi_master
 ```
 
 2.4. Add to connections (optional):
+
 The connections will vary according to the type of peripheral added.
 Some peripherals may not have configurable connections.
+
 In this example, the SPI peripheral connects to the external flash memory interface.
+
 ```python
     def _setup_portmap(cls):
         super()._setup_portmap()
@@ -229,12 +237,16 @@ In this example, the SPI peripheral connects to the external flash memory interf
 ```
 
 
-3. Update FPGA files (optional):
+## 3. Update FPGA files (optional):
+
 System changes for each FPGA/board may be required if the peripheral uses FPGA/board specific components.
+
 In this example, the SPI peripheral connects to the 'AES-KU040-DB-G' FPGA board's flash memory.
 
 3.1. Update FPGA wrapper:
+
 `submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper.v`
+
 ```verilog
 // add SPI1 to top level ports
 
@@ -284,7 +296,9 @@ module iob_soc_tester_fpga_wrapper (
 ```
 
 3.2. Update FPGA constraints:
+
 `submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper_dev.sdc`
+
 ```
 #
 # SPI1 constraints
@@ -318,8 +332,10 @@ set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[3]]
 ```
 
 
-4. Update baremetal firmware:
+## 4. Update baremetal firmware:
+
 `submodules/TESTER/software/src/iob_soc_tester_firmware.c`
+
 ```C
 // Add includes
 #include "iob-spi.h"
@@ -390,11 +406,14 @@ int main(){
 ```
 
 
-5. Update Linux files:
+## 5. Update Linux files:
+
 See [SPI device driver tutorial](https://github.com/IObundle/iob-soc-opencryptolinux/blob/master/document/device_driver_tutorial.md) for more details.
 
 5.1 Update Linux Device Tree:
+
 `submodules/TESTER/software/iob_soc.dts`
+
 ```dts
 /dts-v1/;
 / {
@@ -410,6 +429,7 @@ See [SPI device driver tutorial](https://github.com/IObundle/iob-soc-opencryptol
 ```
 
 5.2. Build Linux Device Tree and OpenSBI:
+
 ```bash
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-dts MACROS_FILE=../../../TESTER/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/simulation/'
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-opensbi MACROS_FILE=../../../TESTER/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/simulation/'
@@ -420,13 +440,17 @@ nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C su
 ```
 
 5.3. Update Linux software:
+
 Add new test software inside the following folder, and compile it if needed:
 `submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/`
+
 See the [SPI python example](https://github.com/IObundle/iob-soc-sut/blob/main/submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/micropython_spi_test.py).
 
 
 5.4. Load Linux kernel module and launch test during boot (optional):
+
 `submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/etc/init.d/S99IObundleVerification`
+
 ```bash
 insmod /drivers/iob_spi_master.ko
 # other modules here
@@ -436,11 +460,15 @@ insmod /drivers/iob_spi_master.ko
 ```
 
 5.5. Build Buildroot:
+
 Add peripheral to the `MODULE_NAMES` list of the [Makefile](https://github.com/IObundle/iob-soc-sut/blob/48c0f15f5f956102b538097e51f26cebc11219de/Makefile#L141).
+
 ```Make
 MODULE_NAMES += iob_spi_master
 ```
+
 Call the [build-linux-buildroot](https://github.com/IObundle/iob-soc-sut/blob/48c0f15f5f956102b538097e51f26cebc11219de/Makefile#L175) makefile target to include previously created files in the Linux root filesystem.
+
 ```bash
 make build-linux-buildroot
 ```
