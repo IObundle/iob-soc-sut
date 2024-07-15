@@ -2,40 +2,251 @@
 This tutorial uses [iob-spi](https://github.com/iobundle/iob-spi) as an example
 device to be added for testing.
 
-1. Add `SPI` as a submodule:
+## 1. Add peripheral as a submodule:
+
 ```bash
 git submodule add git@github.com:IObundle/iob-spi.git submodules/SPI
 git submodule update --init --recursive
 ```
 
-2. Add `SPI` to `iob_soc_tester.py`:
+
+## 2. Add peripheral to `iob_soc_tester.py`:
+
 2.1. Import module:
+
 ```python
-# Add to import list
 from iob_spi_master import iob_spi_master
 ```
+
 2.2. Add to submodule list:
+
 ```python
     def _create_submodules_list(cls):
-        """Create submodules list with dependencies of this module"""
         submodules = [
-            # other submodule here
             iob_spi_master,
             # other submodules here
         ]
 ```
+
 2.3. Add to peripheral list:
+
 ```python
+    
     def _create_instances(cls):
-        # Instantiate TESTER peripherals
-        # other peripherals here
         cls.peripherals.append(
             iob_spi_master("SPI1", "SPI interface for communication with Flash memory")
         )
+        # other peripherals here
 ```
-2.4. Add to connections (optional)?
-3. Update FPGA files (AES-KU040-DB-G only):
-3.1. FPGA wrapper: `submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper.v`
+
+2.4. Add to connections (optional):
+
+The connections will vary according to the type of peripheral added.
+Some peripherals may not have configurable connections.
+
+In this example, the SPI peripheral connects to the external flash memory interface.
+
+```python
+    def _setup_portmap(cls):
+        super()._setup_portmap()
+        cls.peripheral_portmap += [
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "SS",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "SCLK",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "MISO",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "MOSI",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "WP_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "flash_if",
+                    "port": "HOLD_N",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "avalid_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "address_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "wdata_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "wstrb_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "rdata_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "rvalid_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "SPI1",
+                    "if_name": "iob_s_cache",
+                    "port": "ready_cache",
+                    "bits": [],
+                },
+                {
+                    "corename": "external",
+                    "if_name": "SPI1",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # other peripheral ports here
+        ]
+```
+
+
+## 3. Update FPGA files (optional):
+
+System changes for each FPGA/board may be required if the peripheral uses FPGA/board specific components.
+
+In this example, the SPI peripheral connects to the 'AES-KU040-DB-G' FPGA board's flash memory.
+
+3.1. Update FPGA wrapper:
+
+`submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper.v`
+
 ```verilog
 // add SPI1 to top level ports
 
@@ -83,8 +294,11 @@ module iob_soc_tester_fpga_wrapper (
 
 
 ```
-3.2. Add SPI1 FPGA constraints in
+
+3.2. Update FPGA constraints:
+
 `submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper_dev.sdc`
+
 ```
 #
 # SPI1 constraints
@@ -117,7 +331,11 @@ set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[2]]
 set_property IOB TRUE [get_cells iob_soc_tester0/SPI1/fl_spi0/dq_out_r_reg[3]]
 ```
 
-4. Update `submodules/TESTER/software/src/iob_soc_tester_firmware.c` to use SPI:
+
+## 4. Update baremetal firmware:
+
+`submodules/TESTER/software/src/iob_soc_tester_firmware.c`
+
 ```C
 // Add includes
 #include "iob-spi.h"
@@ -187,7 +405,31 @@ int main(){
 }
 ```
 
-5. [Required for Linux] Update Linux Device Tree and OpenSBI:
+
+## 5. Update Linux files:
+
+See [SPI device driver tutorial](https://github.com/IObundle/iob-soc-opencryptolinux/blob/master/document/device_driver_tutorial.md) for more details.
+
+5.1 Update Linux Device Tree:
+
+`submodules/TESTER/software/iob_soc.dts`
+
+```dts
+/dts-v1/;
+/ {
+    // other properties here
+    soc {
+        SPI1: spi@/*SPI1_ADDR_MACRO*/ {
+            compatible = "iobundle,spi0";
+            reg = <0x/*SPI1_ADDR_MACRO*/ 0x100>;
+        };
+        // other peripherals here
+    };
+};
+```
+
+5.2. Build Linux Device Tree and OpenSBI:
+
 ```bash
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-dts MACROS_FILE=../../../TESTER/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/simulation/'
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-opensbi MACROS_FILE=../../../TESTER/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/simulation/'
@@ -195,4 +437,38 @@ nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C su
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-opensbi MACROS_FILE=../../../TESTER/hardware/fpga/vivado/AES-KU040-DB-G/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/fpga/vivado/AES-KU040-DB-G/'
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-dts MACROS_FILE=../../../TESTER/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/fpga/quartus/CYCLONEV-GT-DK/'
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-opensbi MACROS_FILE=../../../TESTER/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/fpga/quartus/CYCLONEV-GT-DK/'
+```
+
+5.3. Update Linux software:
+
+Add new test software inside the following folder, and compile it if needed:
+`submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/`
+
+See the [SPI python example](https://github.com/IObundle/iob-soc-sut/blob/main/submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/micropython_spi_test.py).
+
+
+5.4. Load Linux kernel module and launch test during boot (optional):
+
+`submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/etc/init.d/S99IObundleVerification`
+
+```bash
+insmod /drivers/iob_spi_master.ko
+# other modules here
+
+/root/tester_verification/micropython_spi_test.py
+# other software tests here
+```
+
+5.5. Build Buildroot:
+
+Add peripheral to the `MODULE_NAMES` list of the [Makefile](https://github.com/IObundle/iob-soc-sut/blob/48c0f15f5f956102b538097e51f26cebc11219de/Makefile#L141).
+
+```Make
+MODULE_NAMES += iob_spi_master
+```
+
+Call the [build-linux-buildroot](https://github.com/IObundle/iob-soc-sut/blob/48c0f15f5f956102b538097e51f26cebc11219de/Makefile#L175) makefile target to include previously created files in the Linux root filesystem.
+
+```bash
+make build-linux-buildroot
 ```

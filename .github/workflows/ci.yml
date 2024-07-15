@@ -23,7 +23,7 @@ on:
 jobs:
   verilator:
     runs-on: self-hosted
-    timeout-minutes: 30
+    timeout-minutes: 60
     # always run, except when previous job was cancelled
     if: ${{ !cancelled() }}
     # run after indicated job

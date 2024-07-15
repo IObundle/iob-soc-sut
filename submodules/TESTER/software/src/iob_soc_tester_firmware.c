@@ -16,6 +16,7 @@
 #define ILA0_BUFFER_W IOB_SOC_TESTER_ILA0_BUFFER_W
 #endif
 
+#include "iob-nco.h"
 #include "iob-dma.h"
 #include "iob-eth.h"
 #include "iob-spi.h"
@@ -751,8 +752,16 @@ int main() {
   dma_init(DMA0_BASE);
   // init console eth
   eth_init(ETH0_BASE, &clear_cache);
+  // init nco
+  nco_init(NCO0_BASE);
 
-  uart16550_puts("\n[Tester]: Waiting for ethernet PHY reset to finish...\n\n");
+  // Configure NCO period to be 3 times the system clock period (2 clock cycles + 1 implicit by iob_nco)
+  // Lowest 8 bits of value are the fractional part of the period by default
+  uart16550_puts("\n[Tester]: Configuring iob_nco to output a signal with 3x period of the system clock\n\n");
+  nco_set_period(0x200);
+  nco_enable(1);
+
+  uart16550_puts("[Tester]: Waiting for ethernet PHY reset to finish...\n\n");
   eth_wait_phy_rst();
 
   // Receive data from console via Ethernet
@@ -1039,7 +1048,7 @@ void pfsm_program(char *bitstreamBuffer){
 // Program Monitor PFSM internal to ILA.
 void ila_monitor_program(char *bitstreamBuffer){
   // init ILA Monitor (PFSM)
-  pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 2, 2, 1);
+  pfsm_init(ila_get_monitor_base_addr(ILA0_BASE), 3, 2, 1);
   uint32_t file_size = 0;
   // Receive pfsm bitstream
   file_size = uart16550_recvfile("monitor_pfsm.bit", bitstreamBuffer);
@@ -1051,10 +1060,11 @@ void ila_monitor_program(char *bitstreamBuffer){
 }
 
 void print_ila_samples() {
-  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output
+  // From the ILA0 configuration: bits 0-15 are the timestamp; bits 16-47 are fifo_value; bits 48-52 are the fifo_level; bit 53 is PFSM output; bit 54 is NCO output
   uint32_t j, i, fifo_value;
   uint16_t initial_time = (uint16_t)ila_get_large_value(0,0);
   uint32_t latest_sample_index = ila_number_samples();
+  printf("debug: %d\n", latest_sample_index);
 
   // Allocate memory for samples
   // Each buffer sample has 2 * 32 bit words
@@ -1069,11 +1079,11 @@ void print_ila_samples() {
   clear_cache();
 
   uart16550_puts("[Tester]: ILA values sampled from the AXI input FIFO of SUT: \n");
-  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output |\n");
+  uart16550_puts("[Tester]: | Timestamp | FIFO level | AXI input value | PFSM output | NCO output |\n");
   // For every sample in the buffer
   for(i=(ILA0_BUFFER_SIZE-latest_sample_index)*2; i<ILA0_BUFFER_SIZE*2; i+=2){
     fifo_value = samples[i+1]<<16 | samples[i]>>16;
-    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1);
+    printf("[Tester]: | %06d    | 0x%02x       | 0x%08x      | %d           | %d          |\n",(uint16_t)(samples[i]-initial_time), samples[i+1]>>16 & 0x1f, fifo_value, samples[i+1]>>21 & 0x1, samples[i+1]>>22 & 0x1);
   }
   uart16550_putc('\n');
 
