@@ -1,6 +1,22 @@
-# Tutorial: Add a new Device to be tested
-This tutorial uses [iob-spi](https://github.com/iobundle/iob-spi) as an example
-device to be added for testing.
+# Tutorial: Add a new Device to the Tester
+
+This tutorial shows the steps required to add a new peripheral to the Tester system, to be used to verify the System Under Test (SUT).
+
+The SUT includes a set of interfaces for communicating with external systems.
+
+The Tester's role is to ensure the SUT functions correctly.
+To do this, the Tester interacts with the SUT's interfaces and verifies the accuracy of its responses.
+
+Each peripheral core within the Tester system introduces a new interface.
+The Tester can be configured with additional peripherals as needed, allowing it to match the SUT's interfaces.
+
+Using these peripherals, the Tester communicates with the SUT's interfaces to confirm they are operating as expected.
+
+The Tester may also include peripherals that provide it with new functionality, like a Timer for precise time tracking.
+It may also use new interfaces to communicate with external systems, like UART, SPI, Ethernet, etc.
+
+This tutorial uses [iob-spi](https://github.com/iobundle/iob-spi) as an example device to be added to the Tester.
+This peripheral will be used to communicate with a Flash memory external to the Tester.
 
 ## 1. Add peripheral as a submodule:
 
@@ -12,13 +28,13 @@ git submodule update --init --recursive
 
 ## 2. Add peripheral to `iob_soc_tester.py`:
 
-2.1. Import module:
+### 2.1. Import module:
 
 ```python
 from iob_spi_master import iob_spi_master
 ```
 
-2.2. Add to submodule list:
+### 2.2. Add to submodule list:
 
 ```python
     def _create_submodules_list(cls):
@@ -28,7 +44,7 @@ from iob_spi_master import iob_spi_master
         ]
 ```
 
-2.3. Add to peripheral list:
+### 2.3. Add to peripheral list:
 
 ```python
     
@@ -39,7 +55,7 @@ from iob_spi_master import iob_spi_master
         # other peripherals here
 ```
 
-2.4. Add to connections (optional):
+### 2.4. Add to connections (optional):
 
 The connections will vary according to the type of peripheral added.
 Some peripherals may not have configurable connections.
@@ -239,11 +255,11 @@ In this example, the SPI peripheral connects to the external flash memory interf
 
 ## 3. Update FPGA files (optional):
 
-System changes for each FPGA/board may be required if the peripheral uses FPGA/board specific components.
+System changes for each FPGA/board may be required if the peripheral uses FPGA/board-specific components.
 
 In this example, the SPI peripheral connects to the 'AES-KU040-DB-G' FPGA board's flash memory.
 
-3.1. Update FPGA wrapper:
+### 3.1. Update FPGA wrapper:
 
 `submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper.v`
 
@@ -295,7 +311,7 @@ module iob_soc_tester_fpga_wrapper (
 
 ```
 
-3.2. Update FPGA constraints:
+### 3.2. Update FPGA constraints:
 
 `submodules/TESTER/hardware/fpga/vivado/AES-KU040-DB-G/iob_soc_tester_fpga_wrapper_dev.sdc`
 
@@ -410,7 +426,7 @@ int main(){
 
 See [SPI device driver tutorial](https://github.com/IObundle/iob-soc-opencryptolinux/blob/master/document/device_driver_tutorial.md) for more details.
 
-5.1 Update Linux Device Tree:
+### 5.1 Update Linux Device Tree:
 
 `submodules/TESTER/software/iob_soc.dts`
 
@@ -428,7 +444,7 @@ See [SPI device driver tutorial](https://github.com/IObundle/iob-soc-opencryptol
 };
 ```
 
-5.2. Build Linux Device Tree and OpenSBI:
+### 5.2. Build Linux Device Tree and OpenSBI:
 
 ```bash
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-dts MACROS_FILE=../../../TESTER/hardware/simulation/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/simulation/'
@@ -439,7 +455,7 @@ nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C su
 nix-shell submodules/OPENCRYPTOLINUX/submodules/OS/default.nix --run 'make -C submodules/OPENCRYPTOLINUX/submodules/OS build-opensbi MACROS_FILE=../../../TESTER/hardware/fpga/quartus/CYCLONEV-GT-DK/linux_build_macros.txt OS_BUILD_DIR=../../../TESTER/hardware/fpga/quartus/CYCLONEV-GT-DK/'
 ```
 
-5.3. Update Linux software:
+### 5.3. Update Linux software:
 
 Add new test software inside the following folder, and compile it if needed:
 `submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/`
@@ -447,7 +463,7 @@ Add new test software inside the following folder, and compile it if needed:
 See the [SPI python example](https://github.com/IObundle/iob-soc-sut/blob/main/submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/root/tester_verification/micropython_spi_test.py).
 
 
-5.4. Load Linux kernel module and launch test during boot (optional):
+### 5.4. Load Linux kernel module and launch test during boot (optional):
 
 `submodules/TESTER/software/buildroot/board/IObundle/iob-soc/rootfs-overlay/etc/init.d/S99IObundleVerification`
 
@@ -459,7 +475,7 @@ insmod /drivers/iob_spi_master.ko
 # other software tests here
 ```
 
-5.5. Build Buildroot:
+### 5.5. Build Buildroot:
 
 Add peripheral to the `MODULE_NAMES` list of the [Makefile](https://github.com/IObundle/iob-soc-sut/blob/48c0f15f5f956102b538097e51f26cebc11219de/Makefile#L141).
 
@@ -472,3 +488,43 @@ Call the [build-linux-buildroot](https://github.com/IObundle/iob-soc-sut/blob/48
 ```bash
 make build-linux-buildroot
 ```
+
+
+## 6. Setup the Tester+SUT and run verification:
+
+Set up and run the system to ensure that the new peripheral was added correctly, and to verify that the SUT functions as intended.
+
+For more details, see [README.md](https://github.com/IObundle/iob-soc-sut/blob/main/README.md) in the [iob-soc-sut](https://github.com/IObundle/iob-soc-sut) repository.
+
+### 6.1. Run the Tester+SUT with baremetal firmware:
+
+Run in simulation:
+
+```bash
+make sim-run TESTER=1
+```
+
+The tester should print the messages configured in [step 4](#4-update-baremetal-firmware).
+
+In the iob-spi example, the peripheral interfaces with the external flash memory on the AES-KU040 FPGA board.
+Consequently, the example firmware described in [step 4](#4-update-baremetal-firmware) only prints SPI-related messages when executed on that board, provided the 'XILINX' macro is defined.
+
+Run on the AES-KU040 fpga board:
+
+```bash
+make fpga-run TESTER=1 BOARD=AES-KU040-DB-G
+```
+
+
+### 6.2. Run the Tester+SUT with Linux:
+
+Simulating the Tester with Linux takes a significant amount of time.
+Therefore, it is preferable to run the system on the FPGA board.
+
+Run on the AES-KU040 fpga board:
+
+```bash
+make fpga-run TESTER=1 RUN_LINUX=1 BOARD=AES-KU040-DB-G
+```
+
+The tester should print the messages configured in [step 5.3](#53-update-linux-software).
